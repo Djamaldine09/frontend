@@ -84,7 +84,8 @@ export default function RegisterPage() {
               <label>Rôle</label>
               <select className="input-field" value={form.role} onChange={e => f('role', e.target.value)} style={{ appearance: 'none' }}>
                 <option value="CANDIDAT">Candidat</option>
-                <option value="SURVEILLANT">Surveillant / Correcteur</option>
+                <option value="SURVEILLANT">Surveillant (Examens & Présences)</option>
+                <option value="CORRECTEUR">Correcteur (Résultats & Notes)</option>
                 <option value="RESPONSABLE">Responsable de centre</option>
                 <option value="ADMIN">Administrateur</option>
               </select>
