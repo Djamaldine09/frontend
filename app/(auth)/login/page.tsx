@@ -6,6 +6,9 @@ import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
+import Image from 'next/image';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 // --- IMPORTS GOOGLE ---
 import { useGoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'; 
@@ -40,9 +43,25 @@ function LoginContent() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const { login } = useAuth();
   const router = useRouter();
+
+  // ================= CAROUSEL AUTO-SCROLL =================
+  const slides = [
+    '/images/im2.jpg',
+    '/images/im4.jpg',
+    '/images/im3.webp'
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [slides.length]);
 
   // ================= 1. LOGIQUE GOOGLE =================
   const handleGoogleLogin = useGoogleLogin({
@@ -174,69 +193,92 @@ function LoginContent() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%', fontFamily: "'Roboto', sans-serif", backgroundColor: '#ffffff', margin: 0, padding: 0, boxSizing: 'border-box' }}>
+      <style>{`
+        .phone-input input {
+          width: 100% !important;
+          padding: 14px 14px !important;
+          background-color: #f0f4f9 !important;
+          border: none !important;
+          border-radius: 12px !important;
+          font-size: 14px !important;
+          color: #111827 !important;
+          outline: none !important;
+          box-sizing: border-box !important;
+          font-family: inherit !important;
+        }
+      `}</style>
       
       <div id="recaptcha-container"></div>
 
-      {/* ================= GAUCHE : BANNIÈRE AVEC BACKGROUND VIDÉO ================= */}
+      {/* ================= GAUCHE : BANNIÈRE AVEC CAROUSEL IMAGES ================= */}
       <div style={{ 
         display: 'flex', 
         flexDirection: 'column', 
         justifyContent: 'space-between', 
         flex: 1, 
-        backgroundColor: '#1e1b4b', /* Couleur de secours pendant le chargement */
         padding: '60px', 
-        color: '#ffffff', 
         position: 'relative',
-        overflow: 'hidden', /* Requis pour que la vidéo ne déborde pas */
+        overflow: 'hidden',
         boxSizing: 'border-box'
       }} className="hidden-mobile-logic">
         
-        {/* Balise Vidéo Arrière-plan */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            zIndex: 0
-          }}
-        >
-          {/* Change le chemin ici si ton fichier s'appelle autrement */}
-          <source src="/videos/auth-background.mp4" type="video/mp4" />
-          Votre navigateur ne supporte pas les vidéos.
-        </video>
-
-        {/* Overlay en dégradé linéaire transparent pour conserver la lisibilité des textes */}
+        {/* Carousel Container */}
         <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
-          backdropFilter: 'blur(3px)',
-          // background: 'linear-gradient(135deg, rgba(79, 70, 233, 0.75) 0%, rgba(99, 102, 241, 0.6) 40%, rgba(124, 58, 237, 0.75) 100%)',
-          zIndex: 1
-        }} />
+          borderTopRightRadius: '35px',
+          borderBottomRightRadius: '35px',
+          overflow: 'hidden',
+          zIndex: 0
+        }}>
+          {slides.map((slide, index) => (
+            <div
+              key={index}
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                opacity: index === currentSlide ? 1 : 0,
+                transition: 'opacity 1s ease-in-out',
+                borderTopRightRadius: '35px',
+                borderBottomRightRadius: '35px',
+              }}
+            >
+              <Image
+                src={slide}
+                alt={`Slide ${index + 1}`}
+                fill
+                style={{
+                  objectFit: 'cover',
+                  borderTopRightRadius: '35px',
+                  borderBottomRightRadius: '35px',
+                }}
+                priority={index === 0}
+              />
+            </div>
+          ))}
+        </div>
 
-        {/* Top: Logo (z-index augmenté pour passer devant la vidéo) */}
-        {/* <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 2 }}>
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg style={{ width: '20px', height: '20px', color: '#fff' }} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          </div>
-          <span style={{ fontWeight: 'bold', fontSize: '18px' }}>ExamGest MG</span>
-        </div> */}
+        {/* Overlay Gradient */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          // background: 'linear-gradient(135deg, rgba(79, 70, 233, 0.6) 0%, rgba(99, 102, 241, 0.5) 40%, rgba(124, 58, 237, 0.6) 100%)',
+          // backdropFilter: 'blur(1px)',
+          zIndex: 1,
+          borderTopRightRadius: '15px',
+          borderBottomRightRadius: '15px',
+        }} />
 
         {/* Milieu: Textes (position relative + z-index requis) */}
         <div style={{ maxWidth: '460px', margin: 'auto 0', position: 'relative', zIndex: 2 }}>
-          <h1 style={{ fontSize: '35px', fontWeight: 800, lineHeight: 1.2, marginBottom: '24px', letterSpacing: '-1px' }}>
+          <h1 style={{ fontSize: '35px', fontWeight: 800, lineHeight: 1.2, marginBottom: '24px', letterSpacing: '-1px', color: '#ffffff' }}>
             Votre avenir académique commence ici
           </h1>
           <p style={{ fontSize: '16px', color: '#e0e7ff', lineHeight: 1.5 }}>
@@ -244,17 +286,24 @@ function LoginContent() {
           </p>
         </div>
 
-        {/* Bas: Cadre des rôles (position relative + z-index requis) */}
-        {/* <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', padding: '24px', maxWidth: '440px', position: 'relative', zIndex: 2 }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>4 rôles</h4>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#c7d2fe' }}>Admin · Responsable · Surveillant · Candidat</p>
-          </div>
-          <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>Sécurisé</h4>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#c7d2fe' }}>Authentification JWT · Accès par rôle</p>
-          </div>
-        </div> */}
+        {/* Slide Indicators */}
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', gap: '8px', justifyContent: 'center' }}>
+          {slides.map((_, index) => (
+            <div
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: index === currentSlide ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: '2px solid rgba(255, 255, 255, 0.3)'
+              }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* ================= DROITE : FORMULAIRE ================= */}
@@ -344,33 +393,121 @@ function LoginContent() {
                     type="button" 
                     onClick={() => handleGoogleLogin()} 
                     disabled={loading}
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '10px', backgroundColor: '#ffffff', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 500, color: '#374151' }}
+                    style={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '10px', 
+                      border: 'none', 
+                      borderRadius: '12px', 
+                      padding: '12px', 
+                      backgroundColor: '#ffffff',
+                      cursor: loading ? 'not-allowed' : 'pointer', 
+                      fontSize: '14px', 
+                      fontWeight: 500, 
+                      color: '#374151',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      opacity: loading ? 0.6 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loading) {
+                        e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
+                        e.currentTarget.style.transform = 'translateY(-3px)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
                   >
-                    <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24">
-                      <path fill="#EA4335" d="M12 5.04c1.64 0 3.12.56 4.28 1.67l3.2-3.2C17.52 1.58 14.96 1 12 1 7.35 1 3.4 3.65 1.5 7.5l3.86 3.c.9-2.7 3.4-4.46 6.64-4.46z"/>
+                    <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24">
+                      <path fill="#EA4335" d="M12 5.04c1.64 0 3.12.56 4.28 1.67l3.2-3.2C17.52 1.58 14.96 1 12 1 7.35 1 3.4 3.65 1.5 7.5l3.86 3c.9-2.7 3.4-4.46 6.64-4.46z"/>
                       <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.42 3.58l3.76 2.91c2.2-2.03 3.69-5.02 3.69-8.64z"/>
                       <path fill="#FBBC05" d="M5.36 14.5c-.24-.72-.38-1.49-.38-2.3s.14-1.58.38-2.3L1.5 6.9C.54 8.84 0 11 0 13.2s.54 4.36 1.5 6.3l3.86-3z"/>
                       <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.76-2.91c-1.1.74-2.5 1.18-4.2 1.18-3.24 0-5.74-1.76-6.64-4.46L1.5 16.9C3.4 20.75 7.35 23 12 23z"/>
                     </svg>
-                    Google
+                    <span>Google</span>
                   </button>
                   
-                  <button type="button" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '10px', backgroundColor: '#ffffff', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                  <button 
+                    type="button"
+                    disabled={loading}
+                    style={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '10px', 
+                      border: 'none', 
+                      borderRadius: '12px', 
+                      padding: '12px', 
+                      backgroundColor: '#ffffff',
+                      cursor: loading ? 'not-allowed' : 'pointer', 
+                      fontSize: '14px', 
+                      fontWeight: 500, 
+                      color: '#374151',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      opacity: loading ? 0.6 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loading) {
+                        e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
+                        e.currentTarget.style.transform = 'translateY(-3px)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
                     <svg style={{ width: '18px', height: '18px', color: '#1877F2' }} fill="currentColor" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                     </svg>
-                    Facebook
+                    <span>Facebook</span>
                   </button>
                 </div>
 
                 <button 
                   type="button" 
                   onClick={() => setLoginMethod('phone')}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '12px', backgroundColor: '#ffffff', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                  <svg style={{ width: '16px', height: '16px', color: '#6b7280' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  disabled={loading}
+                  style={{ 
+                    width: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '10px', 
+                    border: '2px solid #e5e7eb', 
+                    borderRadius: '12px', 
+                    padding: '12px', 
+                    backgroundColor: '#ffffff',
+                    cursor: loading ? 'not-allowed' : 'pointer', 
+                    fontSize: '14px', 
+                    fontWeight: 500, 
+                    color: '#374151',
+                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    opacity: loading ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.borderColor = '#5c54f3';
+                      e.currentTarget.style.backgroundColor = '#f3f0ff';
+                      e.currentTarget.style.color = '#5c54f3';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.backgroundColor = '#ffffff';
+                    e.currentTarget.style.color = '#374151';
+                  }}
+                >
+                  <svg style={{ width: '18px', height: '18px', color: 'currentColor' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.622l1.056-1.056a2.25 2.25 0 013.182 0l2.9 2.9a2.25 2.25 0 010 3.182l-1.127 1.127a1.455 1.455 0 00-.372 1.353 11.916 11.916 0 005.155 5.155 1.455 1.455 0 001.353-.372l1.127-1.127a2.25 2.25 0 013.182 0l2.9 2.9a2.25 2.25 0 010 3.182l-1.057 1.057a2.25 2.25 0 01-3.18 0a17.481 17.481 0 01-4.745-4.745a17.487 17.487 0 01-4.745-4.745a2.25 2.25 0 010-3.18z" />
                   </svg>
-                  Continuer avec un numéro
+                  <span>Continuer avec un numéro</span>
                 </button>
               </div>
             </>
@@ -380,21 +517,15 @@ function LoginContent() {
                 <form onSubmit={handleSendSMS} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Numéro de téléphone</label>
-                    <div style={{ position: 'relative', width: '100%' }}>
-                      <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '14px', color: '#9ca3af', display: 'flex', alignItems: 'center' }}>
-                        <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                        </svg>
-                      </div>
-                      <input
-                        type="tel"
-                        placeholder="+26134..."
-                        value={phoneNumber}
-                        onChange={e => setPhoneNumber(e.target.value)}
-                        required
-                        style={{ width: '100%', padding: '14px 14px 14px 46px', backgroundColor: '#f0f4f9', border: 'none', borderRadius: '12px', fontSize: '14px', color: '#111827', outline: 'none', boxSizing: 'border-box' }}
-                      />
-                    </div>
+                    <PhoneInput
+                      international
+                      countryCallingCodeEditable={false}
+                      defaultCountry="MG"
+                      value={phoneNumber}
+                      onChange={(value: string | undefined) => setPhoneNumber(value || '')}
+                      placeholder="+261 34 ..."
+                      className="phone-input"
+                    />
                   </div>
                   <button
                     type="submit"
@@ -463,6 +594,108 @@ function LoginContent() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        /* PhoneInput Modern Styling */
+        .PhoneInput {
+          display: flex;
+          align-items: center;
+          background-color: #f0f4f9;
+          border-radius: 12px;
+          border: none;
+          padding: 0;
+          overflow: hidden;
+        }
+
+        .PhoneInput--focus {
+          background-color: #f0f4f9;
+          box-shadow: 0 0 0 3px rgba(92, 84, 243, 0.1);
+          border-color: #5c54f3;
+        }
+
+        .PhoneInputCountry {
+          padding: 14px 12px;
+          border: none;
+          background-color: transparent;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          flex-shrink: 0;
+        }
+
+        .PhoneInputCountry:hover {
+          background-color: rgba(92, 84, 243, 0.05);
+        }
+
+        .PhoneInputCountrySelectMenu {
+          background-color: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+          max-height: 280px;
+          overflow-y: auto;
+          z-index: 1000;
+        }
+
+        .PhoneInputCountrySelectMenu__item {
+          padding: 10px 16px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          font-size: 14px;
+          color: #374151;
+        }
+
+        .PhoneInputCountrySelectMenu__item:hover {
+          background-color: #f3f0ff;
+          color: #5c54f3;
+        }
+
+        .PhoneInputCountrySelectMenu__item--selected {
+          background-color: #f0f4f9;
+          color: #5c54f3;
+          font-weight: 600;
+        }
+
+        .PhoneInputCountryFlag {
+          margin-right: 8px;
+          font-size: 18px;
+        }
+
+        .PhoneInputCountryCallingCode {
+          margin-left: 6px;
+          color: #6b7280;
+          font-size: 12px;
+        }
+
+        input.PhoneInputInput {
+          flex: 1;
+          background-color: transparent;
+          border: none;
+          padding: 14px 14px;
+          font-size: 14px;
+          color: #111827;
+          outline: none;
+          font-family: inherit;
+        }
+
+        input.PhoneInputInput::placeholder {
+          color: #9ca3af;
+        }
+
+        input.PhoneInputInput:focus {
+          outline: none;
+        }
+
+        .PhoneInput input::-webkit-outer-spin-button,
+        .PhoneInput input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .PhoneInput input[type=number] {
+          -moz-appearance: textfield;
         }
       `}</style>
     </div>
