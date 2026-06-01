@@ -12,7 +12,7 @@ import {
 
 const navItems = [
   { href: '/dashboard',  label: 'Tableau de bord', icon: LayoutGrid,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
-  { href: '/utilisateurs', label: 'Utilisateurs',    icon: Users,       roles: ['ADMIN'] },
+  { href: '/dashboard/admin/utilisateurs', label: 'Utilisateurs',    icon: Users,       roles: ['ADMIN'] },
   { href: '/supervision',  label: 'Supervision',     icon: Activity,    roles: ['ADMIN'] },
   { href: '/mon-dossier',  label: 'Mon dossier',     icon: FileText,    roles: ['CANDIDAT'] },
   { href: '/convocation',  label: 'Convocation',     icon: ScrollText,    roles: ['CANDIDAT'] },

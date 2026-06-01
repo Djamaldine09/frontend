@@ -6,11 +6,42 @@ import { useAuth } from '@/contexts/AuthContext';
 import { adminAPI, type AdminCentre } from '@/lib/api';
 import { Plus, Edit2, Trash2, Building2, MapPin, Users } from 'lucide-react';
 
-
+const mockCentres: AdminCentre[] = [
+  {
+    _id: '1',
+    nom: 'Centre Andohalo',
+    code: 'CAD-001',
+    ville: 'Antananarivo',
+    region: 'Analamanga',
+    capaciteMaximale: 500,
+    examensAcceptes: ['BAC', 'BEPC'],
+    candidatsAffectes: [],
+  },
+  {
+    _id: '2',
+    nom: 'Centre Anosibe',
+    code: 'CAN-001',
+    ville: 'Antananarivo',
+    region: 'Analamanga',
+    capaciteMaximale: 300,
+    examensAcceptes: ['BAC'],
+    candidatsAffectes: [],
+  },
+  {
+    _id: '3',
+    nom: 'Centre Fianarantsoa',
+    code: 'CFI-001',
+    ville: 'Fianarantsoa',
+    region: 'Amoron\'i Mania',
+    capaciteMaximale: 400,
+    examensAcceptes: ['BAC', 'BEPC', 'CEPE'],
+    candidatsAffectes: [],
+  },
+];
 
 export default function CentresAdminPage() {
   const { user } = useAuth();
-  const [centres, setCentres] = useState<AdminCentre[]>([]);
+  const [centres, setCentres] = useState<AdminCentre[]>(mockCentres);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
