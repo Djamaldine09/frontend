@@ -16,7 +16,7 @@ const navItems = [
   { href: '/supervision',  label: 'Supervision',     icon: Activity,    roles: ['ADMIN'] },
   { href: '/mon-dossier',  label: 'Mon dossier',     icon: FileText,    roles: ['CANDIDAT'] },
   { href: '/convocation',  label: 'Convocation',     icon: ScrollText,    roles: ['CANDIDAT'] },
-  { href: '/candidats',  label: 'Candidats',       icon: FileText,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR'] },
+  { href: '/dashboard/admin/candidat',  label: 'Candidats',       icon: FileText,    roles: ['ADMIN'] },
   { href: '/examens',    label: 'Examens',         icon: BookOpen,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
   { href: '/resultats',  label: 'Résultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
   { href: '/affectations',  label: 'Affectations',     icon: ScrollText,    roles: ['SURVEILLANT'] },

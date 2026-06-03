@@ -1,20 +1,40 @@
 // app/(dashboard)/dashboard/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
 import {
-  Users, BookOpen, Building2, ScrollText, FileCheck, Wallet,
-  ClipboardEdit, CheckCircle2, Layers, UserCheck, ArrowUpRight,
-  TrendingUp, MapPin, FileText
+  Users,
+  BookOpen,
+  Building2,
+  ScrollText,
+  FileCheck,
+  Wallet,
+  ClipboardEdit,
+  CheckCircle2,
+  Layers,
+  UserCheck,
+  ArrowUpRight,
+  TrendingUp,
+  MapPin,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDashboard from './CandidateDashboard';
 import { adminAPI, type AdminDashboard } from '@/lib/api';
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 
 const roleGreeting: Record<Role, string> = {
@@ -25,82 +45,148 @@ const roleGreeting: Record<Role, string> = {
   CANDIDAT: 'Mon espace candidat',
 };
 
+type DashboardStat = {
+  label: string;
+  value: string;
+  hint: string;
+  tone: string;
+  Icon: typeof Users;
+};
+
+type QuickLink = {
+  label: string;
+  href: string;
+  desc: string;
+  Icon: typeof Users;
+  tone: string;
+};
+
+function isAdminDashboard(value: unknown): value is AdminDashboard {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const dashboard = value as Partial<AdminDashboard>;
+  return Boolean(
+    dashboard.users &&
+      dashboard.candidats &&
+      dashboard.examens &&
+      dashboard.centres &&
+      dashboard.repartitionRegionale &&
+      dashboard.security
+  );
+}
+
+function extractAdminDashboard(value: unknown): AdminDashboard | null {
+  if (isAdminDashboard(value)) {
+    return value;
+  }
+
+  if (value && typeof value === 'object' && 'data' in value) {
+    const nested = (value as { data?: unknown }).data;
+    if (isAdminDashboard(nested)) {
+      return nested;
+    }
+  }
+
+  return null;
+}
+
 // Fallback stats en cas d'erreur API (pour les non-admin)
-const fallbackStats: Record<Exclude<Role, 'CANDIDAT'>, any[]> = {
+const fallbackStats: Record<Exclude<Role, 'CANDIDAT'>, DashboardStat[]> = {
   ADMIN: [
-    { label: 'Candidats inscrits',  value: '...', hint: 'Chargement...', tone: 'var(--tile-sky)',   Icon: Users },
-    { label: 'Examens planifiés',    value: '...', hint: 'Chargement...', tone: 'var(--tile-lila)',  Icon: BookOpen },
-    { label: 'Centres actifs',       value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)',  Icon: Building2 },
-    { label: 'Taux occupation',      value: '...', hint: 'Chargement...', tone: 'var(--tile-sun)',   Icon: TrendingUp },
+    { label: 'Candidats inscrits', value: '...', hint: 'Chargement...', tone: 'var(--tile-sky)', Icon: Users },
+    { label: 'Examens planifiés', value: '...', hint: 'Chargement...', tone: 'var(--tile-lila)', Icon: BookOpen },
+    { label: 'Centres actifs', value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)', Icon: Building2 },
+    { label: 'Taux occupation', value: '...', hint: 'Chargement...', tone: 'var(--tile-sun)', Icon: TrendingUp },
   ],
   RESPONSABLE: [
-    { label: 'Dossiers à valider',   value: '...', hint: 'Chargement...', tone: 'var(--tile-peach)', Icon: FileCheck },
-    { label: 'Examens en cours',     value: '...', hint: 'Chargement...', tone: 'var(--tile-lila)',  Icon: BookOpen },
-    { label: 'Paiements reçus',      value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)',  Icon: Wallet },
-    { label: 'Résultats saisis',     value: '...', hint: 'Chargement...', tone: 'var(--tile-sun)',  Icon: ClipboardEdit },
+    { label: 'Dossiers à valider', value: '...', hint: 'Chargement...', tone: 'var(--tile-peach)', Icon: FileCheck },
+    { label: 'Examens en cours', value: '...', hint: 'Chargement...', tone: 'var(--tile-lila)', Icon: BookOpen },
+    { label: 'Paiements reçus', value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)', Icon: Wallet },
+    { label: 'Résultats saisis', value: '...', hint: 'Chargement...', tone: 'var(--tile-sun)', Icon: ClipboardEdit },
   ],
   SURVEILLANT: [
-    { label: 'Notes à saisir',       value: '...', hint: 'Chargement...', tone: 'var(--tile-sky)',  Icon: ClipboardEdit },
-    { label: 'Notes validées',       value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)',  Icon: CheckCircle2 },
-    { label: 'Examens assignés',     value: '...', hint: 'Chargement...', tone: 'var(--tile-lila)',  Icon: Layers },
-    { label: 'Candidats suivis',     value: '...', hint: 'Chargement...', tone: 'var(--tile-peach)', Icon: UserCheck },
+    { label: 'Notes à saisir', value: '...', hint: 'Chargement...', tone: 'var(--tile-sky)', Icon: ClipboardEdit },
+    { label: 'Notes validées', value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)', Icon: CheckCircle2 },
+    { label: 'Examens assignés', value: '...', hint: 'Chargement...', tone: 'var(--tile-lila)', Icon: Layers },
+    { label: 'Candidats suivis', value: '...', hint: 'Chargement...', tone: 'var(--tile-peach)', Icon: UserCheck },
   ],
   CORRECTEUR: [
-    { label: 'Copies à corriger',    value: '...', hint: 'Chargement...', tone: 'var(--tile-sky)',   Icon: ClipboardEdit },
-    { label: 'Notes saisies',        value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)',  Icon: CheckCircle2 },
-    { label: 'Moyenne centre',       value: '...', hint: 'Chargement...', tone: 'var(--tile-sun)',   Icon: ScrollText },
-    { label: 'Temps restant',        value: '...', hint: 'Chargement...', tone: 'var(--tile-peach)', Icon: Layers },
+    { label: 'Copies à corriger', value: '...', hint: 'Chargement...', tone: 'var(--tile-sky)', Icon: ClipboardEdit },
+    { label: 'Notes saisies', value: '...', hint: 'Chargement...', tone: 'var(--tile-mint)', Icon: CheckCircle2 },
+    { label: 'Moyenne centre', value: '...', hint: 'Chargement...', tone: 'var(--tile-sun)', Icon: ScrollText },
+    { label: 'Temps restant', value: '...', hint: 'Chargement...', tone: 'var(--tile-peach)', Icon: Layers },
   ],
 };
 
-const quickLinks: Record<Exclude<Role, 'CANDIDAT'>, { label: string; href: string; desc: string; Icon: any; tone: string }[]> = {
+const quickLinks: Record<Exclude<Role, 'CANDIDAT'>, QuickLink[]> = {
   ADMIN: [
-    { label: 'Gérer les utilisateurs', href: '/admin/utilisateurs', desc: 'Créer, modifier, supprimer', Icon: Users,    tone: 'var(--tile-sky)' },
-    { label: 'Gestion des centres',    href: '/admin/centres',   desc: 'Capacité, régions, affectation', Icon: Building2, tone: 'var(--tile-lila)' },
-    { label: "Créer un examen",        href: '/examens',         desc: 'Planifier une session nationale', Icon: BookOpen, tone: 'var(--tile-mint)' },
-    { label: "Rapports nationaux",     href: '/admin/rapports',  desc: 'Export PDF/Excel',               Icon: FileText,  tone: 'var(--tile-sun)' },
+    { label: 'Gérer les utilisateurs', href: '/admin/utilisateurs', desc: 'Créer, modifier, supprimer', Icon: Users, tone: 'var(--tile-sky)' },
+    { label: 'Gestion des centres', href: '/admin/centres', desc: 'Capacité, régions, affectation', Icon: Building2, tone: 'var(--tile-lila)' },
+    { label: 'Créer un examen', href: '/examens', desc: 'Planifier une session nationale', Icon: BookOpen, tone: 'var(--tile-mint)' },
+    { label: 'Rapports nationaux', href: '/admin/rapports', desc: 'Export PDF/Excel', Icon: FileText, tone: 'var(--tile-sun)' },
   ],
   RESPONSABLE: [
-    { label: 'Valider les dossiers', href: '/candidats', desc: 'Traiter les inscriptions en attente', Icon: FileCheck,     tone: 'var(--tile-peach)' },
-    { label: 'Saisir les résultats', href: '/resultats', desc: 'Encoder les notes anonymisées',        Icon: ClipboardEdit, tone: 'var(--tile-sun)' },
+    { label: 'Valider les dossiers', href: '/candidats', desc: 'Traiter les inscriptions en attente', Icon: FileCheck, tone: 'var(--tile-peach)' },
+    { label: 'Saisir les résultats', href: '/resultats', desc: 'Encoder les notes anonymisées', Icon: ClipboardEdit, tone: 'var(--tile-sun)' },
   ],
   SURVEILLANT: [
-    { label: 'Saisir les notes',     href: '/resultats', desc: 'Notation anonyme des copies',         Icon: ClipboardEdit, tone: 'var(--tile-sky)' },
-    { label: 'Voir les candidats',   href: '/candidats', desc: 'Consulter les dossiers assignés',     Icon: Users,         tone: 'var(--tile-lila)' },
+    { label: 'Saisir les notes', href: '/resultats', desc: 'Notation anonyme des copies', Icon: ClipboardEdit, tone: 'var(--tile-sky)' },
+    { label: 'Voir les candidats', href: '/candidats', desc: 'Consulter les dossiers assignés', Icon: Users, tone: 'var(--tile-lila)' },
   ],
   CORRECTEUR: [
-    { label: 'Saisir les notes',     href: '/notation',   desc: 'Encoder les notes des copies',       Icon: ClipboardEdit, tone: 'var(--tile-sun)' },
-    { label: 'Valider résultats',    href: '/validation', desc: 'Vérification finale des notes',      Icon: CheckCircle2,  tone: 'var(--tile-mint)' },
+    { label: 'Saisir les notes', href: '/notation', desc: 'Encoder les notes des copies', Icon: ClipboardEdit, tone: 'var(--tile-sun)' },
+    { label: 'Valider résultats', href: '/validation', desc: 'Vérification finale des notes', Icon: CheckCircle2, tone: 'var(--tile-mint)' },
   ],
 };
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const [dashboardData, setDashboardData] = useState<AdminDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isFetchingAdminDashboard, setIsFetchingAdminDashboard] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user && user.role === 'ADMIN') {
-      const fetchAdminDashboard = async () => {
-        try {
-          const response = await adminAPI.dashboard();
-          setDashboardData(response.data);
-          setError(null);
-        } catch (err: any) {
-          console.error('Erreur chargement dashboard admin:', err);
-          setError(err.message || 'Erreur de chargement');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchAdminDashboard();
-    } else {
-      setLoading(false);
+    if (!user || user.role !== 'ADMIN') {
+      return;
     }
+
+    let cancelled = false;
+
+    const fetchAdminDashboard = async () => {
+      try {
+        setIsFetchingAdminDashboard(true);
+        const response = await adminAPI.dashboard();
+        const dashboard = extractAdminDashboard(response.data);
+
+        if (!cancelled) {
+          setDashboardData(dashboard);
+          setError(null);
+        }
+      } catch (err: unknown) {
+        console.error('Erreur chargement dashboard admin:', err);
+        const message = err instanceof Error ? err.message : 'Erreur de chargement';
+        if (!cancelled) {
+          setError(message);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetchingAdminDashboard(false);
+        }
+      }
+    };
+
+    void fetchAdminDashboard();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  if (isLoading || loading) {
+  const loading = isLoading || (user?.role === 'ADMIN' && isFetchingAdminDashboard);
+
+  if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -118,12 +204,10 @@ export default function DashboardPage() {
     );
   }
 
-  // Vue CANDIDAT
   if (user.role === 'CANDIDAT') {
     return <CandidateDashboard user={user} />;
   }
 
-  // Vue ADMIN avec données réelles
   if (user.role === 'ADMIN') {
     if (error || !dashboardData) {
       return (
@@ -142,17 +226,21 @@ export default function DashboardPage() {
       );
     }
 
-    // Préparer les données pour les graphiques
-    const candidatsByStatusData = Object.entries(dashboardData.candidats.byStatus).map(([status, count]) => ({
+    const candidatsByStatus = dashboardData.candidats.byStatus ?? {};
+    const candidatsByStatusData = Object.entries(candidatsByStatus).map(([status, count]) => ({
       name: status === 'INSCRIT' ? 'Inscrits' : status === 'PAYE' ? 'Payés' : status === 'VALIDE' ? 'Validés' : 'Rejetés',
       value: count,
     }));
 
     const COLORS = ['#3fbf50', '#d29922', '#8b949e', '#da3633'];
 
+    const occupationRate =
+      dashboardData.centres.capacity > 0
+        ? Math.round((dashboardData.centres.occupied / dashboardData.centres.capacity) * 100)
+        : 0;
+
     return (
       <div className="animate-fade-in">
-        {/* Header */}
         <section style={{ marginBottom: 28 }}>
           <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
             {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -161,11 +249,10 @@ export default function DashboardPage() {
             {roleGreeting[user.role]}
           </h1>
           <p style={{ color: 'var(--ink-soft)', marginTop: 6, fontSize: 14.5 }}>
-            Bienvenue <strong style={{ color: 'var(--ink)' }}>{user.prenom} {user.nom}</strong> — session en cours.
+            Bienvenue <strong style={{ color: 'var(--ink)' }}> {user.prenom} {user.nom}</strong>
           </p>
         </section>
 
-        {/* KPIs avec données réelles */}
         <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
           <div className="card card-hoverable">
             <div className="tile" style={{ background: 'var(--tile-sky)', marginBottom: 14 }}>
@@ -220,7 +307,7 @@ export default function DashboardPage() {
               Taux d'occupation
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: -0.8 }}>
-              {Math.round((dashboardData.centres.occupied / dashboardData.centres.capacity) * 100)}%
+              {occupationRate}%
             </div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 4 }}>
               {dashboardData.centres.occupied} / {dashboardData.centres.capacity} places
@@ -228,7 +315,6 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Graphiques */}
         <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
           <div className="card" style={{ padding: 20 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>
@@ -245,7 +331,7 @@ export default function DashboardPage() {
                   outerRadius={80}
                   dataKey="value"
                 >
-                  {candidatsByStatusData.map((entry, index) => (
+                  {candidatsByStatusData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -272,7 +358,6 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Actions rapides */}
         <section>
           <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--ink)', marginBottom: 14, letterSpacing: -0.4 }}>
             Actions rapides
@@ -298,7 +383,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Vue pour RESPONSABLE, SURVEILLANT, CORRECTEUR (fallback)
   const roleFallback = fallbackStats[user.role as keyof typeof fallbackStats] || fallbackStats.RESPONSABLE;
   const roleLinks = quickLinks[user.role as keyof typeof quickLinks] || [];
 

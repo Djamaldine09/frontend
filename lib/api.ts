@@ -3,6 +3,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
   headers: { 'Content-Type': 'application/json' },
+  timeout: 10000, // 10 secondes timeout
 });
 
 api.interceptors.request.use((config) => {
@@ -233,15 +234,27 @@ export type NationalReport = {
 };
 
 export const adminAPI = {
-  dashboard: () => api.get<AdminDashboard>('/admin/dashboard'),
-  report: () => api.get<NationalReport>('/admin/reports/national'),
-  getUsers: () => api.get<AdminUser[]>('/admin/users'),
+  dashboard: () => api.get<AdminDashboard>('/admin/dashboard', { 
+    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    params: { _t: Date.now() }
+  }),
+  report: () => api.get<NationalReport>('/admin/reports/national', { 
+    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    params: { _t: Date.now() }
+  }),
+  getUsers: () => api.get<AdminUser[]>('/admin/users', { 
+    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    params: { _t: Date.now() }
+  }),
   createUser: (data: Partial<AdminUser> & { motDePasse: string }) => 
     api.post<AdminUser>('/admin/users', data),
   updateUser: (id: string, data: Partial<AdminUser> & { motDePasse?: string }) => 
     api.put<AdminUser>(`/admin/users/${id}`, data),
   deleteUser: (id: string) => api.delete<void>(`/admin/users/${id}`),
-  getCentres: () => api.get<AdminCentre[]>('/admin/centres'),
+  getCentres: () => api.get<AdminCentre[]>('/admin/centres', { 
+    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    params: { _t: Date.now() }
+  }),
   createCentre: (data: Partial<AdminCentre>) => api.post<AdminCentre>('/admin/centres', data),
   updateCentre: (id: string, data: Partial<AdminCentre>) => api.put<AdminCentre>(`/admin/centres/${id}`, data),
   deleteCentre: (id: string) => api.delete<void>(`/admin/centres/${id}`),
