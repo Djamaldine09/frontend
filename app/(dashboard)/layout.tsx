@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
+import NotificationBell from '@/components/NotificationBell';
 import {
   LayoutGrid, FileText, BookOpen, ScrollText, CreditCard, Building2,
   Bell, Settings, LogOut, Search, Download, ArrowUpRight, Calendar,
@@ -19,11 +20,11 @@ const navItems = [
   { href: '/dashboard/admin/candidat',  label: 'Candidats',       icon: FileText,    roles: ['ADMIN'] },
   { href: '/examens',    label: 'Examens',         icon: BookOpen,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
   { href: '/resultats',  label: 'Résultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
-  { href: '/affectations',  label: 'Affectations',     icon: ScrollText,    roles: ['SURVEILLANT'] },
+  { href: '/affectations',  label: 'Affectations',     icon: ScrollText,    roles: ['RESPONSABLE'] },
   { href: '/presence',      label: 'Présences',       icon: Activity,      roles: ['SURVEILLANT'] },
   { href: '/notation',      label: 'Saisir les notes', icon: FileText,      roles: ['CORRECTEUR'] },
   { href: '/validation',    label: 'Valider résultats',icon: CheckCircle,   roles: ['CORRECTEUR'] },
-  { href: '/rapports',   label: 'Rapports',        icon: BarChart3,   roles: ['ADMIN'] },
+  { href: '/rapports',   label: 'Rapports', icon: BarChart3,   roles: ['ADMIN'] },
   { href: '/paiements',  label: 'Paiements',       icon: CreditCard,  roles: ['ADMIN','RESPONSABLE','CANDIDAT'] },
   { href: '/centres',    label: 'Centres',         icon: Building2,   roles: ['ADMIN','RESPONSABLE'] },
   { href: '/securite',   label: 'Sécurité',        icon: ShieldCheck, roles: ['ADMIN'] },
@@ -340,14 +341,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button className="btn-icon" aria-label="Calendrier" data-testid="topbar-calendar">
               <Calendar size={17} strokeWidth={2} />
             </button>
-            <button className="btn-icon" aria-label="Notifications" data-testid="topbar-bell" style={{ position: 'relative' }}>
-              <Bell size={17} strokeWidth={2} />
-              <span style={{
-                position: 'absolute', top: 6, right: 7,
-                width: 8, height: 8, borderRadius: '50%',
-                background: '#FF6B5B', border: '2px solid var(--bg-app)',
-              }} />
-            </button>
+            <NotificationBell />
             <button className="btn-icon" aria-label="Télécharger" data-testid="topbar-download">
               <Download size={17} strokeWidth={2} />
             </button>

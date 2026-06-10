@@ -189,6 +189,7 @@ export const candidatAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  create: () => api.post('/inscription/create', {}),
 };
 
 export type AdminDashboard = {
@@ -255,6 +256,9 @@ export const adminAPI = {
     headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
     params: { _t: Date.now() }
   }),
+  resetCandidatStatus: () => api.post('/admin/candidats/reset-status'),
+  validateCandidat: (candidatId: string, statut: 'VALIDE' | 'REJETE') => 
+    api.put(`/admin/candidats/${candidatId}/validate`, { statut }),
   createCentre: (data: Partial<AdminCentre>) => api.post<AdminCentre>('/admin/centres', data),
   updateCentre: (id: string, data: Partial<AdminCentre>) => api.put<AdminCentre>(`/admin/centres/${id}`, data),
   deleteCentre: (id: string) => api.delete<void>(`/admin/centres/${id}`),
@@ -466,6 +470,41 @@ export const notificationAPI = {
   // Envoyer une notification à tous les candidats
   sendBroadcast: (message: string, type: string) =>
     api.post('/notifications/broadcast', { message, type }),
+
+  
+  // Enregistrer le token FCM de l'utilisateur (Push notifications)
+  registerFcmToken: (token: string, platform: string = 'web') =>
+    api.post('/notifications/fcm-token', { token, platform }),
+
+  // Supprimer le token FCM
+  removeFcmToken: (token: string) =>
+    api.delete('/notifications/fcm-token', { data: { token } }),
+
+  // Marquer toutes comme lues
+  markAllAsRead: () => api.put('/notifications/read-all'),
+};
+
+// ============ RÉSULTATS PUBLICS (sans auth) ============
+export interface PublicResult {
+  matricule: string;
+  nomComplet: string;
+  examen: string;
+  centre?: string;
+  region?: string;
+  moyenne: number;
+  mention?: string;
+  statut: 'ADMIS' | 'REFUSE' | 'REPECHAGE' | 'EN_ATTENTE';
+  datePublication?: string;
+  notes?: { matiere: string; valeur: number; coefficient: number }[];
+}
+
+export const publicAPI = {
+  // Recherche d'un résultat par matricule (endpoint public, pas de JWT)
+  getResultByMatricule: (matricule: string) =>
+    axios.get<PublicResult>(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/public/resultats/${encodeURIComponent(matricule)}`,
+      { timeout: 10000 }
+    ),
 };
 
 // ============ STATISTIQUES AVANCÉES ============

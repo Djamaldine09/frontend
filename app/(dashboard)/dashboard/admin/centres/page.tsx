@@ -6,43 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { adminAPI, type AdminCentre } from '@/lib/api';
 import { Plus, Edit2, Trash2, Building2, MapPin, Users } from 'lucide-react';
 
-const mockCentres: AdminCentre[] = [
-  {
-    _id: '1',
-    nom: 'Centre Andohalo',
-    code: 'CAD-001',
-    ville: 'Antananarivo',
-    region: 'Analamanga',
-    capaciteMaximale: 500,
-    examensAcceptes: ['BAC', 'BEPC'],
-    candidatsAffectes: [],
-  },
-  {
-    _id: '2',
-    nom: 'Centre Anosibe',
-    code: 'CAN-001',
-    ville: 'Antananarivo',
-    region: 'Analamanga',
-    capaciteMaximale: 300,
-    examensAcceptes: ['BAC'],
-    candidatsAffectes: [],
-  },
-  {
-    _id: '3',
-    nom: 'Centre Fianarantsoa',
-    code: 'CFI-001',
-    ville: 'Fianarantsoa',
-    region: 'Amoron\'i Mania',
-    capaciteMaximale: 400,
-    examensAcceptes: ['BAC', 'BEPC', 'CEPE'],
-    candidatsAffectes: [],
-  },
-];
-
 export default function CentresAdminPage() {
   const { user } = useAuth();
-  const [centres, setCentres] = useState<AdminCentre[]>(mockCentres);
-  const [loading, setLoading] = useState(false);
+  const [centres, setCentres] = useState<AdminCentre[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,6 +23,23 @@ export default function CentresAdminPage() {
     examensAcceptes: ['BAC'],
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // Fetch centres from API
+  useEffect(() => {
+    const fetchCentres = async () => {
+      try {
+        setLoading(true);
+        const response = await adminAPI.getCentres();
+        setCentres(response.data);
+      } catch (err) {
+        console.error('Erreur chargement centres:', err);
+        toast.error('Erreur lors du chargement des centres');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCentres();
+  }, []);
 
   // Vérifier permission
   if (user?.role !== 'ADMIN' && user?.role !== 'RESPONSABLE') {
@@ -71,6 +55,16 @@ export default function CentresAdminPage() {
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>
             Seuls les administrateurs et responsables peuvent accéder à cette page.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 14 }}>Chargement des centres...</div>
         </div>
       </div>
     );

@@ -152,9 +152,9 @@ export default function CandidateDashboard({ user }: { user: User }) {
   ];
 
   const docs: DocumentItem[] = [
-    { key: 'photoIdentite',    label: "Pièce d'identité",     Icon: IdCard,    state: candidat.piecesJustificatives.photoIdentite?.status ?? 'manquant' },
-    { key: 'acteNaissance',    label: 'Acte de naissance',    Icon: FileCheck, state: candidat.piecesJustificatives.acteNaissance?.status ?? 'manquant' },
-    { key: 'diplomePrecedent', label: 'Diplôme précédent',    Icon: GraduationCap, state: candidat.piecesJustificatives.diplomePrecedent?.status ?? 'manquant' },
+    { key: 'photoIdentite',    label: "Pièce d'identité",     Icon: IdCard,    state: (typeof candidat.piecesJustificatives?.photoIdentite === 'string' ? 'valide' : candidat.piecesJustificatives?.photoIdentite?.status) ?? 'manquant' },
+    { key: 'acteNaissance',    label: 'Acte de naissance',    Icon: FileCheck, state: (typeof candidat.piecesJustificatives?.acteNaissance === 'string' ? 'valide' : candidat.piecesJustificatives?.acteNaissance?.status) ?? 'manquant' },
+    { key: 'diplomePrecedent', label: 'Diplôme précédent',    Icon: GraduationCap, state: (typeof candidat.piecesJustificatives?.diplomePrecedent === 'string' ? 'valide' : candidat.piecesJustificatives?.diplomePrecedent?.status) ?? 'manquant' },
     { key: 'photoSupp',        label: 'Photo identité (4x4)', Icon: IdCard,    state: 'manquant' as const },
   ];
 

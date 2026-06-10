@@ -37,7 +37,7 @@ interface EpreuvePlanning {
   heureFin: string;
   coefficient: number;
   duree: number;
-  type: 'EPREUVE' | 'PAUSE';
+  type: 'EPREUVE' | 'REVISION' | 'PAUSE';
 }
 
 // Données mockées pour le développement
@@ -59,7 +59,7 @@ const getMockConvocation = (user: any): Convocation => ({
   salle: 'Salle A101',
   numeroPlace: `P${Math.floor(Math.random() * 200) + 1}`,
   qrPayload: `CONV-${user?.email || 'candidat'}-${Date.now()}`,
-  pdfUrl: null
+  pdfUrl: undefined
 });
 
 const getMockPlanning = (): EpreuvePlanning[] => [

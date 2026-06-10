@@ -3,14 +3,14 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
-import { Plus, Edit2, Trash2, Shield, Loader } from 'lucide-react';
+import { Plus, Edit2, Trash2, Shield, Loader, RefreshCw } from 'lucide-react';
 
 interface User {
   _id: string;
   nom: string;
   prenom: string;
   email: string;
-  role: 'ADMIN' | 'RESPONSABLE' | 'SURVEILLANT' | 'CANDIDAT';
+  role: 'ADMIN' | 'RESPONSABLE' | 'CORRECTEUR' | 'SURVEILLANT' | 'CANDIDAT';
   telephone?: string;
   createdAt?: string;
 }
@@ -20,6 +20,7 @@ const ROLE_COLORS: Record<string, string> = {
   RESPONSABLE: 'badge-blue',
   SURVEILLANT: 'badge-yellow',
   CANDIDAT: 'badge-green',
+  CORRECTEUR: 'badge-violet'
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -27,6 +28,7 @@ const ROLE_LABELS: Record<string, string> = {
   RESPONSABLE: 'Responsable',
   SURVEILLANT: 'Surveillant',
   CANDIDAT: 'Candidat',
+  CORRECTEUR: 'Correcteur'
 };
 
 export default function UtilisateursAdminPage() {
@@ -116,17 +118,17 @@ export default function UtilisateursAdminPage() {
     setSubmitting(true);
     try {
       if (editing) {
-        const response = await api.put(`/admin/users/${editing}`, form);
-        setUsers(users.map(u => u._id === editing ? response.data : u));
+        await api.put(`/admin/users/${editing}`, form);
         toast.success('Utilisateur modifié');
       } else {
-        const response = await api.post('/admin/users', form);
-        setUsers([response.data, ...users]);
+        await api.post('/admin/users', form);
         toast.success('Utilisateur créé');
       }
       setForm({ nom: '', prenom: '', email: '', motDePasse: '', role: 'SURVEILLANT', telephone: '' });
       setShowForm(false);
       setEditing(null);
+      // Recharger les données depuis le serveur pour synchroniser
+      await fetchUsers();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erreur');
     } finally {
@@ -138,8 +140,9 @@ export default function UtilisateursAdminPage() {
     if (!window.confirm('Êtes-vous sûr ? Cette action est irréversible.')) return;
     try {
       await api.delete(`/admin/users/${id}`);
-      setUsers(users.filter(u => u._id !== id));
       toast.success('Utilisateur supprimé');
+      // Recharger les données depuis le serveur pour synchroniser
+      await fetchUsers();
     } catch (err: any) {
       toast.error('Erreur lors de la suppression');
     }
@@ -175,16 +178,26 @@ export default function UtilisateursAdminPage() {
             {users.length} utilisateurs dans la base de données
           </p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => {
-            setShowForm(!showForm);
-            if (showForm) setEditing(null);
-            setForm({ nom: '', prenom: '', email: '', motDePasse: '', role: 'SURVEILLANT', telephone: '' });
-          }}
-        >
-          {showForm ? '✕ Annuler' : <><Plus size={16} /> Créer un utilisateur</>}
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            className="btn-ghost"
+            onClick={fetchUsers}
+            disabled={loading}
+            title="Rafraîchir la liste"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              setShowForm(!showForm);
+              if (showForm) setEditing(null);
+              setForm({ nom: '', prenom: '', email: '', motDePasse: '', role: 'SURVEILLANT', telephone: '' });
+            }}
+          >
+            {showForm ? '✕ Annuler' : <><Plus size={16} /> Créer un utilisateur</>}
+          </button>
+        </div>
       </div>
 
       {/* Formulaire */}

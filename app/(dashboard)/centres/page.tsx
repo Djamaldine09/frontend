@@ -26,6 +26,23 @@ export default function CentresAdminPage() {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  // Fetch centres from API
+  useEffect(() => {
+    const fetchCentres = async () => {
+      try {
+        setLoading(true);
+        const response = await adminAPI.getCentres();
+        setCentres(response.data);
+      } catch (err) {
+        console.error('Erreur chargement centres:', err);
+        toast.error('Erreur lors du chargement des centres');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCentres();
+  }, []);
+
   // Vérifier permission
   if (user?.role !== 'ADMIN' && user?.role !== 'RESPONSABLE') {
     return (
@@ -40,6 +57,16 @@ export default function CentresAdminPage() {
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>
             Seuls les administrateurs et responsables peuvent accéder à cette page.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 14 }}>Chargement des centres...</div>
         </div>
       </div>
     );

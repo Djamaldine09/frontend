@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import api from '@/lib/api';
-import { Users, Loader, Search, RefreshCw } from 'lucide-react';
+import api, { adminAPI } from '@/lib/api';
+import { Users, Loader, Search, RefreshCw, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 interface CandidatData {
   _id: string;
@@ -43,8 +43,36 @@ export default function CandidatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [resetting, setResetting] = useState(false);
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'RESPONSABLE';
+
+  const handleResetStatus = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir réinitialiser tous les statuts REJETE à BROUILLON ?')) return;
+    
+    setResetting(true);
+    try {
+      const res = await adminAPI.resetCandidatStatus();
+      alert(`Statuts réinitialisés avec succès. ${res.data.count} candidats affectés.`);
+      await fetchCandidats();
+    } catch (err: any) {
+      alert('Erreur lors de la réinitialisation: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleValidateCandidat = async (candidatId: string, statut: 'VALIDE' | 'REJETE') => {
+    if (!confirm(`Êtes-vous sûr de vouloir ${statut === 'VALIDE' ? 'valider' : 'rejeter'} ce dossier ?`)) return;
+    
+    try {
+      await adminAPI.validateCandidat(candidatId, statut);
+      alert(`Dossier ${statut === 'VALIDE' ? 'validé' : 'rejeté'} avec succès.`);
+      await fetchCandidats();
+    } catch (err: any) {
+      alert('Erreur lors de la validation: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   // 🔥 Utiliser useCallback pour mémoriser la fonction
   const fetchCandidats = useCallback(async () => {
@@ -121,14 +149,27 @@ export default function CandidatsPage() {
             Liste complète des candidats inscrits aux examens nationaux
           </p>
         </div>
-        <button
-          className="btn-ghost"
-          onClick={() => fetchCandidats()}
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          <RefreshCw size={16} />
-          Actualiser
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {user?.role === 'ADMIN' && (
+            <button
+              className="btn-ghost"
+              onClick={handleResetStatus}
+              disabled={resetting}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--tile-rose)' }}
+            >
+              <AlertTriangle size={16} />
+              {resetting ? 'Réinitialisation...' : 'Réinitialiser statuts'}
+            </button>
+          )}
+          <button
+            className="btn-ghost"
+            onClick={() => fetchCandidats()}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <RefreshCw size={16} />
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {/* Statistiques */}
@@ -206,7 +247,7 @@ export default function CandidatsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Candidat', 'Email', 'Examen', 'Série', 'Statut', 'Paiement'].map(h => (
+                    {['Candidat', 'Email', 'Examen', 'Série', 'Statut', 'Paiement', 'Actions'].map(h => (
                       <th
                         key={h}
                         style={{
@@ -262,6 +303,48 @@ export default function CandidatsPage() {
                            c.paiement.statut === 'EN_COURS' ? 'En cours' :
                            c.paiement.statut === 'PAYE' ? 'Payé' : 'Échec'}
                         </span>
+                      </td>
+                      <td style={{ padding: '14px 20px' }}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {c.statutInscription === 'EN_ATTENTE_VALIDATION' && (
+                            <>
+                              <button
+                                className="btn-ghost"
+                                onClick={() => handleValidateCandidat(c._id, 'VALIDE')}
+                                style={{ 
+                                  padding: '6px 12px', 
+                                  fontSize: 12, 
+                                  color: 'var(--tile-mint)',
+                                  border: '1px solid var(--tile-mint)',
+                                  borderRadius: 4
+                                }}
+                                title="Valider le dossier"
+                              >
+                                <CheckCircle size={14} />
+                              </button>
+                              <button
+                                className="btn-ghost"
+                                onClick={() => handleValidateCandidat(c._id, 'REJETE')}
+                                style={{ 
+                                  padding: '6px 12px', 
+                                  fontSize: 12, 
+                                  color: 'var(--tile-rose)',
+                                  border: '1px solid var(--tile-rose)',
+                                  borderRadius: 4
+                                }}
+                                title="Rejeter le dossier"
+                              >
+                                <XCircle size={14} />
+                              </button>
+                            </>
+                          )}
+                          {c.statutInscription === 'VALIDE' && (
+                            <span style={{ fontSize: 12, color: 'var(--tile-mint)' }}>✓ Validé</span>
+                          )}
+                          {c.statutInscription === 'REJETE' && (
+                            <span style={{ fontSize: 12, color: 'var(--tile-rose)' }}>✗ Rejeté</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

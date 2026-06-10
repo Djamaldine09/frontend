@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
@@ -14,8 +15,22 @@ const firebaseConfig = {
   measurementId: "G-Z93MPGH83K"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const getFirebaseApp = () => {
+  if (typeof window === 'undefined') return null;
+  const { getApps, initializeApp } = require('firebase/app');
+  const apps = getApps();
+  if (apps.length === 0) {
+    return initializeApp(firebaseConfig);
+  }
+  return apps[0];
+};
+
+const getFirebaseAuth = () => {
+  if (typeof window === 'undefined') return null;
+  const { getAuth } = require('firebase/auth');
+  const app = getFirebaseApp();
+  return app ? getAuth(app) : null;
+};
 
 export default function PhoneLogin() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -24,7 +39,8 @@ export default function PhoneLogin() {
 
   useEffect(() => {
     // 2. Initialisation du reCAPTCHA invisible
-    if (!(window as any).recaptchaVerifier) {
+    const auth = getFirebaseAuth();
+    if (auth && !(window as any).recaptchaVerifier) {
       (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
       });
@@ -34,6 +50,8 @@ export default function PhoneLogin() {
   // 3. Fonction pour envoyer le SMS
   const sendSMS = async () => {
     try {
+      const auth = getFirebaseAuth();
+      if (!auth) return;
       const appVerifier = (window as any).recaptchaVerifier;
       // Le numéro doit inclure l'indicatif, ex: +26134...
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);

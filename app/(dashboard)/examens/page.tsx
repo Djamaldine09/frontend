@@ -81,7 +81,8 @@ export default function ExamensPage() {
   const [filterStatut, setFilterStatut] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'RESPONSABLE';
+  const isAdmin = user?.role === 'ADMIN';
+  const canCreate = user?.role === 'ADMIN';
 
   // Charger les examens depuis le backend
   const fetchExamens = async () => {
@@ -89,25 +90,23 @@ export default function ExamensPage() {
     try {
       const response = await examensAPI.lister();
       console.log('📦 Réponse API examens:', response);
-      
+
       // Gérer différents formats de réponse
       let examensData: Examen[] = [];
-      
-      if (response?.data && Array.isArray(response.data)) {
-        examensData = response.data;
-      } else if (response?.data?.examens && Array.isArray(response.data.examens)) {
-        examensData = response.data.examens;
-      } else if (response?.data?.data && Array.isArray(response.data.data)) {
-        examensData = response.data.data;
+
+      const data = response?.data;
+      if (data && Array.isArray(data)) {
+        examensData = data;
+      } else if (data && typeof data === 'object' && 'examens' in data && Array.isArray((data as any).examens)) {
+        examensData = (data as any).examens;
+      } else if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as any).data)) {
+        examensData = (data as any).data;
       } else if (Array.isArray(response)) {
         examensData = response;
-      } else if (response?.data && typeof response.data === 'object') {
-        // Si c'est un objet mais pas un tableau, on essaie de l'utiliser comme un seul examen
-        if (response.data._id) {
-          examensData = [response.data];
-        }
+      } else if (data && typeof data === 'object' && '_id' in data) {
+        examensData = [data as Examen];
       }
-      
+
       setExamens(examensData);
     } catch (err: any) {
       console.error('Erreur chargement examens:', err);
@@ -244,7 +243,7 @@ export default function ExamensPage() {
             <RefreshCw size={16} />
             Actualiser
           </button>
-          {isAdmin && (
+          {canCreate && (
             <button
               className="btn-primary"
               onClick={() => {
@@ -277,7 +276,7 @@ export default function ExamensPage() {
       </div>
 
       {/* Formulaire de création/modification */}
-      {showForm && isAdmin && (
+      {showForm && canCreate && (
         <div className="card" style={{ marginBottom: 24, borderColor: 'rgba(88,166,255,0.3)', padding: 24 }}>
           <h3 style={{ fontWeight: 700, marginBottom: 20, color: 'var(--text-primary)', fontSize: 18 }}>
             {editing ? '✏️ Modifier l\'examen' : '➕ Créer un nouvel examen'}
@@ -426,7 +425,7 @@ export default function ExamensPage() {
               ? 'Commencez par créer votre premier examen' 
               : 'Aucun examen ne correspond à vos critères de recherche'}
           </p>
-          {stats.total === 0 && isAdmin && (
+          {stats.total === 0 && canCreate && (
             <button className="btn-primary" onClick={() => setShowForm(true)} style={{ marginTop: 16 }}>
               <Plus size={16} /> Créer un examen
             </button>

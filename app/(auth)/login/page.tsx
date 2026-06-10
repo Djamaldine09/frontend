@@ -11,7 +11,9 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 // --- IMPORTS GOOGLE ---
-import { useGoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'; 
+import { useGoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+
+// --- IMPORTS FACEBOOK SDK ---
 
 // --- IMPORTS FIREBASE ---
 import { initializeApp } from 'firebase/app';
@@ -38,15 +40,22 @@ function LoginContent() {
   const [form, setForm] = useState({ email: '', motDePasse: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isHttps, setIsHttps] = useState(false);
 
   const { login } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsHttps(window.location.protocol === 'https:');
+    }
+  }, []);
 
   // ================= CAROUSEL AUTO-SCROLL =================
   const slides = [
@@ -71,7 +80,7 @@ function LoginContent() {
         const res = await axios.post('http://localhost:5000/api/auth/google', {
           token: tokenResponse.access_token
         });
-        
+
         const data = res.data;
         const token = data.token || data.jwt;
         const userData = data.user || data;
@@ -98,6 +107,66 @@ function LoginContent() {
       toast.error('Connexion Google annulée ou échouée');
     }
   });
+
+  // ================= 2. LOGIQUE FACEBOOK =================
+  const handleFacebookLogin = () => {
+    setLoading(true);
+    // Charger le SDK Facebook si ce n'est pas déjà fait
+    if (!(window as any).FB) {
+      // Charger le script Facebook SDK
+      const script = document.createElement('script');
+      script.src = 'https://connect.facebook.net/en_US/sdk.js';
+      script.async = true;
+      script.onload = () => {
+        (window as any).FB.init({
+          appId: '914690428259746 ', // Remplacez par votre Facebook App ID
+          cookie: true,
+          xfbml: true,
+          version: 'v18.0'
+        });
+        initiateFacebookLogin();
+      };
+      document.body.appendChild(script);
+    } else {
+      initiateFacebookLogin();
+    }
+  };
+
+  const initiateFacebookLogin = () => {
+    (window as any).FB.login(async (response: any) => {
+      if (response.authResponse) {
+        try {
+          const res = await axios.post('http://localhost:5000/api/auth/facebook', {
+            token: response.authResponse.accessToken
+          });
+
+          const data = res.data;
+          const token = data.token || data.jwt;
+          const userData = data.user || data;
+          const user = {
+            _id: userData._id,
+            nom: userData.nom || userData.name || 'Candidat',
+            prenom: userData.prenom || userData.given_name || '',
+            email: userData.email,
+            role: userData.role || 'CANDIDAT',
+            telephone: userData.telephone || '',
+            createdAt: userData.createdAt || new Date().toISOString(),
+          };
+
+          login(token, user);
+          toast.success(`Bienvenue, ${user.nom} !`);
+          router.push('/dashboard');
+        } catch (err: any) {
+          toast.error("Échec de la connexion avec Facebook");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        toast.error('Connexion Facebook annulée');
+        setLoading(false);
+      }
+    }, { scope: 'email,public_profile' });
+  };
 
   // ================= 2. LOGIQUE CLASSIQUE (EMAIL) =================
   const handleSubmit = async (e: React.FormEvent) => {
@@ -430,23 +499,26 @@ function LoginContent() {
                     </svg>
                     <span>Google</span>
                   </button>
-                  
-                  <button 
+
+                  {isHttps && (
+                  <button
                     type="button"
+                    onClick={handleFacebookLogin}
                     disabled={loading}
-                    style={{ 
-                      flex: 1, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: '10px', 
-                      border: 'none', 
-                      borderRadius: '12px', 
-                      padding: '12px', 
+                    title="Facebook Login"
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '12px',
                       backgroundColor: '#ffffff',
-                      cursor: loading ? 'not-allowed' : 'pointer', 
-                      fontSize: '14px', 
-                      fontWeight: 500, 
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 500,
                       color: '#374151',
                       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                       transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -468,6 +540,7 @@ function LoginContent() {
                     </svg>
                     <span>Facebook</span>
                   </button>
+                  )}
                 </div>
 
                 <button 

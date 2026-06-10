@@ -5,10 +5,10 @@ import toast from 'react-hot-toast';
 import {
   ArrowLeft, User as UserIcon, GraduationCap, Phone, FileUp,
   CheckCircle2, Clock3, AlertTriangle, X, Save, Upload,
-  IdCard, FileText, BookOpen, AlertCircle, Send,
+  IdCard, FileText, BookOpen, AlertCircle,
 } from 'lucide-react';
 import { useCandidatData } from '@/lib/useCandidatData';
-import { candidatAPI, CandidatMe, examensAPI } from '@/lib/api';
+import { candidatAPI, CandidatMe } from '@/lib/api';
 
 type DocKey = 'photoIdentite' | 'acteNaissance' | 'diplomePrecedent';
 
@@ -22,22 +22,7 @@ export default function MonDossierPage() {
   const { data, loading, error, refetch } = useCandidatData();
   const [form, setForm] = useState<Partial<CandidatMe>>({});
   const [saving, setSaving] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [activeSection, setActiveSection] = useState<'identite' | 'scolarite' | 'coords' | 'pieces'>('identite');
-  const [examens, setExamens] = useState<{ _id: string; titre: string; type: string }[]>([]);
-
-  // Charger les examens au montage
-  useEffect(() => {
-    const loadExamens = async () => {
-      try {
-        const res = await examensAPI.lister();
-        setExamens(res.data || []);
-      } catch {
-        console.error('Erreur lors du chargement des examens');
-      }
-    };
-    loadExamens();
-  }, []);
 
   // hydrate form once we have data
   useEffect(() => {
@@ -49,17 +34,6 @@ export default function MonDossierPage() {
   }
 
   if (!data) {
-    // Créer automatiquement le dossier candidat s'il n'existe pas
-    const createCandidatDossier = async () => {
-      try {
-        await candidatAPI.create();
-        toast.success('Dossier candidat créé avec succès');
-        await refetch();
-      } catch {
-        toast.error('Impossible de créer le dossier candidat');
-      }
-    };
-
     return (
       <div className="card" style={{ padding: 28, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <div className="tile tile-sm" style={{ background: 'var(--tile-sun)', flexShrink: 0 }}>
@@ -68,11 +42,8 @@ export default function MonDossierPage() {
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>Dossier candidat introuvable</h1>
           <p style={{ color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.6 }}>
-            {error || "Aucun dossier réel n'est enregistré pour ce compte."}
+            {error || 'Aucun dossier réel n’est enregistré pour ce compte.'}
           </p>
-          <button className="btn-lime" onClick={createCandidatDossier} style={{ marginTop: 16 }}>
-            Créer mon dossier
-          </button>
         </div>
       </div>
     );
@@ -96,38 +67,7 @@ export default function MonDossierPage() {
     }
   };
 
-  const handleSubmit = async () => {
-    // Vérifier que tous les champs requis sont remplis
-    if (!form.dateNaissance || !form.lieuNaissance || !form.genre || !form.cin) {
-      toast.error('Veuillez remplir tous les champs obligatoires (Identité)');
-      return;
-    }
-    if (!form.examen || !form.serieFiliere) {
-      toast.error('Veuillez remplir tous les champs obligatoires (Scolarité)');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inscription/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      toast.success('Inscription soumise pour validation');
-      await refetch();
-    } catch {
-      toast.error("Soumission impossible — backend indisponible.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const completion = computeCompletion(form, candidat);
-  const statutInscription = candidat.statutInscription || 'BROUILLON';
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
@@ -147,29 +87,10 @@ export default function MonDossierPage() {
           <p style={{ color: 'var(--ink-soft)', fontSize: 14.5, marginTop: 6 }}>
             Complétez vos informations et téléversez les pièces justificatives.
           </p>
-          <div style={{ marginTop: 8 }}>
-            <span className={`badge ${
-              statutInscription === 'BROUILLON' ? 'badge-gray' :
-              statutInscription === 'EN_ATTENTE_VALIDATION' ? 'badge-amber' :
-              statutInscription === 'VALIDE' ? 'badge-green' : 'badge-red'
-            }`}>
-              {statutInscription === 'BROUILLON' && 'Brouillon'}
-              {statutInscription === 'EN_ATTENTE_VALIDATION' && 'En attente de validation'}
-              {statutInscription === 'VALIDE' && 'Validé'}
-              {statutInscription === 'REJETE' && 'Rejeté'}
-            </span>
-          </div>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn-lime" onClick={handleSave} disabled={saving} data-testid="save-btn">
-            {saving ? 'Enregistrement…' : <><Save size={15} /> Enregistrer</>}
-          </button>
-          {statutInscription === 'BROUILLON' && (
-            <button className="btn-dark" onClick={handleSubmit} disabled={submitting || completion < 100} data-testid="submit-btn">
-              {submitting ? 'Soumission…' : <><Send size={15} /> Soumettre l'inscription</>}
-            </button>
-          )}
-        </div>
+        <button className="btn-lime" onClick={handleSave} disabled={saving} data-testid="save-btn">
+          {saving ? 'Enregistrement…' : <><Save size={15} /> Enregistrer</>}
+        </button>
       </header>
 
       {/* Progress */}
@@ -246,7 +167,9 @@ export default function MonDossierPage() {
               <Grid cols={2}>
                 <Select label="Examen visé" value={form.examen ?? ''} onChange={v => set('examen', v)} options={[
                   { value: '', label: '— Sélectionner —' },
-                  ...examens.map(e => ({ value: e.titre, label: e.titre })),
+                  { value: 'Baccalauréat 2025', label: 'Baccalauréat 2025' },
+                  { value: 'BEPC 2025', label: 'BEPC 2025' },
+                  { value: 'CEPE 2025', label: 'CEPE 2025' },
                 ]} testId="input-examen" />
                 <Select label="Série / Filière" value={form.serieFiliere ?? ''} onChange={v => set('serieFiliere', v)} options={[
                   { value: '', label: '— Sélectionner —' },
@@ -288,7 +211,7 @@ export default function MonDossierPage() {
                   <UploadZone
                     key={key}
                     docKey={key}
-                    current={candidat.piecesJustificatives?.[key]}
+                    current={candidat.piecesJustificatives[key]}
                     onUploaded={refetch}
                   />
                 ))}
@@ -377,7 +300,7 @@ function Select({ label, value, onChange, options, testId }: {
 
 function UploadZone({ docKey, current, onUploaded }: {
   docKey: DocKey;
-  current?: string | { url: string; status: 'valide' | 'attente' | 'manquant'; uploadedAt?: string };
+  current?: { url: string; status: 'valide' | 'attente' | 'manquant'; uploadedAt?: string };
   onUploaded: () => void;
 }) {
   const meta = DOC_META[docKey];
@@ -386,12 +309,7 @@ function UploadZone({ docKey, current, onUploaded }: {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // Gérer le cas où current est une chaîne de caractères (chemin du fichier) ou un objet
-  const currentObj = typeof current === 'string' 
-    ? { url: current, status: 'valide' as const } 
-    : current || { status: 'manquant' as const };
-  
-  const status = currentObj.status;
+  const status = current?.status ?? 'manquant';
   const tone = status === 'valide' ? 'var(--tile-mint)' :
                status === 'attente' ? 'var(--tile-sun)' : 'var(--tile-rose)';
 
@@ -455,7 +373,7 @@ function UploadZone({ docKey, current, onUploaded }: {
         </div>
         <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 3 }}>
           {uploading ? 'Téléversement en cours…' : meta.hint}
-          {typeof current === 'object' && current?.uploadedAt && !uploading && <> · ajouté le {new Date(current.uploadedAt).toLocaleDateString('fr-FR')}</>}
+          {current?.uploadedAt && !uploading && <> · ajouté le {new Date(current.uploadedAt).toLocaleDateString('fr-FR')}</>}
         </div>
 
         {uploading && (
@@ -498,9 +416,9 @@ function computeCompletion(form: Partial<CandidatMe>, real: CandidatMe): number 
     !!form.etablissementPrecedent,
     !!form.adresse,
     !!form.telephone,
-    !!real.piecesJustificatives?.photoIdentite,
-    !!real.piecesJustificatives?.acteNaissance,
-    !!real.piecesJustificatives?.diplomePrecedent,
+    real.piecesJustificatives.photoIdentite?.status === 'valide',
+    real.piecesJustificatives.acteNaissance?.status === 'valide',
+    real.piecesJustificatives.diplomePrecedent?.status === 'valide',
   ];
   const done = checks.filter(Boolean).length;
   return Math.round((done / checks.length) * 100);
