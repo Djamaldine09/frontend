@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { paiementAPI } from '@/lib/api';
@@ -32,6 +33,7 @@ const MONTANT_DEFAUT = 25000;
 
 export default function PaiementsPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [showPay, setShowPay] = useState(false);
   const [mode, setMode] = useState<Mode>('MVOLA');
   const [phone, setPhone] = useState('');
@@ -42,6 +44,36 @@ export default function PaiementsPage() {
 
   const isCandidat = user?.role === 'CANDIDAT';
   const canSeeAll = user?.role === 'ADMIN' || user?.role === 'RESPONSABLE';
+
+  // Gérer les paramètres de retour Stripe
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const cancelled = searchParams.get('cancelled');
+    const sessionId = searchParams.get('session_id');
+
+    if (success === 'true' && sessionId) {
+      // Simuler le webhook pour mettre à jour le statut
+      fetch('http://localhost:5000/api/stripe/simulate-webhook-success', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ sessionId })
+      }).then(() => {
+        toast.success('Paiement réussi !');
+        fetchHistory();
+      }).catch(() => {
+        toast.success('Paiement réussi !');
+        fetchHistory();
+      });
+      // Nettoyer l'URL
+      window.history.replaceState({}, '', '/paiements');
+    } else if (cancelled === 'true') {
+      toast.error('Paiement annulé');
+      window.history.replaceState({}, '', '/paiements');
+    }
+  }, [searchParams]);
 
   const fetchHistory = async () => {
     setLoadingHistory(true);
@@ -78,7 +110,7 @@ export default function PaiementsPage() {
       } catch {
         // continue polling
       }
-    }, 4000);
+    }, 10000); // Réduit à 10 secondes pour optimiser les performances
     return () => clearInterval(id);
   }, [pendingTx]);
 
@@ -95,6 +127,14 @@ export default function PaiementsPage() {
         modePaiement: mode,
         numeroTelephone: mode !== 'CARTE_BANCAIRE' ? phone : undefined,
       });
+
+      // Si c'est un paiement Stripe, rediriger vers l'URL de checkout
+      if ((r as any).data?.url) {
+        window.location.href = (r as any).data.url;
+        return;
+      }
+
+      // Pour Mobile Money, afficher le message de confirmation
       const tx = (r as any).data?.transactionId || (r as any).data?._id;
       toast.success(`Paiement initié via ${mode.replace('_', ' ')}. Confirmez sur votre mobile.`);
       if (tx) setPendingTx(tx);
@@ -166,12 +206,32 @@ export default function PaiementsPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 12,
-                      padding: 14,
-                      borderRadius: 14,
-                      border: `2px solid ${mode === m.value ? 'var(--ink)' : 'var(--ink-line)'}`,
+                      padding: 16,
+                      borderRadius: 35,
+                      border: mode === m.value 
+                        ? '2px solid var(--ink)' 
+                        : '2px solid transparent',
+                      background: mode === m.value 
+                        ? 'var(--bg-soft)' 
+                        : 'linear-gradient(white, white) padding-box, linear-gradient(135deg, var(--ink-line) 0%, var(--ink-mute) 100%) border-box',
                       cursor: 'pointer',
-                      background: mode === m.value ? 'var(--bg-soft)' : 'transparent',
-                      transition: 'all 0.18s',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: mode === m.value ? '0 4px 12px rgba(0, 0, 0, 0.1)' : 'none',
+                      transform: mode === m.value ? 'translateY(-2px)' : 'translateY(0)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (mode !== m.value) {
+                        e.currentTarget.style.background = 'linear-gradient(white, white) padding-box, linear-gradient(135deg, var(--ink) 0%, var(--ink-mute) 100%) border-box';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (mode !== m.value) {
+                        e.currentTarget.style.background = 'linear-gradient(white, white) padding-box, linear-gradient(135deg, var(--ink-line) 0%, var(--ink-mute) 100%) border-box';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }
                     }}
                   >
                     <input type="radio" name="mode" value={m.value} checked={mode === m.value} onChange={() => setMode(m.value)} style={{ display: 'none' }} />
@@ -182,17 +242,18 @@ export default function PaiementsPage() {
                           src={logo}
                           alt={m.label}
                           style={{
-                            width: 60,
-                            height: 40,
+                            width: 40,
+                            height: 28,
                             objectFit: 'contain',
-                            borderRadius: 8,
+                            borderRadius: 6,
                             background: '#fff',
-                            padding: 4,
+                            padding: 3,
+                            transition: 'transform 0.3s ease',
                           }}
                         />
                       ))}
                     </div>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{m.label}</span>
+                    <span style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>{m.label}</span>
                   </label>
                 ))}
               </div>
@@ -250,7 +311,7 @@ export default function PaiementsPage() {
                   <tr key={p._id || i} style={{ borderBottom: i < history.length - 1 ? '1px solid var(--ink-line)' : 'none' }}>
                     {canSeeAll && <td style={{ padding: '12px 18px' }}>{p.candidat?.user?.prenom} {p.candidat?.user?.nom || p.candidatNom || '—'}</td>}
                     <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{p.montant?.toLocaleString('fr-FR') || '—'} Ar</td>
-                    <td style={{ padding: '12px 18px' }}>
+                    <td style={{ padding: '12px 18px', whiteSpace: 'nowrap' }}>
                       {p.modePaiement ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ display: 'flex', gap: 2 }}>
@@ -272,7 +333,9 @@ export default function PaiementsPage() {
                         <StatutIcon size={11} /> {p.statut?.replace('_', ' ') || 'NON_PAYE'}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{p.referenceTransaction || '—'}</td>
+                    <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)', fontSize: 12, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {p.referenceTransaction || '—'}
+                    </td>
                     <td style={{ padding: '12px 18px', fontSize: 13, color: 'var(--ink-soft)' }}>
                       {p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR') : '—'}
                     </td>

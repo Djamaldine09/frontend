@@ -282,31 +282,28 @@ export const presenceAPI = {
 
 // ============ PAIEMENTS - Endpoints réels manquants ============
 export const paiementAPI = {
-  // Initier un paiement (Endpoint manquant au backend!)
-  // À ajouter au backend: POST /api/paiements/initier
+  // Initier un paiement
   initiate: (data: {
     montant: number;
     modePaiement: 'MVOLA' | 'ORANGE_MONEY' | 'AIRTEL_MONEY' | 'CARTE_BANCAIRE';
     numeroTelephone?: string;
     carteToken?: string;
   }) => {
-    // NOTE: Cet endpoint n'existe pas dans le backend actuel
-    // Vous devez le créer: POST /api/paiements/initier
-    return api.post('/paiements/initier', data);
+    return api.post('/paiement/initier', data);
   },
   
   // Vérifier le statut d'un paiement
   checkStatus: (transactionId: string) =>
-    api.get(`/paiements/${transactionId}/status`),
+    api.get(`/paiement/${transactionId}/status`),
   
   // Webhook pour callback du provider (déjà implémenté)
-  webhook: (data: any) => api.post('/paiements/webhook', data),
+  webhook: (data: any) => api.post('/paiement/webhook', data),
   
-  // Historique des paiements d'un candidat (Endpoint manquant!)
-  getHistory: () => api.get('/paiements/history'),
+  // Historique des paiements d'un candidat
+  getHistory: () => api.get('/paiement/history'),
   
   // Relancer un paiement
-  retry: (candidatId: string) => api.post(`/paiements/${candidatId}/retry`),
+  retry: (candidatId: string) => api.post(`/paiement/${candidatId}/retry`),
 };
 
 // ============ CONVOCATION ============
@@ -505,6 +502,29 @@ export const publicAPI = {
       `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/public/resultats/${encodeURIComponent(matricule)}`,
       { timeout: 10000 }
     ),
+};
+
+// ============ STRIPE PAIEMENTS ============
+export const stripeAPI = {
+  // Créer un Payment Intent
+  createPaymentIntent: (data: { montant: number; currency?: string }) =>
+    api.post('/stripe/payment-intent', data),
+  
+  // Créer une Checkout Session
+  createCheckoutSession: (data: { montant: number; currency?: string }) =>
+    api.post('/stripe/checkout-session', data),
+  
+  // Récupérer le statut d'un paiement
+  getPaiementStatus: (paiementId: string) =>
+    api.get(`/stripe/paiement/${paiementId}`),
+  
+  // Créer un refund
+  createRefund: (data: { paiementId: string; raison?: string }) =>
+    api.post('/stripe/refund', data),
+  
+  // Récupérer l'historique des paiements
+  getPaiementHistory: () =>
+    api.get('/stripe/history'),
 };
 
 // ============ STATISTIQUES AVANCÉES ============

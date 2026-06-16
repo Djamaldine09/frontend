@@ -8,7 +8,7 @@ import NotificationBell from '@/components/NotificationBell';
 import {
   LayoutGrid, FileText, BookOpen, ScrollText, CreditCard, Building2,
   Bell, Settings, LogOut, Search, Download, ArrowUpRight, Calendar,
-  Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, Moon, Sun, CheckCircle
+  Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, Moon, Sun, CheckCircle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 const navItems = [
@@ -49,6 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme-mode');
@@ -150,11 +151,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         data-testid="sidebar"
         className={`dark-scroll sidebar ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}
         style={{
-          width: 248,
+          width: sidebarCollapsed ? 80 : 248,
           background: 'var(--bg-sidebar)',
           color: 'var(--ink-dark)',
           borderRadius: 'var(--r-xl)',
-          padding: 22,
+          padding: sidebarCollapsed ? 18 : 22,
           display: 'flex',
           flexDirection: 'column',
           position: 'sticky',
@@ -162,7 +163,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           height: 'calc(100vh - 36px)',
           flexShrink: 0,
           overflow: 'hidden',
-          transition: 'all 0.3s ease',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {/* Brand */}
@@ -174,17 +175,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 background: 'var(--lime)', display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
                 color: 'var(--ink)', fontWeight: 800, fontSize: 16,
-                letterSpacing: -0.5,
+                letterSpacing: -0.5, flexShrink: 0,
               }}
             >EM</div>
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>ExamenMG</div>
-              <div style={{ fontSize: 10.5, color: 'var(--ink-dark-soft)', fontFamily: 'var(--font-mono)', marginTop: -1 }}>
-                national.exam
+            {!sidebarCollapsed && (
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>ExamenMG</div>
+                <div style={{ fontSize: 10.5, color: 'var(--ink-dark-soft)', fontFamily: 'var(--font-mono)', marginTop: -1 }}>
+                  national.exam
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </Link>
+
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-end',
+            padding: '8px 12px',
+            borderRadius: 10,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--ink-dark-soft)',
+            marginBottom: 12,
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = 'var(--bg-sidebar-hover)'}
+          onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+        >
+          {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
 
         {/* Main nav */}
         <nav style={{ flex: 1, marginTop: 22, display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto', overflowX: 'hidden', paddingRight: 4 }} className="dark-scroll">
@@ -199,14 +224,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setMobileMenuOpen(false)}
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 14px', borderRadius: 14,
+                  display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
+                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 14,
                   textDecoration: 'none',
                   color: isFirstActive ? 'var(--ink)' : 'var(--ink-dark-soft)',
                   background: isFirstActive ? 'var(--lime)' : 'transparent',
                   fontWeight: isFirstActive ? 700 : 500,
                   fontSize: 14,
                   transition: 'all 0.18s ease',
+                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                 }}
                 onMouseEnter={(e) => {
                   if (!isFirstActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg-sidebar-hover)';
@@ -214,9 +240,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onMouseLeave={(e) => {
                   if (!isFirstActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
                 }}
+                title={sidebarCollapsed ? item.label : undefined}
               >
                 <Icon size={18} strokeWidth={isFirstActive ? 2.4 : 1.9} />
-                {item.label}
+                {!sidebarCollapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
@@ -231,20 +258,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 data-testid={`nav-${b.label.toLowerCase()}`}
                 onClick={() => setMobileMenuOpen(false)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 14px', borderRadius: 14,
+                  display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
+                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 14,
                   color: 'var(--ink-dark-soft)', background: 'transparent',
                   border: 'none', cursor: 'pointer',
                   fontWeight: 500, fontSize: 14, fontFamily: 'inherit',
                   width: '100%', textAlign: 'left',
                   transition: 'all 0.18s ease',
+                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                 }}
                 onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = 'var(--bg-sidebar-hover)'}
                 onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                title={sidebarCollapsed ? b.label : undefined}
               >
                 <Icon size={18} strokeWidth={1.9} />
-                <span style={{ flex: 1 }}>{b.label}</span>
-                {b.badge && (
+                {!sidebarCollapsed && <span style={{ flex: 1 }}>{b.label}</span>}
+                {!sidebarCollapsed && b.badge && (
                   <span style={{
                     background: '#FF6B5B', color: '#fff',
                     fontSize: 10, fontWeight: 700,
@@ -258,51 +287,56 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Mobile-app promo */}
-        <div
-          style={{
-            marginTop: 18,
-            padding: 18,
-            borderRadius: 18,
-            background: 'var(--lime)',
-            color: 'var(--ink)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
+        {!sidebarCollapsed && (
           <div
             style={{
-              position: 'absolute', top: 12, right: 12,
-              width: 28, height: 28, borderRadius: '50%',
-              background: 'var(--bg-card)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
+              marginTop: 18,
+              padding: 18,
+              borderRadius: 18,
+              background: 'var(--lime)',
+              color: 'var(--ink)',
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
-            <ArrowUpRight size={15} strokeWidth={2.4} />
+            <div
+              style={{
+                position: 'absolute', top: 12, right: 12,
+                width: 28, height: 28, borderRadius: '50%',
+                background: 'var(--bg-card)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <ArrowUpRight size={15} strokeWidth={2.4} />
+            </div>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+              {[0, 1, 2].map((i) => (
+                <div key={i} style={{
+                  width: 14, height: 14, borderRadius: 4,
+                  background: 'rgba(20,23,28,0.85)', opacity: 1 - i * 0.25,
+                }} />
+              ))}
+            </div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.3 }}>
+              Téléchargez<br />notre application
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
-            {[0, 1, 2].map((i) => (
-              <div key={i} style={{
-                width: 14, height: 14, borderRadius: 4,
-                background: 'rgba(20,23,28,0.85)', opacity: 1 - i * 0.25,
-              }} />
-            ))}
-          </div>
-          <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.3 }}>
-            Téléchargez<br />notre application
-          </div>
-        </div>
+        )}
 
         <button
           onClick={() => { logout(); router.push('/login'); }}
           data-testid="logout-button"
           style={{
-            marginTop: 14, display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 12px', borderRadius: 12, color: 'var(--ink-dark-soft)',
+            marginTop: 14, display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 10,
+            padding: sidebarCollapsed ? '10px' : '10px 12px', borderRadius: 12, color: 'var(--ink-dark-soft)',
             background: 'transparent', border: 'none', cursor: 'pointer',
             fontSize: 13, fontFamily: 'inherit', fontWeight: 500,
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
           }}
+          title={sidebarCollapsed ? 'Déconnexion' : undefined}
         >
-          <LogOut size={16} /> Déconnexion
+          <LogOut size={16} />
+          {!sidebarCollapsed && <span>Déconnexion</span>}
         </button>
       </aside>
 
