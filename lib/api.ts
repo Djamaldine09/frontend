@@ -247,6 +247,10 @@ export const adminAPI = {
     headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
     params: { _t: Date.now() }
   }),
+  getCandidats: () => api.get<any[]>('/admin/candidats', { 
+    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    params: { _t: Date.now() }
+  }),
   createUser: (data: Partial<AdminUser> & { motDePasse: string }) => 
     api.post<AdminUser>('/admin/users', data),
   updateUser: (id: string, data: Partial<AdminUser> & { motDePasse?: string }) => 
@@ -453,6 +457,17 @@ export const affectationAPI = {
   
   // Annuler une affectation
   cancel: (affectationId: string) => api.delete(`/affectation/${affectationId}`),
+};
+
+// ============ AFFECTATION AUTOMATIQUE ============
+export const affectationAutoAPI = {
+  // Lancer l'affectation automatique
+  lancerAffectation: (examenId: string) =>
+    api.post('/affectation-auto/lancer', { examenId }),
+  
+  // Obtenir les statistiques d'affectation
+  getStats: (examenId: string) =>
+    api.get(`/affectation-auto/stats/${examenId}`),
 };
 
 // ============ NOTIFICATIONS ============

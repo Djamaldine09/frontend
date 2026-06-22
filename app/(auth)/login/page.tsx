@@ -441,6 +441,12 @@ function LoginContent() {
                   </div>
                 </div>
 
+                <div style={{ textAlign: 'right' }}>
+                  <Link href="/forgot-password" style={{ fontSize: '13px', color: '#5c54f3', textDecoration: 'none', fontWeight: 500 }}>
+                    Mot de passe oublié ?
+                  </Link>
+                </div>
+
                 <button
                   type="submit"
                   disabled={loading}

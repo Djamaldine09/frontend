@@ -20,7 +20,7 @@ const navItems = [
   { href: '/dashboard/admin/candidat',  label: 'Candidats',       icon: FileText,    roles: ['ADMIN'] },
   { href: '/examens',    label: 'Examens',         icon: BookOpen,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
   { href: '/resultats',  label: 'Résultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
-  { href: '/affectations',  label: 'Affectations',     icon: ScrollText,    roles: ['RESPONSABLE'] },
+  { href: '/affectation-automatique',  label: 'Affectations',     icon: ScrollText,    roles: ['RESPONSABLE'] },
   { href: '/presence',      label: 'Présences',       icon: Activity,      roles: ['SURVEILLANT'] },
   { href: '/notation',      label: 'Saisir les notes', icon: FileText,      roles: ['CORRECTEUR'] },
   { href: '/validation',    label: 'Valider résultats',icon: CheckCircle,   roles: ['CORRECTEUR'] },
