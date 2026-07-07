@@ -19,8 +19,10 @@ export default function CentresAdminPage() {
     code: '',
     ville: '',
     region: '',
+    adresse: '',
     capaciteMaximale: 0,
     examensAcceptes: ['BAC'],
+    coords: { lat: '', lng: '' },
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -30,7 +32,13 @@ export default function CentresAdminPage() {
       try {
         setLoading(true);
         const response = await adminAPI.getCentres();
-        setCentres(response.data);
+        const normalize = (resp: any) => {
+          if (!resp) return [];
+          if (Array.isArray(resp.data)) return resp.data;
+          if (resp.data && resp.data.data !== undefined) return resp.data.data;
+          return resp.data || [];
+        };
+        setCentres(normalize(response));
       } catch (err) {
         console.error('Erreur chargement centres:', err);
         toast.error('Erreur lors du chargement des centres');
@@ -72,24 +80,62 @@ export default function CentresAdminPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nom || !form.code || !form.ville || !form.region || !form.capaciteMaximale) {
+    if (!form.nom || !form.code || !form.ville || !form.region || !form.capaciteMaximale || !form.adresse) {
       toast.error('Les champs requis doivent être complétés');
       return;
     }
 
+    if ((form.coords.lat && !form.coords.lng) || (!form.coords.lat && form.coords.lng)) {
+      toast.error('Veuillez renseigner à la fois latitude et longitude, ou aucun des deux.');
+      return;
+    }
+
+    const payload: any = {
+      nom: form.nom,
+      code: form.code,
+      ville: form.ville,
+      region: form.region,
+      adresse: form.adresse,
+      capaciteMaximale: form.capaciteMaximale,
+      examensAcceptes: form.examensAcceptes,
+    };
+
+    if (form.coords.lat && form.coords.lng) {
+      const latitude = parseFloat(form.coords.lat);
+      const longitude = parseFloat(form.coords.lng);
+      if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+        toast.error('Latitude et longitude doivent être des nombres valides.');
+        setSubmitting(false);
+        return;
+      }
+      payload.coords = {
+        lat: latitude,
+        lng: longitude,
+      };
+    }
+
     setSubmitting(true);
     try {
+      const unwrapSingle = (resp: any) => {
+        if (!resp) return null;
+        if (Array.isArray(resp.data)) return resp.data[0] ?? null;
+        if (resp.data && resp.data.data !== undefined) return resp.data.data;
+        return resp.data;
+      };
+
       if (editing) {
-        const response = await adminAPI.updateCentre(editing, form);
-        setCentres(centres.map(c => c._id === editing ? response.data : c));
+        const response = await adminAPI.updateCentre(editing, payload);
+        const updated = unwrapSingle(response) as AdminCentre | null;
+        if (updated) setCentres(centres.map(c => c._id === editing ? updated : c));
         toast.success('Centre modifié');
       } else {
-        const response = await adminAPI.createCentre(form);
-        setCentres([response.data, ...centres]);
+        const response = await adminAPI.createCentre(payload);
+        const created = unwrapSingle(response) as AdminCentre | null;
+        if (created) setCentres([created, ...centres]);
         toast.success('Centre créé');
       }
       
-      setForm({ nom: '', code: '', ville: '', region: '', capaciteMaximale: 0, examensAcceptes: ['BAC'] });
+      setForm({ nom: '', code: '', ville: '', region: '', adresse: '', capaciteMaximale: 0, examensAcceptes: ['BAC'], coords: { lat: '', lng: '' } });
       setShowForm(false);
       setEditing(null);
     } catch (err: any) {
@@ -117,8 +163,13 @@ export default function CentresAdminPage() {
       code: c.code,
       ville: c.ville,
       region: c.region,
+      adresse: c.adresse || '',
       capaciteMaximale: c.capaciteMaximale,
       examensAcceptes: c.examensAcceptes,
+      coords: {
+        lat: c.coords?.lat?.toString() || '',
+        lng: c.coords?.lng?.toString() || '',
+      },
     });
     setEditing(c._id);
     setShowForm(true);
@@ -149,7 +200,16 @@ export default function CentresAdminPage() {
           onClick={() => {
             setShowForm(!showForm);
             if (showForm) setEditing(null);
-            setForm({ nom: '', code: '', ville: '', region: '', capaciteMaximale: 0, examensAcceptes: ['BAC'] });
+            setForm({
+              nom: '',
+              code: '',
+              ville: '',
+              region: '',
+              adresse: '',
+              capaciteMaximale: 0,
+              examensAcceptes: ['BAC'],
+              coords: { lat: '', lng: '' },
+            });
           }}
         >
           {showForm ? '✕ Annuler' : <><Plus size={16} /> Créer un centre</>}
@@ -223,6 +283,36 @@ export default function CentresAdminPage() {
                 />
               </div>
               <div>
+                <label>Adresse *</label>
+                <input
+                  className="input-field"
+                  placeholder="Rue de la Reine, Antananarivo"
+                  value={form.adresse}
+                  onChange={e => setForm({ ...form, adresse: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label>Latitude</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="-18.9175"
+                  value={form.coords.lat}
+                  onChange={e => setForm({ ...form, coords: { ...form.coords, lat: e.target.value } })}
+                />
+              </div>
+              <div>
+                <label>Longitude</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="47.5361"
+                  value={form.coords.lng}
+                  onChange={e => setForm({ ...form, coords: { ...form.coords, lng: e.target.value } })}
+                />
+              </div>
+              <div>
                 <label>Capacité maximale *</label>
                 <input
                   type="number"
@@ -262,7 +352,16 @@ export default function CentresAdminPage() {
                 onClick={() => {
                   setShowForm(false);
                   setEditing(null);
-                  setForm({ nom: '', code: '', ville: '', region: '', capaciteMaximale: 0, examensAcceptes: ['BAC'] });
+                  setForm({
+                    nom: '',
+                    code: '',
+                    ville: '',
+                    region: '',
+                    adresse: '',
+                    capaciteMaximale: 0,
+                    examensAcceptes: ['BAC'],
+                    coords: { lat: '', lng: '' },
+                  });
                 }}
               >
                 Annuler
@@ -328,6 +427,16 @@ export default function CentresAdminPage() {
                     {centre.examensAcceptes.join(', ')}
                   </div>
                 </div>
+                {centre.adresse && (
+                  <div style={{ marginTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <strong>Adresse :</strong> {centre.adresse}
+                  </div>
+                )}
+                {centre.coords?.lat !== undefined && centre.coords?.lng !== undefined && (
+                  <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <strong>Coordonnées :</strong> {centre.coords.lat.toFixed(6)}, {centre.coords.lng.toFixed(6)}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button

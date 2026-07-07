@@ -8,11 +8,12 @@ import {
   CheckCircle, TrendingUp, Clock, Award, ChevronRight
 } from 'lucide-react';
 import Iridescence from '../../components/Iridescence';
+import { MorphText } from "@/components/ui/morph-text";
 import ImageSlider3D from "@/components/lightswind/3d-image-slider";
 import { AuroraTextEffect } from "@/components/lightswind/aurora-text-effect";
 import { MagneticButton } from "@/components/lightswind/magnetic-button";
 import { HangingIdCard } from "@/components/lightswind/HangingIdCard"
-
+import { RadialGlowButton } from "@/components/ui/radial-glow-button"
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,7 +24,6 @@ export default function LandingPage() {
   const featuresRef = useRef<HTMLDivElement>(null);
 
   const [hoverLogin, setHoverLogin] = useState(false);
-  const [hoverRegister, setHoverRegister] = useState(false);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -156,9 +156,9 @@ export default function LandingPage() {
               <MagneticButton 
                 variant="dark" 
                 /* On enlève size="md" au cas où il imposerait une largeur fixe */
-                className="!w-auto !px-8 !py-2.5 !rounded-full whitespace-nowrap"
+                className="!w-auto !px-8 !py-2.5 !rounded-full whitespace-nowrap cursor-pointer"
               >
-                S'inscrire
+                S&lsquo;inscrire
               </MagneticButton>
             </a>
           </div>
@@ -179,22 +179,19 @@ export default function LandingPage() {
                 letterSpacing: '-0.03em'
               }}>
                 Gérez vos
-                <AuroraTextEffect 
-  text="Examen" 
-  fontSize="clamp(3rem, 8vw, 7rem)"
-  colors={{
-    first: "bg-cyan-400",
-    second: "bg-yellow-400",
-    third: "bg-green-400",
-    fourth: "bg-primarylw"
-  }}
-  blurAmount="blur-lg"
-/>
+                <MorphText
+                    words={["EXAMEN", "RESULTAT", "DASH"]}
+                    interval={2500}
+                    subtext="Move fast. Break things."
+                    fontSize="clamp(2rem, 4vw, 4rem)"
+                />
                 <br />
                 Nationaux avec
                 <br />
                 <span style={{ color: '#0C6478' }}>Excellence</span>
               </h1>
+              
+    
               <p style={{
                 fontSize: '1.15rem',
                 color: '#475569',
@@ -202,25 +199,15 @@ export default function LandingPage() {
                 maxWidth: '32rem'
               }}>
                 Plateforme complète pour la gestion des examens nationaux. 
-                Simplifiez l'organisation, le suivi et l'évaluation des candidats.
+                Simplifiez l&lsquo;organisation, le suivi et l&lsquo;évaluation des candidats.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-                <a href="/login" style={{
-                  padding: '1rem 2.5rem',
-                  background: 'linear-gradient(135deg, #0C6478, #BDEE98)',
-                  color: '#ffffff',
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  borderRadius: '1rem',
-                  boxShadow: '0 20px 40px -10px rgba(12, 100, 120, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <span>Commencer</span>
-                  <ArrowRight style={{ width: 20, height: 20 }} />
-                </a>
+                <RadialGlowButton className="rounded-full" onClick={() => window.location.href = '/register'}>
+      Commencer <ArrowRight style={{ width: 20, height: 20 }} />
+    </RadialGlowButton>
+                  
+                  
+                
                 <a href="#features" style={{
                   padding: '1rem 2.5rem',
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -228,7 +215,7 @@ export default function LandingPage() {
                   color: '#334155',
                   textDecoration: 'none',
                   fontWeight: 600,
-                  borderRadius: '1rem',
+                  borderRadius: '33px',
                   border: '1px solid rgba(226, 232, 240, 0.8)',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                 }}>
@@ -264,7 +251,7 @@ export default function LandingPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tableau de bord</h3>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.3rem 0.8rem', borderRadius: '999px' }}>Aujourd'hui</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.3rem 0.8rem', borderRadius: '999px' }}>Aujourd&lsquo;hui</span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
                     <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
@@ -457,7 +444,7 @@ export default function LandingPage() {
             margin: '0 auto 2.5rem',
             lineHeight: 1.6
           }}>
-            Rejoignez des centaines d'établissements qui font confiance à ExamGest pour leurs examens nationaux.
+            Rejoignez des centaines d&lsquo;établissements qui font confiance à ExamGest pour leurs examens nationaux.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', justifyContent: 'center' }}>
             <a href="/login" style={{
@@ -485,7 +472,7 @@ export default function LandingPage() {
               borderRadius: '1rem',
               border: '2px solid rgba(255, 255, 255, 0.3)'
             }}>
-              Contacter l'Équipe
+              Contacter l&lsquo;Équipe
             </a>
           </div>
         </div>
@@ -528,7 +515,7 @@ export default function LandingPage() {
             <div>
               <h4 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Support</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Centre d'aide</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Centre d&lsquo;aide</a>
                 <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Contact</a>
                 <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>FAQ</a>
               </div>

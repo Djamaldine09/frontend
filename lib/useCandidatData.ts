@@ -33,9 +33,9 @@ export function useCandidatData() {
       ]);
 
       setData({
-        candidat: meRes.data,
-        convocation: convRes.status === 'fulfilled' ? convRes.value.data : null,
-        planning: planRes.status === 'fulfilled' ? planRes.value.data : [],
+        candidat: meRes.data.data,
+        convocation: convRes.status === 'fulfilled' ? convRes.value.data.data : null,
+        planning: planRes.status === 'fulfilled' ? planRes.value.data.data : [],
       });
 
       if (convRes.status === 'rejected') {

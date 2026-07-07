@@ -320,6 +320,7 @@ function LoginContent() {
                 src={slide}
                 alt={`Slide ${index + 1}`}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 style={{
                   objectFit: 'cover',
                   borderTopRightRadius: '35px',

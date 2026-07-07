@@ -125,6 +125,7 @@ const quickLinks: Record<Exclude<Role, 'CANDIDAT'>, QuickLink[]> = {
     { label: 'Gérer les utilisateurs', href: '/admin/utilisateurs', desc: 'Créer, modifier, supprimer', Icon: Users, tone: 'var(--tile-sky)' },
     { label: 'Gestion des centres', href: '/admin/centres', desc: 'Capacité, régions, affectation', Icon: Building2, tone: 'var(--tile-lila)' },
     { label: 'Créer un examen', href: '/examens', desc: 'Planifier une session nationale', Icon: BookOpen, tone: 'var(--tile-mint)' },
+    { label: 'Gérer les matières', href: '/matieres', desc: 'Créer les matières pour un examen', Icon: FileText, tone: 'var(--tile-green)' },
     { label: 'Rapports nationaux', href: '/admin/rapports', desc: 'Export PDF/Excel', Icon: FileText, tone: 'var(--tile-sun)' },
   ],
   RESPONSABLE: [

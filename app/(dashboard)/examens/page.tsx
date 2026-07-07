@@ -1,31 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { examensAPI } from '@/lib/api';
+import { examensAPI, examensExtendedAPI, examensAdminAPI } from '@/lib/api';
+import type { Examen } from '@/lib/api';
 import { 
   BookOpen, Plus, Edit2, Trash2, Calendar, Clock, Users, 
-  RefreshCw, Eye, Download, AlertCircle, CheckCircle, XCircle 
+  RefreshCw, CheckCircle, type LucideIcon 
 } from 'lucide-react';
-import api from '@/lib/api';
 
 // Types
-interface Examen {
-  _id: string;
-  titre: string;
-  type: string;
-  dateDebut: string;
-  dateFin: string;
-  nombreCandidats: number;
-  nombreCentres: number;
-  statut: 'PLANIFIE' | 'EN_COURS' | 'TERMINE';
-  description?: string;
-  lieu?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
 interface CreateExamenDTO {
   titre: string;
   type: string;
@@ -35,7 +20,7 @@ interface CreateExamenDTO {
   lieu?: string;
 }
 
-const STATUT_CONFIG: Record<string, { label: string; badge: string; icon: any; color: string }> = {
+const STATUT_CONFIG: Record<string, { label: string; badge: string; icon: LucideIcon; color: string }> = {
   PLANIFIE: { 
     label: 'Planifié', 
     badge: 'badge-blue', 
@@ -80,46 +65,104 @@ export default function ExamensPage() {
   const [filterType, setFilterType] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedExamForSubjects, setSelectedExamForSubjects] = useState<string | null>(null);
+  const [subjectExamDetails, setSubjectExamDetails] = useState<Examen | null>(null);
+  const [loadingExamDetails, setLoadingExamDetails] = useState(false);
+
+  const getApiErrorMessage = (error: unknown): string | undefined => {
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const resp = (error as { response?: { data?: { message?: string } } }).response;
+      return resp?.data?.message;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return undefined;
+  };
 
   const isAdmin = user?.role === 'ADMIN';
   const canCreate = user?.role === 'ADMIN';
 
+  // Publish convocations (admin action)
+  const handlePublishConvocations = async (examenId: string) => {
+    if (!confirm('Publier les convocations pour tous les candidats validés ? Cette action écrasera les convocations existantes.')) return;
+    try {
+      const resp = await examensAdminAPI.publishConvocations(examenId);
+      toast.success(resp.data?.message || 'Convocations publiées');
+      // Refresh list to update counts
+      await fetchExamens();
+    } catch (err: unknown) {
+      console.error('Erreur publication convocations:', err);
+      toast.error(getApiErrorMessage(err) || 'Erreur lors de la publication');
+    }
+  };
+
   // Charger les examens depuis le backend
-  const fetchExamens = async () => {
+  const fetchExamens = useCallback(async () => {
     setLoading(true);
     try {
       const response = await examensAPI.lister();
-      console.log('📦 Réponse API examens:', response);
+      console.log('Réponse API examens:', response);
 
-      // Gérer différents formats de réponse
+      type ResponseShape = { examens?: Examen[]; data?: Examen[] };
+      const responseData = response?.data;
       let examensData: Examen[] = [];
 
-      const data = response?.data;
-      if (data && Array.isArray(data)) {
-        examensData = data;
-      } else if (data && typeof data === 'object' && 'examens' in data && Array.isArray((data as any).examens)) {
-        examensData = (data as any).examens;
-      } else if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as any).data)) {
-        examensData = (data as any).data;
-      } else if (Array.isArray(response)) {
-        examensData = response;
-      } else if (data && typeof data === 'object' && '_id' in data) {
-        examensData = [data as Examen];
+      if (Array.isArray(responseData)) {
+        examensData = responseData;
+      } else if (responseData && typeof responseData === 'object') {
+        const normalized = responseData as ResponseShape | Examen;
+        if (Array.isArray((normalized as ResponseShape).examens)) {
+          examensData = (normalized as ResponseShape).examens!;
+        } else if (Array.isArray((normalized as ResponseShape).data)) {
+          examensData = (normalized as ResponseShape).data!;
+        } else if ('_id' in normalized) {
+          examensData = [normalized as Examen];
+        }
       }
 
       setExamens(examensData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement examens:', err);
-      toast.error('Impossible de charger la liste des examens');
+      toast.error(getApiErrorMessage(err) || 'Impossible de charger la liste des examens');
       setExamens([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchExamens();
-  }, []);
+  }, [fetchExamens]);
+
+  useEffect(() => {
+    if (!selectedExamForSubjects) {
+      return;
+    }
+
+    const fetchExamDetails = async () => {
+      setLoadingExamDetails(true);
+      try {
+        const response = await examensExtendedAPI.getById(selectedExamForSubjects);
+        const data = response?.data;
+        if (data && typeof data === 'object') {
+          setSubjectExamDetails(data as Examen);
+        } else {
+          setSubjectExamDetails(null);
+        }
+      } catch (err: unknown) {
+        console.error('Erreur chargement détails examen :', err);
+        toast.error(getApiErrorMessage(err) || 'Impossible de charger les matières de l&apos;examen sélectionné');
+        setSubjectExamDetails(null);
+      } finally {
+        setLoadingExamDetails(false);
+      }
+    };
+
+    fetchExamDetails();
+  }, [selectedExamForSubjects]);
 
   // Créer ou modifier un examen
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,10 +192,9 @@ export default function ExamensPage() {
       // Reset form et recharger
       resetForm();
       await fetchExamens();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur:', err);
-      const errorMsg = err.response?.data?.message || err.message || 'Erreur lors de l\'opération';
-      toast.error(errorMsg);
+      toast.error(getApiErrorMessage(err) || 'Erreur lors de l&apos;opération');
     } finally {
       setSubmitting(false);
     }
@@ -168,9 +210,9 @@ export default function ExamensPage() {
       await examensAPI.supprimer(id);
       toast.success('Examen supprimé avec succès');
       await fetchExamens();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur suppression:', err);
-      toast.error(err.response?.data?.message || 'Erreur lors de la suppression');
+      toast.error(getApiErrorMessage(err) || 'Erreur lors de la suppression');
     }
   };
 
@@ -228,7 +270,7 @@ export default function ExamensPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: 'var(--text-primary)' }}>
-            📚 Gestion des examens
+             Gestion des examens
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: 4, fontSize: 14 }}>
             Créer, planifier et suivre les examens nationaux
@@ -279,13 +321,13 @@ export default function ExamensPage() {
       {showForm && canCreate && (
         <div className="card" style={{ marginBottom: 24, borderColor: 'rgba(88,166,255,0.3)', padding: 24 }}>
           <h3 style={{ fontWeight: 700, marginBottom: 20, color: 'var(--text-primary)', fontSize: 18 }}>
-            {editing ? '✏️ Modifier l\'examen' : '➕ Créer un nouvel examen'}
+            {editing ? '✏️ Modifier l&apos;examen' : '➕ Créer un nouvel examen'}
           </h3>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
               <div>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
-                  Titre de l'examen *
+                  Titre de l&apos;examen *
                 </label>
                 <input
                   className="input-field"
@@ -297,7 +339,7 @@ export default function ExamensPage() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
-                  Type d'examen *
+                  Type d&apos;examen *
                 </label>
                 <select
                   className="input-field"
@@ -415,6 +457,51 @@ export default function ExamensPage() {
         </select>
       </div>
 
+      {selectedExamForSubjects && (
+        <div className="card" style={{ marginBottom: 24, padding: 22 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Matières de l&apos;examen sélectionné</h2>
+              <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)' }}>
+                {subjectExamDetails ? `Matières pour ${subjectExamDetails.titre}` : 'Chargement des matières...'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setSelectedExamForSubjects(null)}
+            >
+              Fermer
+            </button>
+          </div>
+
+          {loadingExamDetails ? (
+            <div style={{ marginTop: 20, color: 'var(--text-secondary)' }}>Chargement...</div>
+          ) : subjectExamDetails && subjectExamDetails.epreuves && subjectExamDetails.epreuves.length > 0 ? (
+            <div style={{ display: 'grid', gap: 12, marginTop: 20 }}>
+              {subjectExamDetails.epreuves.map((ep, idx) => (
+                <div key={`${ep._id || idx}`} style={{ padding: 16, background: 'var(--bg-soft)', borderRadius: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                    <strong>{ep.matiere}</strong>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{ep.type}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginTop: 10, fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <span>{new Date(ep.date).toLocaleDateString('fr-FR')}</span>
+                    <span>{ep.heureDebut} - {ep.heureFin}</span>
+                    <span>Durée: {ep.duree} min</span>
+                    <span>Coef: {ep.coefficient}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ marginTop: 20, color: 'var(--text-secondary)' }}>
+              Aucune matière enregistrée pour cet examen.
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Liste des examens */}
       {!Array.isArray(filteredExamens) || filteredExamens.length === 0 ? (
         <div className="card" style={{ padding: 48, textAlign: 'center' }}>
@@ -477,7 +564,15 @@ export default function ExamensPage() {
                   </div>
                   
                   {isAdmin && (
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        className="btn-ghost"
+                        style={{ padding: '8px 12px' }}
+                        onClick={() => handlePublishConvocations(exam._id)}
+                        title="Publier les convocations"
+                      >
+                        <Users size={14} /> Publier convocations
+                      </button>
                       <button
                         className="btn-ghost"
                         style={{ padding: '8px 12px' }}
@@ -485,6 +580,14 @@ export default function ExamensPage() {
                         title="Modifier"
                       >
                         <Edit2 size={14} /> Modifier
+                      </button>
+                      <button
+                        className="btn-ghost"
+                        style={{ padding: '8px 12px' }}
+                        onClick={() => setSelectedExamForSubjects(exam._id)}
+                        title="Voir les matières"
+                      >
+                        <BookOpen size={14} /> Matières
                       </button>
                       <button
                         className="btn-ghost"

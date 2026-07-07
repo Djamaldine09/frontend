@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { User } from '@/types';
@@ -17,8 +18,9 @@ import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage } fr
 const FR_MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const FR_DAYS_SHORT = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
 
-function daysUntil(iso: string): number {
-  const target = new Date(iso);
+function daysUntil(value: string | Date | undefined | null): number | null {
+  const target = parseDateSafely(value);
+  if (!target) return null;
   const now = new Date();
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
@@ -34,12 +36,31 @@ function buildHoursMock(highlightDayIdx = 3): { d: string; v: number; highlight:
   }));
 }
 
+function parseDateSafely(value: string | Date | undefined | null): Date | null {
+  if (value === undefined || value === null || value === '') return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function normalizeCalendarDate(value: string | Date | undefined | null): string | null {
+  const date = parseDateSafely(value);
+  return date ? date.toISOString().slice(0, 10) : null;
+}
+
+function getValidDate(value: string | Date | undefined | null, fallback: Date = new Date()): Date {
+  return parseDateSafely(value) ?? fallback;
+}
+
+function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat('fr-FR', options).format(date);
+}
+
 function buildCalendar(year: number, month: number, examDates: Set<string>): { day: number | null; iso?: string; isExam?: boolean; isToday?: boolean }[] {
   const firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon
   // Convert Sunday-first to Monday-first index: 0->6, 1->0 ... 6->5
   const offset = (firstDay + 6) % 7;
   const total = new Date(year, month + 1, 0).getDate();
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = normalizeCalendarDate(new Date()) ?? '';
   const grid: { day: number | null; iso?: string; isExam?: boolean; isToday?: boolean }[] = [];
   for (let i = 0; i < offset; i++) grid.push({ day: null });
   for (let d = 1; d <= total; d++) {
@@ -95,6 +116,7 @@ function derivePhases(candidat: CandidatMe): Array<{ key: string; label: string;
 export default function CandidateDashboard({ user }: { user: User }) {
   const { data, loading, error } = useCandidatData();
   const [downloading, setDownloading] = useState(false);
+  const router = useRouter();
 
   if (loading) return <DashboardSkeleton />;
   if (!data) {
@@ -110,15 +132,24 @@ export default function CandidateDashboard({ user }: { user: User }) {
   const phases = derivePhases(candidat);
 
   // Build calendar from real planning
-  const examDates = new Set(planning.filter(p => p.type === 'EPREUVE').map(p => p.date));
+  const examDates = new Set(planning
+    .filter(p => p.type === 'EPREUVE')
+    .map(p => normalizeCalendarDate(p.date))
+    .filter(Boolean) as string[]
+  );
   const nextExam = planning
-    .filter(p => p.type === 'EPREUVE' && new Date(p.date) >= new Date(new Date().toISOString().slice(0,10)))
-    .sort((a, b) => a.date.localeCompare(b.date))[0] ?? planning[0];
-  const examDate = nextExam ? new Date(nextExam.date) : convocation ? new Date(convocation.dateEpreuve) : new Date();
+    .filter(p => p.type === 'EPREUVE')
+    .map(p => ({ ...p, normalizedDate: normalizeCalendarDate(p.date) }))
+    .filter((p): p is EpreuvePlanning & { normalizedDate: string } => Boolean(p.normalizedDate))
+    .filter(p => p.normalizedDate >= normalizeCalendarDate(new Date())!)
+    .sort((a, b) => a.normalizedDate.localeCompare(b.normalizedDate))[0] ?? planning[0];
+  const examDate = getValidDate(nextExam?.date, getValidDate(convocation?.dateEpreuve, new Date()));
   const examMonth = examDate.getMonth();
   const examYear = examDate.getFullYear();
   const calendar = buildCalendar(examYear, examMonth, examDates);
-  const days = convocation ? daysUntil(convocation.dateEpreuve) : null;
+  const days = convocation && normalizeCalendarDate(convocation.dateEpreuve)
+    ? daysUntil(convocation.dateEpreuve)
+    : null;
 
   const overviewCards: OverviewCard[] = [
     {
@@ -460,7 +491,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
             </svg>
           </div>
 
-          <button className="btn-lime" style={{ marginTop: 14, padding: '9px 18px', fontSize: 13 }} data-testid="itinerary-btn">
+          <button className="btn-lime" style={{ marginTop: 14, padding: '9px 18px', fontSize: 13 }} data-testid="itinerary-btn" onClick={() => router.push('/itineraire')}>
             Itinéraire <ArrowUpRight size={14} strokeWidth={2.4} />
           </button>
         </div>

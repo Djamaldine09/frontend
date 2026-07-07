@@ -39,6 +39,7 @@ export interface Candidat {
   piecesJustificatives: {
     photoIdentite?: string;
     acteNaissance?: string;
+    photoSupp?: string;
   };
   createdAt: string;
 }

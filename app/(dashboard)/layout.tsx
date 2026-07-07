@@ -18,6 +18,7 @@ const navItems = [
   { href: '/mon-dossier',  label: 'Mon dossier',     icon: FileText,    roles: ['CANDIDAT'] },
   { href: '/convocation',  label: 'Convocation',     icon: ScrollText,    roles: ['CANDIDAT'] },
   { href: '/dashboard/admin/candidat',  label: 'Candidats',       icon: FileText,    roles: ['ADMIN'] },
+  { href: '/matieres', label: 'Matières',        icon: BookOpen,    roles: ['ADMIN'] },
   { href: '/examens',    label: 'Examens',         icon: BookOpen,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
   { href: '/resultats',  label: 'Résultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
   { href: '/affectation-automatique',  label: 'Affectations',     icon: ScrollText,    roles: ['RESPONSABLE'] },
@@ -171,7 +172,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <div
               style={{
-                width: 36, height: 36, borderRadius: 12,
+                width: 36, height: 36, borderRadius: 35,
                 background: 'var(--lime)', display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
                 color: 'var(--ink)', fontWeight: 800, fontSize: 16,
@@ -197,7 +198,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             alignItems: 'center',
             justifyContent: sidebarCollapsed ? 'center' : 'flex-end',
             padding: '8px 12px',
-            borderRadius: 10,
+            borderRadius: 35,
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
@@ -225,7 +226,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 style={{
                   display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
-                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 14,
+                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 999,
                   textDecoration: 'none',
                   color: isFirstActive ? 'var(--ink)' : 'var(--ink-dark-soft)',
                   background: isFirstActive ? 'var(--lime)' : 'transparent',
@@ -259,7 +260,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setMobileMenuOpen(false)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
-                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 14,
+                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 999,
                   color: 'var(--ink-dark-soft)', background: 'transparent',
                   border: 'none', cursor: 'pointer',
                   fontWeight: 500, fontSize: 14, fontFamily: 'inherit',

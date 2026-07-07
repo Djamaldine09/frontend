@@ -34,7 +34,7 @@ export function AuroraTextEffect({
   text,
   className,
   textClassName,
-  fontSize = "clamp(3rem, 8vw, 7rem)",
+  fontSize = "clamp(1rem, 5vw, 5rem)",
   colors = {
     first: "bg-cyan-400",
     second: "bg-yellow-400",
@@ -89,7 +89,7 @@ export function AuroraTextEffect({
     <div
       className={cn(
         // Updated to support light and dark modes
-        "bg-white rounded-full flex items-center justify-center overflow-hidden",
+        "bg-white m-1 px-2.5 rounded-full flex items-center justify-center overflow-hidden",
         className
       )}
     >
@@ -111,7 +111,7 @@ export function AuroraTextEffect({
             {/* First Aurora Layer */}
             <div
               className={cn(
-                "absolute w-[60vw] h-[60vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
+                "absolute w-[40vw] h-[10vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
                 colors.first || "bg-cyan-400",
                 blurAmount
               )}
@@ -127,7 +127,7 @@ export function AuroraTextEffect({
             {/* Second Aurora Layer */}
             <div
               className={cn(
-                "absolute w-[60vw] h-[60vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
+                "absolute w-[40vw] h-[10vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
                 colors.second,
                 blurAmount
               )}
@@ -143,7 +143,7 @@ export function AuroraTextEffect({
             {/* Third Aurora Layer */}
             <div
               className={cn(
-                "absolute w-[60vw] h-[60vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
+                "absolute w-[40vw] h-[10vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
                 colors.third,
                 blurAmount
               )}
@@ -159,7 +159,7 @@ export function AuroraTextEffect({
             {/* Fourth Aurora Layer */}
             <div
               className={cn(
-                "absolute w-[60vw] h-[60vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
+                "absolute w-[40vw] h-[60vw] rounded-[37%_29%_27%_27%/28%_25%_41%_37%] filter mix-blend-overlay",
                 colors.fourth,
                 blurAmount
               )}

@@ -72,6 +72,17 @@ export const examensAPI = {
   getDetails: (id: string) => api.get<Examen>(`/examens/${id}`),
 };
 
+export interface Epreuve {
+  _id?: string;
+  matiere: string;
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+  duree: number;
+  coefficient: number;
+  type?: 'EPREUVE' | 'REVISION';
+}
+
 export interface Examen {
   _id: string;
   titre: string;
@@ -83,6 +94,7 @@ export interface Examen {
   statut: 'PLANIFIE' | 'EN_COURS' | 'TERMINE';
   description?: string;
   lieu?: string;
+  epreuves?: Epreuve[];
   createdAt: string;
 }
 
@@ -124,6 +136,7 @@ export type CandidatMe = {
   adresse?: string;
   telephone?: string;
   emailParent?: string;
+  region?: string;
   statutInscription: 'BROUILLON' | 'EN_ATTENTE_VALIDATION' | 'VALIDE' | 'REJETE';
   paiement: {
     statut: 'NON_PAYE' | 'EN_COURS' | 'PAYE' | 'ECHEC';
@@ -135,6 +148,7 @@ export type CandidatMe = {
     photoIdentite?: { url: string; status: 'valide' | 'attente' | 'manquant'; uploadedAt?: string };
     acteNaissance?: { url: string; status: 'valide' | 'attente' | 'manquant'; uploadedAt?: string };
     diplomePrecedent?: { url: string; status: 'valide' | 'attente' | 'manquant'; uploadedAt?: string };
+    photoSupp?: { url: string; status: 'valide' | 'attente' | 'manquant'; uploadedAt?: string };
   };
   centreAffecte?: {
     nom: string;
@@ -144,6 +158,10 @@ export type CandidatMe = {
     salle: string;
     numeroPlace: string;
     coords?: { lat: number; lng: number };
+    latitude?: number;
+    longitude?: number;
+    telephone?: string;
+    email?: string;
   };
   createdAt: string;
 };
@@ -181,7 +199,7 @@ export const candidatAPI = {
   update: (data: Partial<CandidatMe>) => api.put<CandidatMe>('/candidats/me', data),
   convocation: () => api.get<Convocation>('/candidats/me/convocation'),
   planning: () => api.get<EpreuvePlanning[]>('/candidats/me/planning'),
-  uploadDocument: (type: 'photoIdentite' | 'acteNaissance' | 'diplomePrecedent', file: File) => {
+  uploadDocument: (type: 'photoIdentite' | 'acteNaissance' | 'diplomePrecedent' | 'photoSupp', file: File) => {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('type', type);
@@ -189,7 +207,12 @@ export const candidatAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+};
+
+export const inscriptionAPI = {
   create: () => api.post('/inscription/create', {}),
+  submit: () => api.post('/inscription/submit', {}),
+  updateProfile: (data: Partial<CandidatMe>) => api.put<CandidatMe>('/inscription/profile', data),
 };
 
 export type AdminDashboard = {
@@ -326,6 +349,10 @@ export const convocationAPI = {
 };
 
 // ============ EXAMENS - Endpoints complémentaires ============
+export const examensAdminAPI = {
+  publishConvocations: (examenId: string) => api.post(`/examens/${examenId}/publish-convocations`),
+};
+
 export const examensExtendedAPI = {
   // Créer un examen (existe)
   create: (data: any) => api.post('/examens/creer', data),

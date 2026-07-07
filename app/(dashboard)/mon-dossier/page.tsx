@@ -8,19 +8,20 @@ import {
   IdCard, FileText, BookOpen, AlertCircle, Send,
 } from 'lucide-react';
 import { useCandidatData } from '@/lib/useCandidatData';
-import { candidatAPI, CandidatMe, examensAPI } from '@/lib/api';
+import { candidatAPI, inscriptionAPI, CandidatMe, examensAPI } from '@/lib/api';
 
-type DocKey = 'photoIdentite' | 'acteNaissance' | 'diplomePrecedent';
+type DocKey = 'photoIdentite' | 'acteNaissance' | 'photoSupp';
 
 const DOC_META: Record<DocKey, { label: string; hint: string; Icon: any; accept: string }> = {
-  photoIdentite:    { label: "Pièce d'identité",   hint: 'CIN ou passeport — JPG/PNG/PDF, max 5 Mo', Icon: IdCard,        accept: 'image/*,application/pdf' },
-  acteNaissance:    { label: 'Acte de naissance',  hint: 'Copie certifiée — PDF, max 5 Mo',          Icon: FileText,      accept: 'application/pdf,image/*' },
-  diplomePrecedent: { label: 'Diplôme précédent',  hint: 'BEPC ou équivalent — PDF, max 5 Mo',       Icon: GraduationCap, accept: 'application/pdf,image/*' },
+  photoIdentite:    { label: "Pièce d'identité",       hint: 'CIN ou passeport — JPG/PNG/PDF, max 5 Mo', Icon: IdCard,        accept: 'image/*,application/pdf' },
+  acteNaissance:    { label: 'Acte de naissance',      hint: 'Copie certifiée — PDF, max 5 Mo',          Icon: FileText,      accept: 'application/pdf,image/*' },
+  photoSupp:        { label: 'Photo identité (4x4)',   hint: 'Photo d’identité 4x4 — JPG/PNG, max 5 Mo', Icon: IdCard,        accept: 'image/*' },
 };
 
 export default function MonDossierPage() {
   const { data, loading, error, refetch } = useCandidatData();
   const [form, setForm] = useState<Partial<CandidatMe>>({});
+  const [hasCin, setHasCin] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeSection, setActiveSection] = useState<'identite' | 'scolarite' | 'coords' | 'pieces'>('identite');
@@ -41,7 +42,10 @@ export default function MonDossierPage() {
 
   // hydrate form once we have data
   useEffect(() => {
-    if (data?.candidat) setForm(data.candidat);
+    if (data?.candidat) {
+      setForm(data.candidat);
+      setHasCin(!!data.candidat.cin);
+    }
   }, [data?.candidat]);
 
   if (loading) {
@@ -52,11 +56,11 @@ export default function MonDossierPage() {
     // Créer automatiquement le dossier candidat s'il n'existe pas
     const createCandidatDossier = async () => {
       try {
-        await candidatAPI.create();
+        await inscriptionAPI.create();
         toast.success('Dossier candidat créé avec succès');
         await refetch();
-      } catch {
-        toast.error('Impossible de créer le dossier candidat');
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Impossible de créer le dossier candidat');
       }
     };
 
@@ -98,7 +102,7 @@ export default function MonDossierPage() {
 
   const handleSubmit = async () => {
     // Vérifier que tous les champs requis sont remplis
-    if (!form.dateNaissance || !form.lieuNaissance || !form.genre || !form.cin) {
+    if (!form.dateNaissance || !form.lieuNaissance || !form.genre || (hasCin !== false && !form.cin) || !form.region) {
       toast.error('Veuillez remplir tous les champs obligatoires (Identité)');
       return;
     }
@@ -109,18 +113,12 @@ export default function MonDossierPage() {
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inscription/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      await candidatAPI.update(form);
+      await inscriptionAPI.submit();
       toast.success('Inscription soumise pour validation');
       await refetch();
-    } catch {
-      toast.error("Soumission impossible — backend indisponible.");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Soumission impossible — backend indisponible.");
     } finally {
       setSubmitting(false);
     }
@@ -231,12 +229,67 @@ export default function MonDossierPage() {
                 <Field label="Prénom" value={candidat.user.prenom} disabled />
                 <Field label="Date de naissance" type="date" value={form.dateNaissance ?? ''} onChange={v => set('dateNaissance', v)} testId="input-dateNaissance" />
                 <Field label="Lieu de naissance" value={form.lieuNaissance ?? ''} onChange={v => set('lieuNaissance', v)} testId="input-lieuNaissance" />
+                <Select label="Région" value={form.region ?? ''} onChange={v => set('region', v)} options={[
+                  { value: '', label: '— Sélectionner —' },
+                  { value: 'Alaotra-Mangoro', label: 'Alaotra-Mangoro' },
+                  { value: 'Analamanga', label: 'Analamanga' },
+                  { value: 'Analanjirofo', label: 'Analanjirofo' },
+                  { value: 'Amoron\'i Mania', label: 'Amoron\'i Mania' },
+                  { value: 'Androy', label: 'Androy' },
+                  { value: 'Anosy', label: 'Anosy' },
+                  { value: 'Atsimo-Andrefana', label: 'Atsimo-Andrefana' },
+                  { value: 'Atsimo-Atsinanana', label: 'Atsimo-Atsinanana' },
+                  { value: 'Atsinanana', label: 'Atsinanana' },
+                  { value: 'Betsiboka', label: 'Betsiboka' },
+                  { value: 'Boeny', label: 'Boeny' },
+                  { value: 'Bongolava', label: 'Bongolava' },
+                  { value: 'Diana', label: 'Diana' },
+                  { value: 'Haute Matsiatra', label: 'Haute Matsiatra' },
+                  { value: 'Ihorombe', label: 'Ihorombe' },
+                  { value: 'Itasy', label: 'Itasy' },
+                  { value: 'Melaky', label: 'Melaky' },
+                  { value: 'Menabe', label: 'Menabe' },
+                  { value: 'Sava', label: 'Sava' },
+                  { value: 'Sofia', label: 'Sofia' },
+                  { value: 'Vakinankaratra', label: 'Vakinankaratra' },
+                  { value: 'Vatovavy', label: 'Vatovavy' },
+                  { value: 'Fitovinany', label: 'Fitovinany' },
+                ]} testId="input-region" />
                 <Select label="Genre" value={form.genre ?? ''} onChange={v => set('genre', v as 'M'|'F')} options={[
                   { value: '', label: '— Sélectionner —' },
                   { value: 'M', label: 'Masculin' },
                   { value: 'F', label: 'Féminin' },
                 ]} testId="input-genre" />
-                <Field label="Numéro CIN" value={form.cin ?? ''} onChange={v => set('cin', v)} placeholder="101 000 000 000" testId="input-cin" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className={`btn-ghost ${hasCin === true ? 'active' : ''}`}
+                      onClick={() => setHasCin(true)}
+                      data-testid="btn-has-cin"
+                    >
+                      J'ai un CIN
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-ghost ${hasCin === false ? 'active' : ''}`}
+                      onClick={() => {
+                        setHasCin(false);
+                        set('cin', '');
+                      }}
+                      data-testid="btn-no-cin"
+                    >
+                      Je n'ai pas de CIN
+                    </button>
+                  </div>
+                  {hasCin !== false ? (
+                    <Field label="Numéro CIN" value={form.cin ?? ''} onChange={v => set('cin', v)} placeholder="101 000 000 000" testId="input-cin" />
+                  ) : (
+                    <div style={{ padding: '14px 16px', borderRadius: 14, background: 'var(--tile-soft)', color: 'var(--ink)', fontSize: 13 }}>
+                      Vous avez indiqué ne pas avoir de CIN. Le champ CIN n'est pas requis.
+                    </div>
+                  )}
+                </div>
               </Grid>
             </Section>
           )}
@@ -493,6 +546,7 @@ function computeCompletion(form: Partial<CandidatMe>, real: CandidatMe): number 
     !!form.lieuNaissance,
     !!form.genre,
     !!form.cin,
+    !!form.region,
     !!form.examen,
     !!form.serieFiliere,
     !!form.etablissementPrecedent,
@@ -500,7 +554,7 @@ function computeCompletion(form: Partial<CandidatMe>, real: CandidatMe): number 
     !!form.telephone,
     !!real.piecesJustificatives?.photoIdentite,
     !!real.piecesJustificatives?.acteNaissance,
-    !!real.piecesJustificatives?.diplomePrecedent,
+    !!real.piecesJustificatives?.photoSupp,
   ];
   const done = checks.filter(Boolean).length;
   return Math.round((done / checks.length) * 100);

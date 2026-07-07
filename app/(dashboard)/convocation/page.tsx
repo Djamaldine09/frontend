@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { candidatAPI, documentsAPI } from '@/lib/api';
+import { QRCodeSVG } from 'qrcode.react';
 import {
-  MapPin, Clock, User, Printer, Download, AlertCircle, LoaderCircle,
-  Building2, MapPinned, Calendar, CheckCircle
+  Clock, User, Printer, Download, AlertCircle, LoaderCircle,
+  Building2, Calendar, CheckCircle
 } from 'lucide-react';
 
 // Types locaux en attendant l'API backend
@@ -27,6 +29,7 @@ interface Convocation {
   salle?: string;
   numeroPlace?: string;
   qrPayload: string;
+  planning?: EpreuvePlanning[];
   pdfUrl?: string;
 }
 
@@ -40,164 +43,10 @@ interface EpreuvePlanning {
   type: 'EPREUVE' | 'REVISION' | 'PAUSE';
 }
 
-// Données mockées pour le développement
-const getMockConvocation = (user: any): Convocation => ({
-  _id: 'mock_001',
-  nom: user?.nom || 'Rakoto',
-  prenom: user?.prenom || 'Jean',
-  matricule: `MAT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-  examenTitre: 'Baccalauréat 2025',
-  dateEpreuve: '2025-06-15',
-  heureDebut: '08:00',
-  heureFin: '12:00',
-  centre: {
-    nom: 'Centre Andohalo',
-    adresse: 'Boulevard de l\'Indépendance',
-    ville: 'Antananarivo',
-    code: 'CAD-001'
-  },
-  salle: 'Salle A101',
-  numeroPlace: `P${Math.floor(Math.random() * 200) + 1}`,
-  qrPayload: `CONV-${user?.email || 'candidat'}-${Date.now()}`,
-  pdfUrl: undefined
-});
-
-const getMockPlanning = (): EpreuvePlanning[] => [
-  {
-    matiere: 'Mathématiques',
-    date: '2025-06-15',
-    heureDebut: '08:00',
-    heureFin: '10:00',
-    coefficient: 4,
-    duree: 120,
-    type: 'EPREUVE'
-  },
-  {
-    matiere: 'Français',
-    date: '2025-06-16',
-    heureDebut: '08:00',
-    heureFin: '11:00',
-    coefficient: 3,
-    duree: 180,
-    type: 'EPREUVE'
-  },
-  {
-    matiere: 'Anglais',
-    date: '2025-06-17',
-    heureDebut: '08:00',
-    heureFin: '10:00',
-    coefficient: 2,
-    duree: 120,
-    type: 'EPREUVE'
-  },
-  {
-    matiere: 'Physique-Chimie',
-    date: '2025-06-18',
-    heureDebut: '08:00',
-    heureFin: '10:00',
-    coefficient: 3,
-    duree: 120,
-    type: 'EPREUVE'
-  },
-  {
-    matiere: 'Philosophie',
-    date: '2025-06-19',
-    heureDebut: '08:00',
-    heureFin: '11:00',
-    coefficient: 2,
-    duree: 180,
-    type: 'EPREUVE'
-  }
-];
-
-// Composant QR Code simple
-const SimpleQRCode = ({ value, size = 200 }: { value: string; size?: number }) => {
-  const [qrDataUrl, setQrDataUrl] = useState<string>('');
-
-  useEffect(() => {
-    if (value) {
-      // Créer un canvas pour simuler un QR code
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Fond blanc
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, size, size);
-        
-        // Dessiner un motif de QR code simulé
-        ctx.fillStyle = '#000000';
-        const blockSize = size / 10;
-        
-        // Coin supérieur gauche
-        for (let i = 0; i < 7; i++) {
-          for (let j = 0; j < 7; j++) {
-            if ((i < 2 || i > 4 || j < 2 || j > 4) && !(i > 4 && j > 4)) {
-              ctx.fillRect(i * blockSize, j * blockSize, blockSize, blockSize);
-            }
-          }
-        }
-        
-        // Coin supérieur droit
-        for (let i = 0; i < 7; i++) {
-          for (let j = 0; j < 7; j++) {
-            if ((i < 2 || i > 4 || j < 2 || j > 4) && !(i > 4 && j > 4)) {
-              ctx.fillRect(size - (i + 1) * blockSize, j * blockSize, blockSize, blockSize);
-            }
-          }
-        }
-        
-        // Coin inférieur gauche
-        for (let i = 0; i < 7; i++) {
-          for (let j = 0; j < 7; j++) {
-            if ((i < 2 || i > 4 || j < 2 || j > 4) && !(i > 4 && j > 4)) {
-              ctx.fillRect(i * blockSize, size - (j + 1) * blockSize, blockSize, blockSize);
-            }
-          }
-        }
-        
-        // Données aléatoires
-        for (let i = 0; i < 100; i++) {
-          const x = Math.floor(Math.random() * 9);
-          const y = Math.floor(Math.random() * 9);
-          if (!(x < 7 && y < 7) && !(x > 2 && y > 2 && x < 7 && y < 7)) {
-            ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
-          }
-        }
-        
-        // Texte au centre
-        ctx.fillStyle = '#000000';
-        ctx.font = `${Math.floor(size / 15)}px monospace`;
-        ctx.fillText(value.substring(0, 8), size / 3, size / 2);
-        
-        setQrDataUrl(canvas.toDataURL());
-      }
-    }
-  }, [value, size]);
-
-  if (!qrDataUrl) {
-    return (
-      <div style={{ 
-        width: size, 
-        height: size, 
-        background: '#f5f5f5', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        borderRadius: 12,
-        border: '1px solid #e0e0e0'
-      }}>
-        <LoaderCircle size={24} className="animate-spin" />
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <img src={qrDataUrl} alt="QR Code" width={size} height={size} style={{ borderRadius: 12 }} />
-    </div>
-  );
+type UserInfo = {
+  nom?: string;
+  prenom?: string;
+  email?: string;
 };
 
 export default function ConvocationPage() {
@@ -206,7 +55,6 @@ export default function ConvocationPage() {
   const [planning, setPlanning] = useState<EpreuvePlanning[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usingMockData, setUsingMockData] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [printing, setPrinting] = useState(false);
 
@@ -221,52 +69,46 @@ export default function ConvocationPage() {
         // Tenter d'appeler l'API réelle
         let convData = null;
         let planData: EpreuvePlanning[] = [];
-        let useMock = false;
         
         try {
-          // Essayer de charger depuis l'API
-          const { candidatAPI } = await import('@/lib/api');
-          
-          try {
-            const convRes = await candidatAPI.convocation();
-            convData = convRes.data;
-          } catch (convErr: any) {
-            console.warn('API convocation non disponible:', convErr.message);
-            if (convErr.response?.status === 404) {
-              useMock = true;
-            }
+          const convRes = await candidatAPI.convocation();
+          convData = convRes.data?.data ?? convRes.data;
+        } catch (convErr: unknown) {
+          const errMessage = convErr instanceof Error ? convErr.message : 'Erreur convocation';
+          console.warn('API convocation non disponible:', errMessage);
+          const response = typeof convErr === 'object' && convErr !== null && 'response' in convErr
+            ? (convErr as { response?: { status?: number } }).response
+            : undefined;
+          if (response?.status === 404) {
+            setError('Votre convocation n’est pas encore publiée par l’administration.');
+          } else {
+            setError(errMessage || 'Impossible de charger votre convocation.');
           }
-          
-          try {
-            const planRes = await candidatAPI.planning();
-            planData = Array.isArray(planRes.data) ? planRes.data : [];
-          } catch (planErr: any) {
-            console.warn('API planning non disponible:', planErr.message);
-            if (planErr.response?.status === 404) {
-              useMock = true;
-            }
-          }
-        } catch (importErr) {
-          console.warn('Module API non disponible, utilisation des données mockées');
-          useMock = true;
+          setConvocation(null);
+          setLoading(false);
+          return;
         }
         
-        // Utiliser les données mockées si nécessaire
-        if (useMock || !convData) {
-          setUsingMockData(true);
-          convData = getMockConvocation(user);
-          planData = getMockPlanning();
-          toast.success('Mode démo: Affichage des données de test', {
-            icon: '🔧',
-            duration: 3000
-          });
+        try {
+          const planRes = await candidatAPI.planning();
+          planData = Array.isArray(planRes.data?.data ? planRes.data.data : planRes.data)
+            ? planRes.data?.data ?? planRes.data
+            : [];
+        } catch (planErr: unknown) {
+          const errMessage = planErr instanceof Error ? planErr.message : 'Erreur planning';
+          console.warn('API planning non disponible:', errMessage);
+          planData = [];
         }
+
+        const convDataTyped = convData as Convocation & { planning?: EpreuvePlanning[] };
+        const convPlanning = Array.isArray(convDataTyped.planning) ? convDataTyped.planning : planData;
         
-        setConvocation(convData);
-        setPlanning(planData);
-      } catch (err: any) {
+        setConvocation(convDataTyped);
+        setPlanning(convPlanning);
+      } catch (err: unknown) {
         console.error('Erreur chargement:', err);
-        setError(err.message || 'Impossible de charger votre convocation');
+        const errMessage = err instanceof Error ? err.message : String(err);
+        setError(errMessage || 'Impossible de charger votre convocation');
       } finally {
         setLoading(false);
       }
@@ -280,47 +122,8 @@ export default function ConvocationPage() {
     
     setDownloading(true);
     try {
-      if (usingMockData) {
-        // Mode démo: générer un PDF factice
-        toast.success('Fonctionnalité disponible après implémentation backend', {
-          icon: '📄',
-          duration: 3000
-        });
-        
-        // Simuler un téléchargement
-        const blob = new Blob([
-          `CONVOCATION D'EXAMEN
-          
-Candidat: ${convocation.prenom} ${convocation.nom}
-Matricule: ${convocation.matricule}
-Examen: ${convocation.examenTitre}
-Date: ${new Date(convocation.dateEpreuve).toLocaleDateString('fr-FR')}
-Heure: ${convocation.heureDebut} - ${convocation.heureFin}
-Centre: ${convocation.centre.nom}
-Salle: ${convocation.salle}
-Place: ${convocation.numeroPlace}
-
-Ce document est généré en mode démo.`
-        ], { type: 'application/pdf' });
-        
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `convocation-${convocation.matricule}.txt`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        return;
-      }
-      
-      // API réelle
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/candidats/me/convocation/pdf', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
-      
-      if (!response.ok) throw new Error('Erreur lors du téléchargement');
-      
-      const blob = await response.blob();
+      const response = await documentsAPI.telechargerConvocation();
+      const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -339,10 +142,19 @@ Ce document est généré en mode démo.`
     }
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     setPrinting(true);
-    window.print();
-    setTimeout(() => setPrinting(false), 1000);
+    try {
+      const response = await documentsAPI.telechargerConvocation();
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.error('Erreur impression PDF:', err);
+      toast.error('Impossible de charger le PDF de convocation pour impression.');
+    } finally {
+      setPrinting(false);
+    }
   };
 
   if (loading) {
@@ -398,31 +210,15 @@ Ce document est généré en mode démo.`
 
   return (
     <div className="animate-fade-in" id="convocation-print">
-      {/* Bannière mode démo */}
-      {usingMockData && (
-        <div style={{ 
-          marginBottom: 20, 
-          padding: '10px 16px', 
-          background: 'var(--tile-sun)', 
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          fontSize: 13
-        }}>
-          <span>🔧</span>
-          <span>Mode démo: Données de test affichées en attendant l'implémentation des endpoints backend.</span>
-        </div>
-      )}
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.6px', color: 'var(--text-primary)' }}>
-          📄 Ma convocation
+          Ma convocation
         </h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: 8, fontSize: 15 }}>
           Examen: <strong style={{ color: 'var(--text-primary)' }}>{convocation.examenTitre}</strong> ·
-          Date: <strong style={{ color: 'var(--accent-yellow)' }}>
+          Date: <strong style={{ color: 'var(--text-primary)' }}>
             {convocation.dateEpreuve ? new Date(convocation.dateEpreuve).toLocaleDateString('fr-FR', {
               weekday: 'long',
               year: 'numeric',
@@ -435,9 +231,37 @@ Ce document est généré en mode démo.`
 
       {/* Actions */}
       <div className="no-print" style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-        <button className="btn-primary" onClick={handleDownloadPDF} disabled={downloading}>
-          <Download size={16} />
-          {downloading ? 'Téléchargement...' : 'Télécharger PDF'}
+        <button
+          onClick={handleDownloadPDF}
+          disabled={downloading}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '14px 22px',
+            borderRadius: 999,
+            border: 'none',
+            background: 'linear-gradient(135deg, #1F7A74 0%, #3ECF8E 100%)',
+            color: '#ffffff',
+            fontWeight: 700,
+            fontSize: 14,
+            boxShadow: '0 14px 30px rgba(31, 122, 116, 0.18)',
+            cursor: downloading ? 'not-allowed' : 'pointer',
+            transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+          }}
+          onMouseEnter={(event) => {
+            if (!downloading) {
+              (event.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+              (event.currentTarget as HTMLButtonElement).style.boxShadow = '0 18px 35px rgba(31, 122, 116, 0.25)';
+            }
+          }}
+          onMouseLeave={(event) => {
+            (event.currentTarget as HTMLButtonElement).style.transform = 'none';
+            (event.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 30px rgba(31, 122, 116, 0.18)';
+          }}
+        >
+          <Download size={18} />
+          {downloading ? 'Téléchargement...' : 'Télécharger ma convocation'}
         </button>
         <button className="btn-ghost" onClick={handlePrint} disabled={printing}>
           <Printer size={16} />
@@ -478,7 +302,7 @@ Ce document est généré en mode démo.`
           {/* Centre d'examen */}
           <div>
             <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Building2 size={18} /> Centre d'examen
+              <Building2 size={18} /> Centre d&apos;examen
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ padding: 12, background: 'var(--bg-soft)', borderRadius: 8 }}>
@@ -496,7 +320,7 @@ Ce document est généré en mode démo.`
               {convocation.salle && (
                 <div style={{ padding: 12, background: 'var(--bg-soft)', borderRadius: 8 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Salle / Place</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
                     {convocation.salle} - Place {convocation.numeroPlace}
                   </div>
                 </div>
@@ -507,18 +331,18 @@ Ce document est généré en mode démo.`
           {/* Horaire */}
           <div>
             <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Clock size={18} /> Horaire de l'épreuve
+              <Clock size={18} /> Horaire de l&apos;épreuve
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               <div style={{ padding: 12, background: 'var(--bg-soft)', borderRadius: 8 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Date</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                   {new Date(convocation.dateEpreuve).toLocaleDateString('fr-FR')}
                 </div>
               </div>
               <div style={{ padding: 12, background: 'var(--bg-soft)', borderRadius: 8 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Horaire</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                   {convocation.heureDebut} - {convocation.heureFin}
                 </div>
               </div>
@@ -529,13 +353,13 @@ Ce document est généré en mode démo.`
         {/* Bloc QR Code */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
-            <SimpleQRCode value={convocation.qrPayload} size={200} />
+            <QRCodeSVG value={convocation.qrPayload} size={220} />
             <div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
                 Code QR de validation
               </p>
-              <p style={{ fontSize: 10, color: 'var(--text-muted)', wordBreak: 'break-all' }}>
-                {convocation.qrPayload}
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                Présentez ce QR le jour de l’examen pour validation.
               </p>
             </div>
           </div>
@@ -546,7 +370,7 @@ Ce document est généré en mode démo.`
             </h3>
             <ul style={{ fontSize: 13, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
               <li>📄 Cette convocation imprimée ou sur mobile</li>
-              <li>🆔 Pièce d'identité (CIN ou Passeport)</li>
+              <li>🆔 Pièce d&apos;identité (CIN ou Passeport)</li>
               <li>✍️ Stylo noir et règle</li>
               <li>📏 Matériel autorisé selon la matière</li>
             </ul>
@@ -557,7 +381,7 @@ Ce document est généré en mode démo.`
               ⏰ Important
             </h3>
             <p style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-              Présentez-vous <strong>30 minutes avant</strong> l'heure de début. 
+              Présentez-vous <strong>30 minutes avant</strong> l&apos;heure de début. 
               Les retardataires ne seront pas admis après 15 minutes.
             </p>
           </div>
@@ -584,7 +408,7 @@ Ce document est généré en mode démo.`
                   borderLeft: `4px solid ${epreuve.type === 'EPREUVE' ? 'var(--accent)' : 'var(--accent-yellow)'}`,
                 }}
               >
-                <div><Clock size={18} style={{ color: 'var(--accent)' }} /></div>
+                <div><Clock size={18} style={{ color: 'var(--text-primary)' }} /></div>
                 <div>
                   <div style={{ fontWeight: 700 }}>{epreuve.matiere}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
@@ -592,7 +416,7 @@ Ce document est généré en mode démo.`
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', fontSize: 12 }}>
-                  <div style={{ color: 'var(--accent)' }}>Coeff. {epreuve.coefficient}</div>
+                  <div style={{ color: 'var(--text-primary)' }}>Coeff. {epreuve.coefficient}</div>
                   <div style={{ color: 'var(--text-muted)' }}>{epreuve.duree} min</div>
                 </div>
               </div>
