@@ -8,7 +8,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { User } from '@/types';
 import { useCandidatData } from '@/lib/useCandidatData';
@@ -25,15 +25,149 @@ function daysUntil(value: string | Date | undefined | null): number | null {
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function buildHoursMock(highlightDayIdx = 3): { d: string; v: number; highlight: boolean; ts: string | undefined }[] {
-  // Deterministic synthetic series — replaced by real data if available
-  const base = [3.5, 5.0, 2.2, 8.75, 4.0, 1.5, 3.8];
-  return base.map((v, i) => ({
-    d: FR_DAYS_SHORT[i],
-    v,
-    highlight: i === highlightDayIdx,
-    ts: i === highlightDayIdx ? '8h 45 min · 5 fév.' : undefined,
-  }));
+function formatHours(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}:${String(minutes).padStart(2, '0')}`;
+}
+
+function getMonday(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function areSameDay(a: Date, b: Date): boolean {
+  return normalizeCalendarDate(a) === normalizeCalendarDate(b);
+}
+
+function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' | 'Mensuel', today = new Date()) {
+  const revisionItems = planning
+    .filter((item) => item.type === 'REVISION')
+    .map((item) => ({
+      ...item,
+      dateObj: getValidDate(item.date),
+    }))
+    .filter((item): item is EpreuvePlanning & { dateObj: Date } => item.dateObj !== null);
+
+  if (revisionItems.length === 0) {
+    return { data: [], summary: 'Aucune donnée de révision planifiée.', trend: '' };
+  }
+
+  const computeTrend = (current: number, previous: number, context: string) => {
+    if (current === 0 && previous === 0) return `Aucune révision ${context} précédente.`;
+    if (previous === 0) return `+100% par rapport à ${context} précédente`; 
+    const change = Math.round(((current - previous) / previous) * 100);
+    return `${change >= 0 ? '+' : ''}${change}% par rapport à ${context} précédente`;
+  };
+
+  if (period === 'Hebdomadaire') {
+    const weekStart = getMonday(today);
+    const previousWeekStart = new Date(weekStart);
+    previousWeekStart.setDate(previousWeekStart.getDate() - 7);
+
+    const slots = Array.from({ length: 7 }, (_, index) => {
+      const slotDate = new Date(weekStart);
+      slotDate.setDate(slotDate.getDate() + index);
+      return {
+        d: FR_DAYS_SHORT[index],
+        v: 0,
+        highlight: areSameDay(slotDate, today),
+        ts: undefined as string | undefined,
+        iso: normalizeCalendarDate(slotDate),
+      };
+    });
+
+    let totalThisWeek = 0;
+    let totalLastWeek = 0;
+
+    revisionItems.forEach((item) => {
+      const itemHours = item.duree / 60;
+      const itemIso = normalizeCalendarDate(item.dateObj);
+      const itemWeekStart = getMonday(item.dateObj);
+
+      if (normalizeCalendarDate(itemWeekStart) === normalizeCalendarDate(weekStart)) {
+        totalThisWeek += itemHours;
+      }
+      if (normalizeCalendarDate(itemWeekStart) === normalizeCalendarDate(previousWeekStart)) {
+        totalLastWeek += itemHours;
+      }
+
+      const slot = slots.find((s) => s.iso === itemIso);
+      if (slot) {
+        slot.v += itemHours;
+        if (areSameDay(item.dateObj, today)) {
+          slot.ts = `${formatHours(item.duree)} · aujourd'hui`;
+        }
+      }
+    });
+
+    const summary = totalThisWeek > 0
+      ? `${formatHours(totalThisWeek * 60)} de révision cette semaine`
+      : 'Aucune révision programmée cette semaine.';
+    const trend = computeTrend(totalThisWeek, totalLastWeek, 'la semaine');
+
+    return { data: slots.map(({ iso, ...slot }) => slot), summary, trend };
+  }
+
+  const month = today.getMonth();
+  const year = today.getFullYear();
+  const firstOfMonth = new Date(year, month, 1);
+  const monthStart = getMonday(firstOfMonth);
+  const monthEnd = new Date(year, month + 1, 0);
+
+  const weeks: Array<{ d: string; v: number; highlight: boolean; ts?: string; start: Date; end: Date }> = [];
+  let weekStart = new Date(monthStart);
+  let weekIndex = 0;
+
+  while (weekStart <= monthEnd || weeks.length < 4) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weeks.push({
+      d: `S${weekIndex + 1}`,
+      v: 0,
+      highlight: today >= weekStart && today <= weekEnd,
+      ts: undefined,
+      start: new Date(weekStart),
+      end: new Date(weekEnd),
+    });
+    weekStart.setDate(weekStart.getDate() + 7);
+    weekIndex += 1;
+    if (weeks.length >= 6) break;
+  }
+
+  let totalMonth = 0;
+  let totalLastMonth = 0;
+  const lastMonth = month === 0 ? 11 : month - 1;
+  const lastMonthYear = month === 0 ? year - 1 : year;
+
+  revisionItems.forEach((item) => {
+    const itemHours = item.duree / 60;
+    const itemDate = item.dateObj;
+    if (itemDate.getMonth() === month && itemDate.getFullYear() === year) {
+      const weekSlot = weeks.find((w) => itemDate >= w.start && itemDate <= w.end);
+      if (weekSlot) {
+        weekSlot.v += itemHours;
+        totalMonth += itemHours;
+        if (weekSlot.highlight) {
+          weekSlot.ts = `${formatHours(item.duree)} · séance de révision`;
+        }
+      }
+    }
+    if (itemDate.getMonth() === lastMonth && itemDate.getFullYear() === lastMonthYear) {
+      totalLastMonth += itemHours;
+    }
+  });
+
+  const summary = totalMonth > 0
+    ? `${formatHours(totalMonth * 60)} de révision ce mois-ci`
+    : 'Aucune révision programmée ce mois-ci.';
+  const trend = computeTrend(totalMonth, totalLastMonth, 'le mois');
+
+  return { data: weeks.map(({ start, end, ...slot }) => slot), summary, trend };
 }
 
 function parseDateSafely(value: string | Date | undefined | null): Date | null {
@@ -116,7 +250,10 @@ function derivePhases(candidat: CandidatMe): Array<{ key: string; label: string;
 export default function CandidateDashboard({ user }: { user: User }) {
   const { data, loading, error } = useCandidatData();
   const [downloading, setDownloading] = useState(false);
+  const [revisionPeriod, setRevisionPeriod] = useState<'Hebdomadaire' | 'Mensuel'>('Hebdomadaire');
   const router = useRouter();
+
+  const revisionData = useMemo(() => buildRevisionHours(data?.planning ?? [], revisionPeriod), [data?.planning, revisionPeriod]);
 
   if (loading) return <DashboardSkeleton />;
   if (!data) {
@@ -185,8 +322,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
   const docs: DocumentItem[] = [
     { key: 'photoIdentite',    label: "Pièce d'identité",     Icon: IdCard,    state: (typeof candidat.piecesJustificatives?.photoIdentite === 'string' ? 'valide' : candidat.piecesJustificatives?.photoIdentite?.status) ?? 'manquant' },
     { key: 'acteNaissance',    label: 'Acte de naissance',    Icon: FileCheck, state: (typeof candidat.piecesJustificatives?.acteNaissance === 'string' ? 'valide' : candidat.piecesJustificatives?.acteNaissance?.status) ?? 'manquant' },
-    { key: 'diplomePrecedent', label: 'Diplôme précédent',    Icon: GraduationCap, state: (typeof candidat.piecesJustificatives?.diplomePrecedent === 'string' ? 'valide' : candidat.piecesJustificatives?.diplomePrecedent?.status) ?? 'manquant' },
-    { key: 'photoSupp',        label: 'Photo identité (4x4)', Icon: IdCard,    state: 'manquant' as const },
+    { key: 'photoSupp',        label: 'Photo identité (4x4)', Icon: IdCard,    state: (typeof candidat.piecesJustificatives?.photoSupp === 'string' ? 'valide' : candidat.piecesJustificatives?.photoSupp?.status) ?? 'manquant' },
   ];
 
   const handleDownload = async () => {
@@ -212,7 +348,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
     }
   };
 
-  const hours: { d: string; v: number; highlight?: boolean; ts?: string }[] = [];
+  const hours: { d: string; v: number; highlight?: boolean; ts?: string }[] = revisionData.data;
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
@@ -330,20 +466,29 @@ export default function CandidateDashboard({ user }: { user: User }) {
                   <ArrowUpRight size={13} strokeWidth={2.6} />
                 </span>
                 <span style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>
-                  <strong style={{ color: 'var(--ink)' }}>+21%</strong> par rapport à la semaine dernière
+                  <strong style={{ color: 'var(--ink)' }}>{revisionData.trend || '---'}</strong>
                 </span>
               </div>
             </div>
-            <select data-testid="hours-period" style={{ background: 'var(--bg-soft)', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer' }}>
-              <option>Hebdomadaire</option>
-              <option>Mensuel</option>
+            <select
+              data-testid="hours-period"
+              value={revisionPeriod}
+              onChange={(e) => setRevisionPeriod(e.target.value as 'Hebdomadaire' | 'Mensuel')}
+              style={{ background: 'var(--bg-soft)', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer' }}>
+              <option value="Hebdomadaire">Hebdomadaire</option>
+              <option value="Mensuel">Mensuel</option>
             </select>
           </div>
-          {hours.length > 0 ? (
-            <BarChart data={hours} />
+          {revisionData.data.length > 0 ? (
+            <BarChart data={revisionData.data} />
           ) : (
             <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-soft)', fontSize: 13, background: 'var(--bg-soft)', borderRadius: 14 }}>
-              Aucune donnée réelle de révision disponible.
+              {revisionData.summary}
+            </div>
+          )}
+          {revisionData.data.length > 0 && (
+            <div style={{ marginTop: 14, fontSize: 13, color: 'var(--ink-soft)' }}>
+              {revisionData.summary}
             </div>
           )}
         </div>
@@ -456,18 +601,18 @@ export default function CandidateDashboard({ user }: { user: User }) {
         </div>
 
         {/* Centre d'examen */}
-        <div className="card" data-testid="center-card" style={{ padding: 22, background: 'var(--ink)', color: 'var(--ink-dark)', position: 'relative', overflow: 'hidden' }}>
+        <div className="card" data-testid="center-card" style={{ padding: 22, background: 'var(--bg-card)', color: 'var(--ink)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
             <div className="tile tile-sm" style={{ background: 'var(--lime)' }}>
               <MapPin size={17} strokeWidth={2.2} color="var(--ink)\" />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-dark-soft)' }}>Centre d'examen</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>Centre d'examen</div>
           </div>
 
-          <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, color: 'var(--ink-dark)' }}>
+          <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, color: 'var(--ink)' }}>
             {candidat.centreAffecte?.nom ?? '— En cours d\'affectation'}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--ink-dark-soft)', marginTop: 4 }}>
+          <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
             {candidat.centreAffecte
               ? `${candidat.centreAffecte.ville} · Salle ${candidat.centreAffecte.salle} · Place n° ${candidat.centreAffecte.numeroPlace}`
               : 'Affectation par sectorisation automatique'}
@@ -559,7 +704,7 @@ function BarChart({ data }: { data: { d: string; v: number; highlight?: boolean;
       </svg>
       {highlightIdx >= 0 && data[highlightIdx].ts && (
         <div style={{ position: 'absolute', left: `calc(${(highlightIdx + 0.5) * (100 / data.length)}% - 70px)`, top: 0,
-          background: 'var(--ink)', color: 'var(--ink-dark)', padding: '6px 10px', borderRadius: 10,
+          background: 'var(--ink)', color: 'var(--ink-dark-soft)', padding: '6px 10px', borderRadius: 10,
           fontSize: 11.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
           <span style={{ width: 6, height: 6, borderRadius: 50, background: 'var(--lime)' }} />
           {data[highlightIdx].ts}

@@ -34,7 +34,7 @@ const navItems = [
 
 const bottomNav = [
   { href: '#notifications', label: 'Notifications', icon: Bell, badge: 2 },
-  { href: '#settings',      label: 'Paramètres',    icon: Settings },
+  { href: '/dashboard/parametres',      label: 'Paramètres',    icon: Settings },
 ];
 
 const roleColors: Record<Role, string> = {
@@ -253,11 +253,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {bottomNav.map((b) => {
             const Icon = b.icon;
+            const itemContent = (
+              <>
+                <Icon size={18} strokeWidth={1.9} />
+                {!sidebarCollapsed && <span style={{ flex: 1 }}>{b.label}</span>}
+                {!sidebarCollapsed && b.badge && (
+                  <span style={{
+                    background: '#FF6B5B', color: '#fff',
+                    fontSize: 10, fontWeight: 700,
+                    padding: '2px 7px', borderRadius: 999,
+                    minWidth: 20, textAlign: 'center',
+                  }}>{b.badge}</span>
+                )}
+              </>
+            );
+
+            if (b.href.startsWith('/')) {
+              return (
+                <Link
+                  key={b.label}
+                  href={b.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  data-testid={`nav-${b.label.toLowerCase()}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
+                    padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 999,
+                    textDecoration: 'none',
+                    color: 'var(--ink-dark-soft)', background: 'transparent',
+                    fontWeight: 500, fontSize: 14, fontFamily: 'inherit',
+                    width: '100%', textAlign: 'left',
+                    transition: 'all 0.18s ease',
+                    justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!(e.currentTarget as HTMLElement).classList.contains('active')) {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--bg-sidebar-hover)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
+                  }}
+                  title={sidebarCollapsed ? b.label : undefined}
+                >
+                  {itemContent}
+                </Link>
+              );
+            }
+
             return (
               <button
                 key={b.label}
                 data-testid={`nav-${b.label.toLowerCase()}`}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => {
+                  if (b.href.startsWith('#')) {
+                    window.location.hash = b.href;
+                  }
+                  setMobileMenuOpen(false);
+                }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
                   padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 999,
@@ -272,16 +324,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'transparent'}
                 title={sidebarCollapsed ? b.label : undefined}
               >
-                <Icon size={18} strokeWidth={1.9} />
-                {!sidebarCollapsed && <span style={{ flex: 1 }}>{b.label}</span>}
-                {!sidebarCollapsed && b.badge && (
-                  <span style={{
-                    background: '#FF6B5B', color: '#fff',
-                    fontSize: 10, fontWeight: 700,
-                    padding: '2px 7px', borderRadius: 999,
-                    minWidth: 20, textAlign: 'center',
-                  }}>{b.badge}</span>
-                )}
+                {itemContent}
               </button>
             );
           })}
