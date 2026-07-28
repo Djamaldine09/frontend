@@ -15,19 +15,6 @@ import { useGoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 
 // --- IMPORTS FACEBOOK SDK ---
 
-// --- IMPORTS FIREBASE ---
-import { initializeApp } from 'firebase/app';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB7sjTBjRLJA9pWeoZ07uZiu9y7iOSU-q8",
-  authDomain: "examgest-a96f9.firebaseapp.com",
-  projectId: "examgest-a96f9",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
 export default function LoginPage() {
   return (
     <GoogleOAuthProvider clientId="198209309688-pg3puag6p249q6ms9i4tqnfh5o75bnbb.apps.googleusercontent.com">
@@ -44,7 +31,7 @@ function LoginContent() {
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [otpSent, setOtpSent] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHttps, setIsHttps] = useState(false);
 
@@ -197,28 +184,19 @@ function LoginContent() {
     }
   };
 
-  // ================= 3. LOGIQUE FIREBASE (TÉLÉPHONE) =================
-  const setupRecaptcha = () => {
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-      });
-    }
-  };
-
+  // ================= 3. LOGIQUE OTP SMS BEFIANA (TELEPHONE) =================
   const handleSendSMS = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber) return toast.error("Veuillez entrer un numéro valide");
     
     setLoading(true);
-    setupRecaptcha();
     try {
-      const appVerifier = (window as any).recaptchaVerifier;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-      setConfirmationResult(confirmation);
+      await authAPI.sendLoginOtp({ telephone: phoneNumber });
+      setOtpSent(true);
+      setVerificationCode('');
       toast.success("Code SMS envoyé !");
-    } catch (error) {
-      toast.error("Erreur d'envoi. Format attendu : +26134...");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Erreur d'envoi. Format attendu : +26134...");
       console.error(error);
     } finally {
       setLoading(false);
@@ -231,11 +209,9 @@ function LoginContent() {
 
     setLoading(true);
     try {
-      const result = await confirmationResult.confirm(verificationCode);
-      const firebaseToken = await result.user.getIdToken();
-
-      const res = await axios.post('http://localhost:5000/api/auth/phone', { 
-        token: firebaseToken 
+      const res = await authAPI.verifyLoginOtp({
+        telephone: phoneNumber,
+        code: verificationCode,
       });
       
       const data = res.data;
@@ -251,7 +227,7 @@ function LoginContent() {
 
       login(data.token, user);
       toast.success(`Bienvenue !`);
-      router.push('/dashboard');
+      router.push(data.profileIncomplete ? '/complete-profile' : '/dashboard');
     } catch (error) {
       toast.error("Code incorrect ou expiré");
       console.error(error);
@@ -277,8 +253,6 @@ function LoginContent() {
         }
       `}</style>
       
-      <div id="recaptcha-container"></div>
-
       {/* ================= GAUCHE : BANNIÈRE AVEC CAROUSEL IMAGES ================= */}
       <div style={{ 
         display: 'flex', 
@@ -593,7 +567,7 @@ function LoginContent() {
             </>
           ) : (
             <>
-              {!confirmationResult ? (
+              {!otpSent ? (
                 <form onSubmit={handleSendSMS} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Numéro de téléphone</label>
@@ -648,7 +622,8 @@ function LoginContent() {
               <button 
                 onClick={() => {
                   setLoginMethod('email');
-                  setConfirmationResult(null);
+                  setOtpSent(false);
+                  setVerificationCode('');
                 }} 
                 style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '14px', cursor: 'pointer', marginTop: '10px', textDecoration: 'underline' }}
               >

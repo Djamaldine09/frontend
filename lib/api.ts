@@ -60,6 +60,12 @@ export const authAPI = {
     api.post('/auth/register', data),
   login: (data: { email: string; motDePasse: string }) =>
     api.post('/auth/login', data),
+  sendLoginOtp: (data: { telephone: string }) =>
+    api.post('/auth/sms/login/send', data),
+  verifyLoginOtp: (data: { telephone: string; code: string }) =>
+    api.post('/auth/sms/login/verify', data),
+  updateMe: (data: { nom: string; prenom: string; email: string; telephone?: string }) =>
+    api.put('/auth/me', data),
 };
 
 // Examens
@@ -110,6 +116,21 @@ export interface CreateExamenDTO {
 export const resultatsAPI = {
   saisirNotes: (candidatId: string, data: { examen: string; notes: { matiere: string; valeur: number; coefficient: number }[] }) =>
     api.post(`/resultats/candidat/${candidatId}/notes`, data),
+  genererAnonymat: (examenId: string) =>
+    api.post(`/resultats/examens/${examenId}/anonymat/generer`),
+  listerCopiesAnonymes: (examenId: string) =>
+    api.get<Array<{
+      _id: string;
+      numeroAnonymat: string;
+      notes: { matiere: string; valeur: number; coefficient: number }[];
+      statutCorrection: 'A_CORRIGER' | 'EN_COURS' | 'TERMINE';
+      anonymatLeve: boolean;
+      updatedAt: string;
+    }>>(`/resultats/examens/${examenId}/anonymat/copies`),
+  saisirNoteAnonyme: (numeroAnonymat: string, data: { examenId: string; matiere: string; valeur: number; coefficient?: number }) =>
+    api.post(`/resultats/anonymat/${encodeURIComponent(numeroAnonymat)}/notes`, data),
+  leverAnonymat: (examenId: string, force = false) =>
+    api.post(`/resultats/examens/${examenId}/anonymat/lever`, { force }),
 };
 
 // Documents

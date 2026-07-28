@@ -104,14 +104,25 @@ export default function AdminDashboardPage() {
   }
 
   // Préparer les données pour les graphiques
+  const statusLabels: Record<string, string> = {
+    BROUILLON: 'Brouillon',
+    EN_ATTENTE_VALIDATION: 'En attente',
+    VALIDE: 'Validés',
+    REJETE: 'Rejetés',
+    INSCRIT: 'Inscrits',
+    PAYE: 'Payés',
+  };
+
   const candidatsByStatusData = Object.entries(dashboard.candidats.byStatus).map(
     ([status, count]) => ({
-      name: status,
+      name: statusLabels[status] || status,
+      key: status,
       value: count,
     })
   );
+  const candidatsStatusTotal = candidatsByStatusData.reduce((sum, item) => sum + item.value, 0);
 
-  const COLORS = ['#3fbf50', '#d29922', '#8b949e', '#da3633'];
+  const COLORS = ['#ff794a', '#ff5f64', '#b95cff', '#45c266', '#26b7c7', '#f5bd38'];
 
   return (
     <div className="animate-fade-in">
@@ -234,25 +245,90 @@ export default function AdminDashboardPage() {
           >
             📊 Candidats par statut
           </h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={candidatsByStatusData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(160px, 0.85fr)', gap: 14, alignItems: 'center' }}>
+            <div style={{ position: 'relative', height: 260 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 8, right: 12, bottom: 8, left: 12 }}>
+                  <Pie
+                    data={candidatsByStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={58}
+                    outerRadius={86}
+                    paddingAngle={4}
+                    cornerRadius={9}
+                    dataKey="value"
+                    labelLine={false}
+                    label={({ cx, cy, midAngle, outerRadius, percent }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = outerRadius + 18;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="var(--text-secondary)"
+                          textAnchor={x > cx ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          style={{ fontSize: 11, fontWeight: 800 }}
+                        >
+                          {`${Math.round(percent * 100)}%`}
+                        </text>
+                      );
+                    }}
+                  >
+                    {candidatsByStatusData.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="var(--bg-soft)" strokeWidth={3} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => [`${value.toLocaleString()} candidat(s)`, name]}
+                    contentStyle={{
+                      background: 'var(--bg-soft)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 10,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  pointerEvents: 'none',
+                }}
               >
-                {COLORS.map((color, index) => (
-                  <Cell key={`cell-${index}`} fill={color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
+                    {candidatsStatusTotal.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5 }}>
+                    Total candidats
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 10 }}>
+              {candidatsByStatusData.map((entry, index) => {
+                const percent = candidatsStatusTotal > 0 ? Math.round((entry.value / candidatsStatusTotal) * 100) : 0;
+                return (
+                  <div key={entry.key} style={{ display: 'grid', gridTemplateColumns: '12px 1fr auto', alignItems: 'center', gap: 9 }}>
+                    <span style={{ width: 12, height: 12, borderRadius: 999, background: COLORS[index % COLORS.length], boxShadow: `0 0 12px ${COLORS[index % COLORS.length]}55` }} />
+                    <span style={{ color: 'var(--text-secondary)', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {entry.name}
+                    </span>
+                    <strong style={{ color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+                      {percent}%
+                    </strong>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Graphique centres */}

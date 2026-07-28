@@ -227,18 +227,41 @@ export default function DashboardPage() {
       );
     }
 
-    const candidatsByStatus = dashboardData.candidats.byStatus ?? {};
-    const candidatsByStatusData = Object.entries(candidatsByStatus).map(([status, count]) => ({
-      name: status === 'INSCRIT' ? 'Inscrits' : status === 'PAYE' ? 'Payés' : status === 'VALIDE' ? 'Validés' : 'Rejetés',
-      value: count,
-    }));
+// Préparer les données pour les graphiques
+    const statusLabels: Record<string, string> = {
+      BROUILLON: 'Brouillon',
+      EN_ATTENTE_VALIDATION: 'En attente',
+      VALIDE: 'Validés',
+      REJETE: 'Rejetés',
+      INSCRIT: 'Inscrits',
+      PAYE: 'Payés',
+    };
 
-    const COLORS = ['#3fbf50', '#d29922', '#8b949e', '#da3633'];
+    // NOUVEAU : Assigner une couleur fixe à chaque statut
+    const statusColors: Record<string, string> = {
+      BROUILLON: '#94a3b8',             // Gris
+      EN_ATTENTE_VALIDATION: '#f5bd38', // Jaune/Orange
+      VALIDE: '#45c266',                // Vert
+      REJETE: '#ff5f64',                // Rouge
+      INSCRIT: '#26b7c7',               // Bleu cyan
+      PAYE: '#b95cff',                  // Violet
+    };
 
-    const occupationRate =
-      dashboardData.centres.capacity > 0
-        ? Math.round((dashboardData.centres.occupied / dashboardData.centres.capacity) * 100)
-        : 0;
+    const candidatsByStatusData = Object.entries(dashboardData.candidats.byStatus).map(
+      ([status, count]) => ({
+        name: statusLabels[status] || status,
+        key: status,
+        value: count,
+        // On récupère la couleur fixe, ou on met un gris par défaut
+        color: statusColors[status] || '#cbd5e1', 
+      })
+    );
+    const candidatsStatusTotal = candidatsByStatusData.reduce((sum, item) => sum + item.value, 0);
+
+    // Calcul du taux d'occupation
+    const occupationRate = dashboardData.centres.capacity > 0 
+      ? Math.round((dashboardData.centres.occupied / dashboardData.centres.capacity) * 100) 
+      : 0;
 
     return (
       <div className="animate-fade-in">
@@ -321,25 +344,103 @@ export default function DashboardPage() {
             <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>
               Candidats par statut
             </h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={candidatsByStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  dataKey="value"
-                >
-                  {candidatsByStatusData.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(160px, 0.85fr)', gap: 14, alignItems: 'center' }}>
+            <div style={{ position: 'relative', height: 260 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 8, right: 12, bottom: 8, left: 12 }}>
+                  <Pie
+                    data={candidatsByStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={58}
+                    outerRadius={86}
+                    paddingAngle={4}
+                    cornerRadius={9}
+                    dataKey="value"
+                    labelLine={false}
+                    label={({ cx, cy, midAngle, outerRadius, percent }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = outerRadius + 18;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="var(--text-secondary)"
+                          textAnchor={x > cx ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          style={{ fontSize: 11, fontWeight: 800 }}
+                        >
+                          {`${Math.round(percent * 100)}%`}
+                        </text>
+                      );
+                    }}
+                  >
+                    {candidatsByStatusData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color} 
+                        stroke="var(--bg-soft)" 
+                        strokeWidth={3} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => [`${value.toLocaleString()} candidat(s)`, name]}
+                    contentStyle={{
+                      background: 'var(--bg-soft)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 10,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
+                    {candidatsStatusTotal.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5 }}>
+                    Total candidats
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 10 }}>
+                {candidatsByStatusData.map((entry) => {
+                  const percent = candidatsStatusTotal > 0 ? Math.round((entry.value / candidatsStatusTotal) * 100) : 0;
+                  return (
+                    <div key={entry.key} style={{ display: 'grid', gridTemplateColumns: '12px 1fr auto', alignItems: 'center', gap: 9 }}>
+                      {/* On utilise entry.color ici pour le point de couleur et l'ombre */}
+                      <span style={{ 
+                        width: 12, 
+                        height: 12, 
+                        borderRadius: 999, 
+                        background: entry.color, 
+                        boxShadow: `0 0 12px ${entry.color}55` 
+                      }} />
+                      <span style={{ color: 'var(--text-secondary)', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {entry.name}
+                      </span>
+                      <strong style={{ color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+                        {percent}%
+                      </strong>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
+        </div>
 
           <div className="card" style={{ padding: 20 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>

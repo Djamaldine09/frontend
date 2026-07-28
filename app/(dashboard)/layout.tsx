@@ -1,14 +1,16 @@
+// app/(dashboard)/layout.tsx
 'use client';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
+import Image from 'next/image';
 import NotificationBell from '@/components/NotificationBell';
 import {
   LayoutGrid, FileText, BookOpen, ScrollText, CreditCard, Building2,
   Bell, Settings, LogOut, Search, Download, ArrowUpRight, Calendar,
-  Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, Moon, Sun, CheckCircle, ChevronLeft, ChevronRight
+  Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, Moon, Sun, CheckCircle
 } from 'lucide-react';
 
 const navItems = [
@@ -20,7 +22,7 @@ const navItems = [
   { href: '/dashboard/admin/candidat',  label: 'Candidats',       icon: FileText,    roles: ['ADMIN'] },
   { href: '/matieres', label: 'Matières',        icon: BookOpen,    roles: ['ADMIN'] },
   { href: '/examens',    label: 'Examens',         icon: BookOpen,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
-  { href: '/resultats',  label: 'Résultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
+  { href: '/resultats',  label: 'Résultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','CORRECTEUR','CANDIDAT'] },
   { href: '/affectation-automatique',  label: 'Affectations',     icon: ScrollText,    roles: ['RESPONSABLE'] },
   { href: '/presence',      label: 'Présences',       icon: Activity,      roles: ['SURVEILLANT'] },
   { href: '/notation',      label: 'Saisir les notes', icon: FileText,      roles: ['CORRECTEUR'] },
@@ -106,6 +108,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         position: 'relative',
       }}
     >
+      {/* ============================ STYLES DYNAMIQUES ============================ */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `
+      }} />
+
       {/* ============================ MOBILE HAMBURGER ============================ */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -150,13 +165,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ============================ SIDEBAR ============================ */}
       <aside
         data-testid="sidebar"
-        className={`dark-scroll sidebar ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}
+        className={`sidebar ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}
         style={{
           width: sidebarCollapsed ? 80 : 248,
           background: 'var(--bg-sidebar)',
           color: 'var(--ink-dark)',
-          borderRadius: 'var(--r-xl)',
-          padding: sidebarCollapsed ? 18 : 22,
+          // Ici on augmente considérablement le border-radius (40px par défaut, et 48px si réduit pour un effet pilule parfait)
+          borderRadius: sidebarCollapsed ? '48px' : '36px',
+          padding: sidebarCollapsed ? '18px 12px' : '22px',
           display: 'flex',
           flexDirection: 'column',
           position: 'sticky',
@@ -167,53 +183,84 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {/* Brand */}
-        <Link href="/dashboard" style={{ textDecoration: 'none', color: 'inherit' }} data-testid="brand-link">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <div
-              style={{
-                width: 36, height: 36, borderRadius: 35,
-                background: 'var(--lime)', display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                color: 'var(--ink)', fontWeight: 800, fontSize: 16,
-                letterSpacing: -0.5, flexShrink: 0,
-              }}
-            >EM</div>
+        {/* Brand & Toggle Croix sur la même ligne */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'space-between', marginBottom: 6 }}>
+          <Link 
+            href="/dashboard" 
+            onClick={(e) => {
+              if (sidebarCollapsed) {
+                e.preventDefault();
+                setSidebarCollapsed(false);
+              }
+            }}
+            style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minWidth: 0, cursor: 'pointer', width: sidebarCollapsed ? '100%' : 'auto' }} 
+            data-testid="brand-link"
+            title={sidebarCollapsed ? "Agrandir le menu" : "Aller au tableau de bord"}
+          >
+            <div style={{ width: sidebarCollapsed ? 44 : 48, height: sidebarCollapsed ? 44 : 48, flexShrink: 0, position: 'relative' }}>
+              <Image
+                src="/logo/logo-app1.png"
+                alt="Logo ExamenMG"
+                fill
+                style={{ 
+                  objectFit: 'contain',
+                  borderRadius: 35
+                }}
+                sizes="36px"
+              />
+            </div>
+
             {!sidebarCollapsed && (
-              <div>
-                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>ExamenMG</div>
-                <div style={{ fontSize: 10.5, color: 'var(--ink-dark-soft)', fontFamily: 'var(--font-mono)', marginTop: -1 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4, whiteSpace: 'nowrap' }}>Exam Mada</div>
+                <div style={{ fontSize: 10.5, color: 'var(--ink-dark-soft)', fontFamily: 'var(--font-mono)', marginTop: -1, whiteSpace: 'nowrap' }}>
                   national.exam
                 </div>
               </div>
             )}
-          </div>
-        </Link>
+          </Link>
 
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: sidebarCollapsed ? 'center' : 'flex-end',
-            padding: '8px 12px',
-            borderRadius: 35,
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--ink-dark-soft)',
-            marginBottom: 12,
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = 'var(--bg-sidebar-hover)'}
-          onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-        >
-          {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+          {/* Bouton Croix sur la même ligne pour basculer le collapse */}
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--ink-dark-soft)',
+                flexShrink: 0,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = 'var(--bg-sidebar-hover)'}
+              onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+              title="Réduire"
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
 
         {/* Main nav */}
-        <nav style={{ flex: 1, marginTop: 22, display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto', overflowX: 'hidden', paddingRight: 4 }} className="dark-scroll">
+        <nav 
+          style={{ 
+            flex: 1, 
+            marginTop: 22, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 4, 
+            overflowY: 'auto', 
+            overflowX: 'hidden', 
+            paddingRight: sidebarCollapsed ? 0 : 4 
+          }} 
+          className={sidebarCollapsed ? "hide-scrollbar" : "dark-scroll"}
+        >
           {allowed.map((item, idx) => {
             const Icon = item.icon;
             const active = pathname === item.href || (idx === 0 && pathname === '/dashboard');
@@ -226,7 +273,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 style={{
                   display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
-                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 999,
+                  padding: sidebarCollapsed ? '12px' : '11px 14px', borderRadius: 999,
                   textDecoration: 'none',
                   color: isFirstActive ? 'var(--ink)' : 'var(--ink-dark-soft)',
                   background: isFirstActive ? 'var(--lime)' : 'transparent',
@@ -277,7 +324,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   data-testid={`nav-${b.label.toLowerCase()}`}
                   style={{
                     display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
-                    padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 999,
+                    padding: sidebarCollapsed ? '12px' : '11px 14px', borderRadius: 999,
                     textDecoration: 'none',
                     color: 'var(--ink-dark-soft)', background: 'transparent',
                     fontWeight: 500, fontSize: 14, fontFamily: 'inherit',
@@ -312,7 +359,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
-                  padding: sidebarCollapsed ? '11px' : '11px 14px', borderRadius: 999,
+                  padding: sidebarCollapsed ? '12px' : '11px 14px', borderRadius: 999,
                   color: 'var(--ink-dark-soft)', background: 'transparent',
                   border: 'none', cursor: 'pointer',
                   fontWeight: 500, fontSize: 14, fontFamily: 'inherit',
@@ -372,7 +419,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           data-testid="logout-button"
           style={{
             marginTop: 14, display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 10,
-            padding: sidebarCollapsed ? '10px' : '10px 12px', borderRadius: 12, color: 'var(--ink-dark-soft)',
+            padding: sidebarCollapsed ? '12px' : '10px 12px', borderRadius: 12, color: 'var(--ink-dark-soft)',
             background: 'transparent', border: 'none', cursor: 'pointer',
             fontSize: 13, fontFamily: 'inherit', fontWeight: 500,
             justifyContent: sidebarCollapsed ? 'center' : 'flex-start',

@@ -32,6 +32,14 @@ export default function ItinerairePage() {
       return;
     }
 
+    // Priorité absolue : coordonnées GPS précises déjà enregistrées pour le centre.
+    // On ne géolocalise l'adresse texte (Nominatim) qu'en dernier recours, car un
+    // géocodage d'adresse peut retomber sur un point imprécis ou erroné.
+    if (centreLat !== undefined && centreLng !== undefined) {
+      setMapCoordinates({ latitude: centreLat, longitude: centreLng });
+      return;
+    }
+
     if (centreAddress) {
       const encodedAddress = encodeURIComponent(centreAddress);
       fetch(`https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1`)
@@ -40,24 +48,13 @@ export default function ItinerairePage() {
           if (Array.isArray(locations) && locations.length > 0) {
             const location = locations[0];
             setMapCoordinates({ latitude: Number(location.lat), longitude: Number(location.lon) });
-          } else if (centreLat !== undefined && centreLng !== undefined) {
-            setMapCoordinates({ latitude: centreLat, longitude: centreLng });
           } else {
             setMapCoordinates({ latitude: -18.8792, longitude: 47.5079 });
           }
         })
         .catch(() => {
-          if (centreLat !== undefined && centreLng !== undefined) {
-            setMapCoordinates({ latitude: centreLat, longitude: centreLng });
-          } else {
-            setMapCoordinates({ latitude: -18.8792, longitude: 47.5079 });
-          }
+          setMapCoordinates({ latitude: -18.8792, longitude: 47.5079 });
         });
-      return;
-    }
-
-    if (centreLat !== undefined && centreLng !== undefined) {
-      setMapCoordinates({ latitude: centreLat, longitude: centreLng });
       return;
     }
 
@@ -99,14 +96,17 @@ export default function ItinerairePage() {
   const numeroPlace = centre.numeroPlace || convocation?.numeroPlace || '—';
 
   const handleOpenMaps = () => {
-    if (centreAddress) {
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(centreAddress)}&travelmode=driving`;
+    // Priorité absolue aux coordonnées GPS précises : elles pointent exactement
+    // sur le centre, contrairement à une adresse texte qui peut être mal
+    // interprétée par le géocodeur de Google Maps.
+    if (centreLat !== undefined && centreLng !== undefined) {
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${centreLat},${centreLng}&travelmode=driving`;
       window.open(mapsUrl, '_blank');
       return;
     }
 
-    if (centreLat !== undefined && centreLng !== undefined) {
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${centreLat},${centreLng}&travelmode=driving`;
+    if (centreAddress) {
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(centreAddress)}&travelmode=driving`;
       window.open(mapsUrl, '_blank');
     }
   };
