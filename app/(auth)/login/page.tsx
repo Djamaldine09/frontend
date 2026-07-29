@@ -32,6 +32,9 @@ function LoginContent() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [twoFactorToken, setTwoFactorToken] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorPhone, setTwoFactorPhone] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHttps, setIsHttps] = useState(false);
 
@@ -163,6 +166,14 @@ function LoginContent() {
       const res = await authAPI.login(form);
       const data = res.data;
 
+      if (data.requiresTwoFactor) {
+        setTwoFactorToken(data.twoFactorToken);
+        setTwoFactorCode('');
+        setTwoFactorPhone(data.maskedTelephone || '');
+        toast.success(data.message || 'Code 2FA envoyé par SMS');
+        return;
+      }
+
       const token = data.token || data.jwt;
       const user = {
         _id: data._id,
@@ -179,6 +190,38 @@ function LoginContent() {
       router.push('/dashboard');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Email ou mot de passe incorrect');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyTwoFactor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorToken || !twoFactorCode) return;
+
+    setLoading(true);
+    try {
+      const res = await authAPI.verifyTwoFactorLogin({
+        twoFactorToken,
+        code: twoFactorCode,
+      });
+      const data = res.data;
+      const token = data.token || data.jwt;
+      const user = {
+        _id: data._id,
+        nom: data.nom,
+        prenom: data.prenom || '',
+        email: data.email,
+        role: data.role,
+        telephone: data.telephone,
+        createdAt: data.createdAt || new Date().toISOString(),
+      };
+
+      login(token, user);
+      toast.success(`Bienvenue, ${user.nom} !`);
+      router.push('/dashboard');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Code 2FA incorrect ou expiré');
     } finally {
       setLoading(false);
     }
@@ -361,7 +404,46 @@ function LoginContent() {
 
           {loginMethod === 'email' ? (
             <>
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <form onSubmit={twoFactorToken ? handleVerifyTwoFactor : handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {twoFactorToken ? (
+                  <>
+                    <div style={{ padding: '14px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', color: '#166534', fontSize: '14px', lineHeight: 1.5 }}>
+                      Code 2FA envoyé par SMS {twoFactorPhone ? `au numéro ${twoFactorPhone}` : 'à votre numéro enregistré'}.
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Code 2FA</label>
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '14px', color: '#9ca3af', display: 'flex', alignItems: 'center' }}>
+                          <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.623 0-1.31-.21-2.571-.598-3.75A11.959 11.959 0 0112 2.714z" />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          placeholder="123456"
+                          value={twoFactorCode}
+                          onChange={e => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          required
+                          style={{ width: '100%', padding: '14px 14px 14px 46px', backgroundColor: '#f0f4f9', border: 'none', borderRadius: '12px', fontSize: '14px', color: '#111827', outline: 'none', boxSizing: 'border-box', letterSpacing: '2px' }}
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwoFactorToken('');
+                        setTwoFactorCode('');
+                        setTwoFactorPhone('');
+                      }}
+                      style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Modifier l'e-mail ou le mot de passe
+                    </button>
+                  </>
+                ) : (
+                  <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Adresse e-mail</label>
                   <div style={{ position: 'relative', width: '100%' }}>
@@ -421,23 +503,25 @@ function LoginContent() {
                     Mot de passe oublié ?
                   </Link>
                 </div>
+                  </>
+                )}
 
                 <button
                   type="submit"
                   disabled={loading}
                   style={{ width: '100%', backgroundColor: '#5c54f3', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '12px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(92, 84, 243, 0.2)' }}
                 >
-                  {loading ? <span style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : 'Se connecter'}
+                  {loading ? <span style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : twoFactorToken ? 'Valider le code 2FA' : 'Se connecter'}
                 </button>
               </form>
 
-              <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              {!twoFactorToken && <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }} />
                 <span style={{ padding: '0 16px', fontSize: '12px', color: '#9ca3af' }}>Ou continuer avec</span>
                 <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }} />
-              </div>
+              </div>}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {!twoFactorToken && <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
                   <button 
                     type="button" 
@@ -563,7 +647,7 @@ function LoginContent() {
                   </svg>
                   <span>Continuer avec un numéro</span>
                 </button>
-              </div>
+              </div>}
             </>
           ) : (
             <>

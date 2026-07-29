@@ -60,6 +60,10 @@ export const authAPI = {
     api.post('/auth/register', data),
   login: (data: { email: string; motDePasse: string }) =>
     api.post('/auth/login', data),
+  verifyTwoFactorLogin: (data: { twoFactorToken: string; code: string }) =>
+    api.post('/auth/login/2fa', data),
+  updateTwoFactorPreference: (data: { enabled: boolean }) =>
+    api.put('/auth/me/2fa', data),
   sendLoginOtp: (data: { telephone: string }) =>
     api.post('/auth/sms/login/send', data),
   verifyLoginOtp: (data: { telephone: string; code: string }) =>
