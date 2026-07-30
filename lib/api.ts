@@ -270,6 +270,8 @@ export type AdminCentre = {
   code: string;
   ville: string;
   region: string;
+  adresse?: string;
+  coords?: { lat?: number; lng?: number };
   capaciteMaximale: number;
   examensAcceptes: string[];
   candidatsAffectes: string[];

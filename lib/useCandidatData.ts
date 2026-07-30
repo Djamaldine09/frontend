@@ -16,6 +16,13 @@ function getApiMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function unwrapApiData<T>(payload: T | { data: T }): T {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as { data: T }).data;
+  }
+  return payload as T;
+}
+
 export function useCandidatData() {
   const [data, setData] = useState<CandidatBundle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,9 +40,9 @@ export function useCandidatData() {
       ]);
 
       setData({
-        candidat: meRes.data.data,
-        convocation: convRes.status === 'fulfilled' ? convRes.value.data.data : null,
-        planning: planRes.status === 'fulfilled' ? planRes.value.data.data : [],
+        candidat: unwrapApiData<CandidatMe>(meRes.data),
+        convocation: convRes.status === 'fulfilled' ? unwrapApiData<Convocation>(convRes.value.data) : null,
+        planning: planRes.status === 'fulfilled' ? unwrapApiData<EpreuvePlanning[]>(planRes.value.data) : [],
       });
 
       if (convRes.status === 'rejected') {

@@ -66,13 +66,14 @@ export default function ConvocationPage() {
         setLoading(true);
         setError(null);
         
-        // Tenter d'appeler l'API réelle
         let convData = null;
         let planData: EpreuvePlanning[] = [];
         
         try {
-          const convRes = await candidatAPI.convocation();
-          convData = convRes.data?.data ?? convRes.data;
+          // CORRECTION ICI : "any" pour esquiver l'erreur TS2339 sur Convocation
+          const convRes: any = await candidatAPI.convocation();
+          // On gère tous les cas d'imbrication (Axios, Fetch, Wrapper personnalisé)
+          convData = convRes?.data?.data ?? convRes?.data ?? convRes;
         } catch (convErr: unknown) {
           const errMessage = convErr instanceof Error ? convErr.message : 'Erreur convocation';
           console.warn('API convocation non disponible:', errMessage);
@@ -90,10 +91,16 @@ export default function ConvocationPage() {
         }
         
         try {
-          const planRes = await candidatAPI.planning();
-          planData = Array.isArray(planRes.data?.data ? planRes.data.data : planRes.data)
-            ? planRes.data?.data ?? planRes.data
-            : [];
+          // CORRECTION PRECEDENTE : "any" pour esquiver l'erreur TS2339 sur EpreuvePlanning[]
+          const planRes: any = await candidatAPI.planning();
+          const responseData = planRes?.data ?? planRes; 
+          
+          planData = Array.isArray(responseData?.data)
+            ? responseData.data
+            : Array.isArray(responseData)
+              ? responseData
+              : [];
+              
         } catch (planErr: unknown) {
           const errMessage = planErr instanceof Error ? planErr.message : 'Erreur planning';
           console.warn('API planning non disponible:', errMessage);

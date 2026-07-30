@@ -1,9 +1,11 @@
 'use client';
+
 import { useEffect, useState } from 'react';
+import { Activity, KeyRound, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
+import toast from 'react-hot-toast';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { adminAPI, adminExtendedAPI, authAPI } from '@/lib/api';
-import { ShieldAlert, ShieldCheck, KeyRound, Activity, RefreshCw } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export default function SecuritePage() {
   const { user, token, login } = useAuth();
@@ -15,12 +17,19 @@ export default function SecuritePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [d, a] = await Promise.allSettled([adminAPI.dashboard(), adminExtendedAPI.getAuditLogs()]);
-      if (d.status === 'fulfilled') {
-        const data: any = (d.value.data as any).data || d.value.data;
+      const [dashboardResult, auditResult] = await Promise.allSettled([
+        adminAPI.dashboard(),
+        adminExtendedAPI.getAuditLogs(),
+      ]);
+
+      if (dashboardResult.status === 'fulfilled') {
+        const data: any = (dashboardResult.value.data as any).data || dashboardResult.value.data;
         setSecurity(data.security);
       }
-      if (a.status === 'fulfilled') setLogs(Array.isArray((a.value as any).data) ? (a.value as any).data : []);
+      if (auditResult.status === 'fulfilled') {
+        const data = (auditResult.value as any).data;
+        setLogs(Array.isArray(data) ? data : []);
+      }
     } catch {
       toast.error('Erreur de chargement');
     } finally {
@@ -34,14 +43,16 @@ export default function SecuritePage() {
 
   const toggleTwoFactor = async () => {
     if (!user || !token) return;
+
     const nextEnabled = !user.twoFactorEnabled;
     setSaving2FA(true);
+
     try {
       const res = await authAPI.updateTwoFactorPreference({ enabled: nextEnabled });
       login(token, { ...user, ...res.data.user });
-      toast.success(nextEnabled ? '2FA activée' : '2FA désactivée');
+      toast.success(nextEnabled ? '2FA activee' : '2FA desactivee');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erreur pendant la mise à jour 2FA');
+      toast.error(error.response?.data?.message || 'Erreur pendant la mise a jour 2FA');
     } finally {
       setSaving2FA(false);
     }
@@ -52,7 +63,7 @@ export default function SecuritePage() {
       <div className="card" style={{ padding: 28, display: 'flex', gap: 14 }}>
         <ShieldAlert size={20} color="var(--status-red)" />
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800 }}>Accès refusé</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800 }}>Connexion requise</h1>
         </div>
       </div>
     );
@@ -62,8 +73,8 @@ export default function SecuritePage() {
     <div className="animate-fade-in" data-testid="securite-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 28, alignItems: 'flex-start' }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.6 }}>Sécurité</h1>
-          <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 4 }}>Audit, conformité et état du système</p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.6 }}>Securite</h1>
+          <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 4 }}>Audit, conformite et etat du systeme</p>
         </div>
         {user.role === 'ADMIN' && (
           <button className="btn-ghost" onClick={load} disabled={loading}>
@@ -77,11 +88,11 @@ export default function SecuritePage() {
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
             <ShieldCheck size={24} style={{ color: user.twoFactorEnabled ? 'var(--status-green)' : 'var(--ink-soft)' }} />
             <div>
-              <h3 style={{ fontWeight: 800, marginBottom: 4 }}>Authentification à deux facteurs</h3>
+              <h3 style={{ fontWeight: 800, marginBottom: 4 }}>Authentification a deux facteurs</h3>
               <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>
                 {user.telephone
-                  ? `Code SMS envoyé au téléphone enregistré (${user.telephone}).`
-                  : 'Ajoutez un numéro de téléphone dans votre profil pour activer la 2FA.'}
+                  ? `Code SMS envoye au telephone enregistre (${user.telephone}).`
+                  : 'Ajoutez un numero de telephone dans votre profil pour activer la 2FA.'}
               </p>
             </div>
           </div>
@@ -92,7 +103,7 @@ export default function SecuritePage() {
             data-testid="toggle-2fa"
           >
             <KeyRound size={14} />
-            {saving2FA ? 'Mise à jour...' : user.twoFactorEnabled ? 'Désactiver 2FA' : 'Activer 2FA'}
+            {saving2FA ? 'Mise a jour...' : user.twoFactorEnabled ? 'Desactiver 2FA' : 'Activer 2FA'}
           </button>
         </div>
       </div>
@@ -103,30 +114,30 @@ export default function SecuritePage() {
             <div className="card" style={{ padding: 18 }}>
               <ShieldCheck size={22} style={{ color: 'var(--status-green)' }} />
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', marginTop: 12, textTransform: 'uppercase' }}>Administrateurs</div>
-              <div style={{ fontSize: 26, fontWeight: 800 }}>{security?.adminCount ?? '—'}</div>
+              <div style={{ fontSize: 26, fontWeight: 800 }}>{security?.adminCount ?? '-'}</div>
             </div>
             <div className="card" style={{ padding: 18 }}>
               <KeyRound size={22} style={{ color: security?.jwtConfigured ? 'var(--status-green)' : 'var(--status-red)' }} />
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', marginTop: 12, textTransform: 'uppercase' }}>JWT</div>
               <div style={{ fontSize: 18, fontWeight: 700 }}>
-                <span className={`badge ${security?.jwtConfigured ? 'badge-green' : 'badge-red'}`}>{security?.jwtConfigured ? 'Configuré' : 'Manquant'}</span>
+                <span className={`badge ${security?.jwtConfigured ? 'badge-green' : 'badge-red'}`}>{security?.jwtConfigured ? 'Configure' : 'Manquant'}</span>
               </div>
             </div>
             <div className="card" style={{ padding: 18 }}>
               <Activity size={22} />
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', marginTop: 12, textTransform: 'uppercase' }}>Origines CORS</div>
-              <div style={{ fontSize: 26, fontWeight: 800 }}>{security?.corsOrigins?.length ?? '—'}</div>
+              <div style={{ fontSize: 26, fontWeight: 800 }}>{security?.corsOrigins?.length ?? '-'}</div>
             </div>
           </div>
 
           <div className="card" style={{ padding: 22, marginBottom: 22 }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 14 }}>Origines CORS autorisées</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 14 }}>Origines CORS autorisees</h3>
             {(security?.corsOrigins || []).length === 0 ? (
-              <p style={{ color: 'var(--ink-soft)', fontSize: 13 }}>Aucune origine restrictive configurée.</p>
+              <p style={{ color: 'var(--ink-soft)', fontSize: 13 }}>Aucune origine restrictive configuree.</p>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {security.corsOrigins.map((o: string) => (
-                  <code key={o} style={{ background: 'var(--bg-soft)', padding: '6px 12px', borderRadius: 999, fontSize: 12 }}>{o}</code>
+                {security.corsOrigins.map((origin: string) => (
+                  <code key={origin} style={{ background: 'var(--bg-soft)', padding: '6px 12px', borderRadius: 999, fontSize: 12 }}>{origin}</code>
                 ))}
               </div>
             )}
@@ -134,28 +145,28 @@ export default function SecuritePage() {
 
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: 18, borderBottom: '1px solid var(--ink-line)' }}>
-              <strong>Journal d'audit</strong> <span style={{ color: 'var(--ink-soft)', fontSize: 12 }}>· {logs.length} évènement(s)</span>
+              <strong>Journal d'audit</strong> <span style={{ color: 'var(--ink-soft)', fontSize: 12 }}>- {logs.length} evenement(s)</span>
             </div>
             {logs.length === 0 ? (
-              <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>Aucun évènement enregistré</div>
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>Aucun evenement enregistre</div>
             ) : (
               <table style={{ width: '100%' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--ink-line)' }}>
-                    {['Date', 'Utilisateur', 'Action', 'Cible'].map((h) => (
-                      <th key={h} style={{ padding: '12px 18px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>{h}</th>
+                    {['Date', 'Utilisateur', 'Action', 'Cible'].map((heading) => (
+                      <th key={heading} style={{ padding: '12px 18px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>{heading}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.slice(0, 50).map((l, i) => (
-                    <tr key={l._id || i} style={{ borderBottom: i < logs.length - 1 ? '1px solid var(--ink-line)' : 'none' }}>
+                  {logs.slice(0, 50).map((log, index) => (
+                    <tr key={log._id || index} style={{ borderBottom: index < logs.length - 1 ? '1px solid var(--ink-line)' : 'none' }}>
                       <td style={{ padding: '10px 18px', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                        {l.createdAt ? new Date(l.createdAt).toLocaleString('fr-FR') : '—'}
+                        {log.createdAt ? new Date(log.createdAt).toLocaleString('fr-FR') : '-'}
                       </td>
-                      <td style={{ padding: '10px 18px' }}>{l.user?.email || l.userEmail || '—'}</td>
-                      <td style={{ padding: '10px 18px' }}><span className="badge badge-blue">{l.action || '—'}</span></td>
-                      <td style={{ padding: '10px 18px', color: 'var(--ink-soft)' }}>{l.resource || l.target || '—'}</td>
+                      <td style={{ padding: '10px 18px' }}>{log.user?.email || log.userEmail || '-'}</td>
+                      <td style={{ padding: '10px 18px' }}><span className="badge badge-blue">{log.action || '-'}</span></td>
+                      <td style={{ padding: '10px 18px', color: 'var(--ink-soft)' }}>{log.resource || log.target || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -163,7 +174,7 @@ export default function SecuritePage() {
             )}
           </div>
         </>
-      )} {/* C'EST ICI QU'IL MANQUAIT LE )} */}
+      )}
     </div>
   );
 }

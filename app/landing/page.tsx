@@ -10,9 +10,7 @@ import {
 import Iridescence from '../../components/Iridescence';
 import { MorphText } from "@/components/ui/morph-text";
 import ImageSlider3D from "@/components/lightswind/3d-image-slider";
-import { AuroraTextEffect } from "@/components/lightswind/aurora-text-effect";
 import { MagneticButton } from "@/components/lightswind/magnetic-button";
-import { HangingIdCard } from "@/components/lightswind/HangingIdCard"
 import { RadialGlowButton } from "@/components/ui/radial-glow-button"
 
 gsap.registerPlugin(ScrollTrigger);
@@ -120,7 +118,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
             <img 
               src="/logo/logo-app.png" 
-              alt="ExamGest Logo" 
+              alt="Exam Mada Logo" 
               style={{ width: 90, height: 90, objectFit: 'contain' }}
             />
             
@@ -407,16 +405,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <div className="flex items-center justify-center p-20">
-      <HangingIdCard
-        name="Djamaldine"
-        role="Developer Full Stack"
-        badgeId="2026"
-        accentColor="#ff17ec"
-        ropeLength={90}
-      />
-    </div>
-
       {/* CTA Section */}
       <section id="contact" style={{
         padding: '6rem 1.5rem',
@@ -495,7 +483,7 @@ export default function LandingPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 <img 
                   src="/logo/logo-app.png" 
-                  alt="ExamGest Logo" 
+                  alt="Exam Mada Logo" 
                   style={{ width: 110, height: 110, objectFit: 'contain' }}
                 />
                 {/* <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>Exam Mada</span> */}
