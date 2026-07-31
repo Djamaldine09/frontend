@@ -36,6 +36,7 @@ function LoginContent() {
   const [twoFactorPhone, setTwoFactorPhone] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHttps, setIsHttps] = useState(false);
+  const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '';
 
   const { login } = useAuth();
   const router = useRouter();
@@ -99,6 +100,11 @@ function LoginContent() {
 
   // ================= 2. LOGIQUE FACEBOOK =================
   const handleFacebookLogin = () => {
+    if (!facebookAppId) {
+      toast.error('FACEBOOK_APP_ID manquant dans Vercel');
+      return;
+    }
+
     setLoading(true);
     // Charger le SDK Facebook si ce n'est pas déjà fait
     if (!(window as any).FB) {
@@ -108,7 +114,7 @@ function LoginContent() {
       script.async = true;
       script.onload = () => {
         (window as any).FB.init({
-          appId: '914690428259746 ', // Remplacez par votre Facebook App ID
+          appId: facebookAppId,
           cookie: true,
           xfbml: true,
           version: 'v18.0'
@@ -564,7 +570,7 @@ function LoginContent() {
                     <span>Google</span>
                   </button>
 
-                  {isHttps && (
+                  {isHttps && facebookAppId && (
                   <button
                     type="button"
                     onClick={handleFacebookLogin}
