@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend-gestion-kask.onrender.com/api';
+export const API_BASE_URL = rawApiUrl.replace(/\/$/, '').endsWith('/api')
+  ? rawApiUrl.replace(/\/$/, '')
+  : `${rawApiUrl.replace(/\/$/, '')}/api`;
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://backend-gestion-kask.onrender.com',
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000, // 10 secondes timeout
 });
@@ -64,6 +69,14 @@ export const authAPI = {
     api.post('/auth/login/2fa', data),
   updateTwoFactorPreference: (data: { enabled: boolean }) =>
     api.put('/auth/me/2fa', data),
+  forgotPassword: (data: { email: string }) =>
+    api.post('/auth/forgot-password', data),
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
+  google: (data: { token: string }) =>
+    api.post('/auth/google', data),
+  facebook: (data: { token: string }) =>
+    api.post('/auth/facebook', data),
   sendLoginOtp: (data: { telephone: string }) =>
     api.post('/auth/sms/login/send', data),
   verifyLoginOtp: (data: { telephone: string; code: string }) =>
@@ -568,7 +581,7 @@ export const publicAPI = {
   // Recherche d'un résultat par matricule (endpoint public, pas de JWT)
   getResultByMatricule: (matricule: string) =>
     axios.get<PublicResult>(
-      `${process.env.NEXT_PUBLIC_API_URL || 'https://backend-gestion-kask.onrender.com'}/public/resultats/${encodeURIComponent(matricule)}`,
+      `${API_BASE_URL}/public/resultats/${encodeURIComponent(matricule)}`,
       { timeout: 10000 }
     ),
 };

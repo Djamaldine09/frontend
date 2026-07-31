@@ -2,10 +2,8 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { examensAPI } from '@/lib/api';
+import { API_BASE_URL, examensAPI } from '@/lib/api';
 import { AlertCircle, Play, BarChart3 } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function AffectationAutomatiquePage() {
   const { user } = useAuth();
@@ -45,7 +43,7 @@ export default function AffectationAutomatiquePage() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/affectation-auto/lancer`, {
+      const res = await fetch(`${API_BASE_URL}/affectation-auto/lancer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +75,7 @@ export default function AffectationAutomatiquePage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `${API_URL}/affectation-auto/stats/${selectedExamen}`,
+        `${API_BASE_URL}/affectation-auto/stats/${selectedExamen}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();

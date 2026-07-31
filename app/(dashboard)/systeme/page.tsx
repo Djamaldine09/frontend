@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShieldAlert, Server, Database, Globe, Wrench, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '@/lib/api';
 
 export default function SystemePage() {
   const { user } = useAuth();
@@ -20,7 +21,7 @@ export default function SystemePage() {
     );
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const apiUrl = API_BASE_URL;
 
   const pingBackend = async () => {
     setPinging(true);

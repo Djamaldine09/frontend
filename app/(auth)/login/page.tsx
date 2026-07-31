@@ -5,7 +5,6 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import axios from 'axios';
 import Image from 'next/image';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -67,7 +66,7 @@ function LoginContent() {
     onSuccess: async (tokenResponse) => {
       setLoading(true);
       try {
-        const res = await axios.post('http://localhost:5000/api/auth/google', {
+        const res = await authAPI.google({
           token: tokenResponse.access_token
         });
 
@@ -126,7 +125,7 @@ function LoginContent() {
     (window as any).FB.login(async (response: any) => {
       if (response.authResponse) {
         try {
-          const res = await axios.post('http://localhost:5000/api/auth/facebook', {
+          const res = await authAPI.facebook({
             token: response.authResponse.accessToken
           });
 

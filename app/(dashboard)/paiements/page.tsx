@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { paiementAPI } from '@/lib/api';
+import { API_BASE_URL, paiementAPI } from '@/lib/api';
 import { Smartphone, CreditCard, CheckCircle2, Clock3, XCircle, RefreshCw, AlertCircle } from 'lucide-react';
 
 type Mode = 'MVOLA' | 'ORANGE_MONEY' | 'AIRTEL_MONEY' | 'CARTE_BANCAIRE';
@@ -53,7 +53,7 @@ export default function PaiementsPage() {
 
     if (success === 'true' && sessionId) {
       // Simuler le webhook pour mettre à jour le statut
-      fetch('http://localhost:5000/api/stripe/simulate-webhook-success', {
+      fetch(`${API_BASE_URL}/stripe/simulate-webhook-success`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,7 +3,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import { authAPI } from '@/lib/api';
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState('');
@@ -39,7 +39,7 @@ function ResetPasswordContent() {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/auth/reset-password', { 
+      await authAPI.resetPassword({ 
         token, 
         newPassword: password 
       });
