@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://backend-gestion-kask.onrender.com',
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000, // 10 secondes timeout
 });
@@ -568,7 +568,7 @@ export const publicAPI = {
   // Recherche d'un résultat par matricule (endpoint public, pas de JWT)
   getResultByMatricule: (matricule: string) =>
     axios.get<PublicResult>(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/public/resultats/${encodeURIComponent(matricule)}`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'https://backend-gestion-kask.onrender.com'}/public/resultats/${encodeURIComponent(matricule)}`,
       { timeout: 10000 }
     ),
 };
