@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Moon, Sun, Bell, User, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Moon, Sun, Bell, User, LogOut, Settings as SettingsIcon, KeyRound, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { authAPI } from '@/lib/api';
 
 export default function ParametresPage() {
-  const { user, logout } = useAuth();
+  const { user, token, login, logout } = useAuth();
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
     return localStorage.getItem('theme-mode') === 'dark' ? 'dark' : 'light';
@@ -15,6 +16,7 @@ export default function ParametresPage() {
     const saved = window.localStorage.getItem('settings-notifications');
     return saved ? JSON.parse(saved) : { email: true, sms: false };
   });
+  const [saving2FA, setSaving2FA] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -31,6 +33,23 @@ export default function ParametresPage() {
     const next = { ...notifications, [key]: !notifications[key] };
     setNotifications(next);
     toast.success(`${key === 'email' ? 'Notifications email' : 'Notifications SMS'} ${next[key] ? 'activées' : 'désactivées'}`);
+  };
+
+  const toggleTwoFactor = async () => {
+    if (!user || !token) return;
+
+    const nextEnabled = !user.twoFactorEnabled;
+    setSaving2FA(true);
+
+    try {
+      const res = await authAPI.updateTwoFactorPreference({ enabled: nextEnabled });
+      login(token, { ...user, ...res.data.user });
+      toast.success(nextEnabled ? '2FA activée' : '2FA désactivée');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erreur pendant la mise à jour 2FA');
+    } finally {
+      setSaving2FA(false);
+    }
   };
 
   if (!user) {
@@ -101,6 +120,41 @@ export default function ParametresPage() {
               checked={notifications.sms}
               onToggle={() => toggleNotification('sms')}
             />
+          </section>
+
+          <section className="card" style={{ padding: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <ShieldCheck size={20} />
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 800 }}>Authentification 2FA</h2>
+                <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 4 }}>
+                  Protégez votre compte avec un code SMS après le mot de passe.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 14, borderRadius: 14, background: 'var(--bg-soft)' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>
+                  {user.twoFactorEnabled ? '2FA active' : '2FA inactive'}
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 4 }}>
+                  {user.telephone
+                    ? `Code envoyé au numéro enregistré : ${user.telephone}`
+                    : 'Ajoutez un numéro de téléphone dans votre profil avant activation.'}
+                </div>
+              </div>
+              <button
+                className={user.twoFactorEnabled ? 'btn-ghost' : 'btn-lime'}
+                type="button"
+                onClick={toggleTwoFactor}
+                disabled={saving2FA || !user.telephone}
+                data-testid="toggle-2fa-settings"
+              >
+                <KeyRound size={14} />
+                {saving2FA ? 'Mise à jour...' : user.twoFactorEnabled ? 'Désactiver' : 'Activer'}
+              </button>
+            </div>
           </section>
         </div>
 
