@@ -369,7 +369,7 @@ export default function CentresAdminPage() {
         <input
           type="text"
           className="input-field"
-          placeholder="🔍 Rechercher par nom ou code..."
+          placeholder="Rechercher par nom ou code..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{ flex: 1 }}

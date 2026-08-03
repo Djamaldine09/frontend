@@ -318,7 +318,7 @@ export default function UtilisateursAdminPage() {
             <input
               type="text"
               className="input-field"
-              placeholder="🔍 Rechercher par nom ou email..."
+              placeholder="Rechercher par nom ou email..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               style={{ flex: 1 }}

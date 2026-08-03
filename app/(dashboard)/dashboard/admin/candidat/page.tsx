@@ -143,7 +143,7 @@ export default function CandidatsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: 'var(--text-primary)' }}>
-            👥 Gestion des candidats
+            Gestion des candidats
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: 4, fontSize: 14 }}>
             Liste complète des candidats inscrits aux examens nationaux
@@ -279,7 +279,7 @@ export default function CandidatsPage() {
                         </div>
                         {c.numeroMatricule && (
                           <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>
-                            🆔 {c.numeroMatricule}
+                            {c.numeroMatricule}
                           </div>
                         )}
                       </td>
