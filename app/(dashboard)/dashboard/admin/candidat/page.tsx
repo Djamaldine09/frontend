@@ -227,7 +227,7 @@ export default function CandidatsPage() {
               placeholder="Rechercher par nom, prénom, email, examen ou matricule..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', maxWidth: 400 }}
+              style={{ flex: 1 }}
             />
           </div>
 
