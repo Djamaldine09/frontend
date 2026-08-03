@@ -22,10 +22,10 @@
 
   /* Pastel tile backgrounds (icons) */
   --tile-peach: #FFE3D1;
-  --tile-lila:  #E4DEFB;
-  --tile-mint:  #D8F5E2;
-  --tile-sky:   #D6E8FB;
-  --tile-sun:   #FBF3CF;
+  --tile-lila:  #6f4bff;
+  --tile-mint:  #2dff76;
+  --tile-sky:   #005dfd;
+  --tile-sun:   #ffde4a;
   --tile-rose:  #ff1d1d;
 
   /* Accent */
@@ -43,7 +43,7 @@
   /* Text */
   --ink: #14171C;
   --ink-soft: #4B5260;
-  --ink-mute: #8A92A0;
+  --ink-mute: #005dfd;
   --ink-line: #ECEAE0;
 
   /* Sidebar text */

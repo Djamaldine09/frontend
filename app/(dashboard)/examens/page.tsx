@@ -321,7 +321,7 @@ export default function ExamensPage() {
       {showForm && canCreate && (
         <div className="card" style={{ marginBottom: 24, borderColor: 'rgba(88,166,255,0.3)', padding: 24 }}>
           <h3 style={{ fontWeight: 700, marginBottom: 20, color: 'var(--text-primary)', fontSize: 18 }}>
-            {editing ? '✏️ Modifier l&apos;examen' : '➕ Créer un nouvel examen'}
+            {editing ? 'Modifier l\'examen' : 'Créer un nouvel examen'}
           </h3>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
@@ -428,7 +428,7 @@ export default function ExamensPage() {
         <input
           type="text"
           className="input-field"
-          placeholder="🔍 Rechercher par titre ou type..."
+          placeholder="Rechercher par titre ou type..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{ flex: 1, minWidth: 200 }}
