@@ -64,7 +64,6 @@ export default function ParametresPage() {
   return (
     <div className="animate-fade-in" data-testid="parametres-page" style={{ display: 'grid', gap: 22 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <SettingsIcon size={24} />
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.6 }}>Paramètres</h1>
           <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 4 }}>Gérez votre thème et vos préférences utilisateur.</p>
