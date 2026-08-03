@@ -538,17 +538,37 @@ export const affectationAutoAPI = {
 };
 
 // ============ NOTIFICATIONS ============
+export type NotificationType = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+
+export interface AppNotification {
+  _id: string;
+  destinataire: string;
+  titre: string;
+  message: string;
+  type: NotificationType;
+  lue: boolean;
+  dateLecture?: string;
+  lien?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface NotificationsResponse {
+  notifications: AppNotification[];
+  unreadCount: number;
+}
+
 export const notificationAPI = {
   // Récupérer les notifications
-  getAll: () => api.get('/notifications'),
+  getAll: () => api.get<NotificationsResponse | AppNotification[]>('/notifications'),
   
   // Marquer une notification comme lue
   markAsRead: (notificationId: string) =>
-    api.put(`/notifications/${notificationId}/read`),
+    api.put<AppNotification>(`/notifications/${notificationId}/read`),
   
   // Envoyer une notification à tous les candidats
-  sendBroadcast: (message: string, type: string) =>
-    api.post('/notifications/broadcast', { message, type }),
+  sendBroadcast: (message: string, type: NotificationType = 'INFO', titre?: string, roles?: string[]) =>
+    api.post('/notifications/broadcast', { message, type, titre, roles }),
 
   
   // Enregistrer le token FCM de l'utilisateur (Push notifications)
