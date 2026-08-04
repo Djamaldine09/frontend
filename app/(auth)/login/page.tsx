@@ -128,39 +128,47 @@ function LoginContent() {
   };
 
   const initiateFacebookLogin = () => {
-    (window as any).FB.login(async (response: any) => {
-      if (response.authResponse) {
-        try {
-          const res = await authAPI.facebook({
-            token: response.authResponse.accessToken
-          });
+    // IMPORTANT: le SDK Facebook rejette les callbacks "async" directement
+    // (erreur "Expression is of type asyncfunction, not function").
+    // On passe donc une fonction normale, qui délègue la partie async
+    // à une fonction séparée.
+    (window as any).FB.login((response: any) => {
+      handleFacebookResponse(response);
+    }, { scope: 'email,public_profile' });
+  };
 
-          const data = res.data;
-          const token = data.token || data.jwt;
-          const userData = data.user || data;
-          const user = {
-            _id: userData._id,
-            nom: userData.nom || userData.name || 'Candidat',
-            prenom: userData.prenom || userData.given_name || '',
-            email: userData.email,
-            role: userData.role || 'CANDIDAT',
-            telephone: userData.telephone || '',
-            createdAt: userData.createdAt || new Date().toISOString(),
-          };
+  const handleFacebookResponse = async (response: any) => {
+    if (response.authResponse) {
+      try {
+        const res = await authAPI.facebook({
+          token: response.authResponse.accessToken
+        });
 
-          login(token, user);
-          toast.success(`Bienvenue, ${user.nom} !`);
-          router.push('/dashboard');
-        } catch (err: any) {
-          toast.error("Échec de la connexion avec Facebook");
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        toast.error('Connexion Facebook annulée');
+        const data = res.data;
+        const token = data.token || data.jwt;
+        const userData = data.user || data;
+        const user = {
+          _id: userData._id,
+          nom: userData.nom || userData.name || 'Candidat',
+          prenom: userData.prenom || userData.given_name || '',
+          email: userData.email,
+          role: userData.role || 'CANDIDAT',
+          telephone: userData.telephone || '',
+          createdAt: userData.createdAt || new Date().toISOString(),
+        };
+
+        login(token, user);
+        toast.success(`Bienvenue, ${user.nom} !`);
+        router.push('/dashboard');
+      } catch (err: any) {
+        toast.error("Échec de la connexion avec Facebook");
+      } finally {
         setLoading(false);
       }
-    }, { scope: 'email,public_profile' });
+    } else {
+      toast.error('Connexion Facebook annulée');
+      setLoading(false);
+    }
   };
 
   // ================= 2. LOGIQUE CLASSIQUE (EMAIL) =================
