@@ -285,14 +285,14 @@ html, body {
   border: 1px solid transparent;
   border-radius: 999px;
   padding: 11px 18px 11px 42px;
-  color: var(--ink);
+  color: var(--ink-soft);
   font-family: var(--font-display);
   font-size: 14px;
   outline: none;
   transition: all 0.2s ease;
 }
 .input-pill:focus { background: var(--bg-card); border-color: var(--ink); }
-.input-pill::placeholder { color: var(--ink); }
+.input-pill::placeholder { color: var(--ink-soft); }
 
 .input-field {
   width: 100%;
@@ -307,7 +307,7 @@ html, body {
   transition: all 0.2s ease;
 }
 .input-field:focus { background: var(--bg-card); border-color: var(--ink); }
-.input-field::placeholder { color: var(--ink-mute); }
+.input-field::placeholder { color: var(--ink-soft); }
 
 label {
   display: block;

@@ -263,7 +263,7 @@ export default function PaiementsPage() {
               <div>
                 <label>Numéro de téléphone Mobile Money</label>
                 <div style={{ position: 'relative' }}>
-                  <Smartphone size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-mute)' }} />
+                  <Smartphone size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-soft)' }} />
                   <input
                     className="input-field"
                     data-testid="pay-phone"
@@ -300,7 +300,7 @@ export default function PaiementsPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid var(--ink-line)' }}>
                 {[...(canSeeAll ? ['Candidat'] : []), 'Montant', 'Mode', 'Statut', 'Référence', 'Date', ...(canSeeAll ? ['Actions'] : [])].map((h) => (
-                  <th key={h} style={{ padding: '12px 18px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>{h}</th>
+                  <th key={h} style={{ padding: '12px 18px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--ink)', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
