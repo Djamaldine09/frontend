@@ -35,8 +35,8 @@ const navItems = [
   { href: '/systeme',    label: 'Système',         icon: Wrench,      roles: ['ADMIN'] },
 ];
 
-const bottomNav = [
-  { href: '#notifications', label: 'Notifications', icon: Bell, badge: 2 },
+const bottomNav: Array<{ href: string; label: string; icon: typeof Bell; badge?: number }> = [
+  { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/parametres',      label: 'Paramètres',    icon: Settings },
 ];
 
