@@ -292,7 +292,7 @@ html, body {
   transition: all 0.2s ease;
 }
 .input-pill:focus { background: var(--bg-card); border-color: var(--ink); }
-.input-pill::placeholder { color: var(--ink-mute); }
+.input-pill::placeholder { color: var(--ink); }
 
 .input-field {
   width: 100%;
