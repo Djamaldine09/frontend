@@ -5,6 +5,16 @@ export const API_BASE_URL = rawApiUrl.replace(/\/$/, '').endsWith('/api')
   ? rawApiUrl.replace(/\/$/, '')
   : `${rawApiUrl.replace(/\/$/, '')}/api`;
 
+// Origine du backend (sans le suffixe /api), utile pour construire l'URL des fichiers statiques (ex: photo de profil)
+export const API_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
+
+// Construit l'URL absolue d'un fichier servi statiquement par le backend (ex: /uploads/avatars/xxx.jpg)
+export function resolveFileUrl(path?: string | null): string | undefined {
+  if (!path) return undefined;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
@@ -83,6 +93,14 @@ export const authAPI = {
     api.post('/auth/sms/login/verify', data),
   updateMe: (data: { nom: string; prenom: string; email: string; telephone?: string }) =>
     api.put('/auth/me', data),
+  uploadPhoto: (file: File) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    return api.post('/auth/me/photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  deletePhoto: () => api.delete('/auth/me/photo'),
 };
 
 // Examens

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { resolveFileUrl } from '@/lib/api';
 import { Role } from '@/types';
 import Image from 'next/image';
 import NotificationBell from '@/components/NotificationBell';
@@ -480,12 +481,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {darkMode ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
             </button>
 
-            <div
+            <Link
+              href="/profil"
               data-testid="user-chip"
+              title="Voir mon profil"
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '4px 14px 4px 4px', background: 'var(--bg-card)',
-                borderRadius: 999, marginLeft: 6,
+                borderRadius: 999, marginLeft: 6, textDecoration: 'none',
+                cursor: 'pointer',
               }}
             >
               <div style={{
@@ -493,8 +497,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 background: 'var(--ink)', color: 'var(--lime)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 800, letterSpacing: -0.3,
+                overflow: 'hidden', flexShrink: 0,
               }}>
-                {user.prenom?.[0]?.toUpperCase()}{user.nom?.[0]?.toUpperCase()}
+                {user.photo ? (
+                  <img
+                    src={resolveFileUrl(user.photo)}
+                    alt={`${user.prenom} ${user.nom}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <>{user.prenom?.[0]?.toUpperCase()}{user.nom?.[0]?.toUpperCase()}</>
+                )}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
@@ -504,7 +517,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {user.role}
                 </span>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
