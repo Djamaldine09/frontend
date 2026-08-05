@@ -389,7 +389,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
                 <div className="tile" style={{ background: c.tone, marginBottom: 14 }}>
                   <c.Icon size={20} strokeWidth={2} color="var(--ink)" />
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                   {c.label}
                 </div>
                 <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--ink)', letterSpacing: -0.4, marginBottom: 4 }}>
@@ -529,7 +529,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
             {['L','M','M','J','V','S','D'].map((d, i) => (
-              <div key={i} style={{ fontSize: 10.5, fontWeight: 700, textAlign: 'center', color: 'var(--ink-mute)', padding: '4px 0' }}>{d}</div>
+              <div key={i} style={{ fontSize: 10.5, fontWeight: 700, textAlign: 'center', color: 'var(--ink)', padding: '4px 0' }}>{d}</div>
             ))}
           </div>
 

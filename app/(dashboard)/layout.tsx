@@ -454,7 +454,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div style={{ position: 'relative', flex: 1, maxWidth: 380 }}>
             <Search size={17} strokeWidth={2} style={{
               position: 'absolute', left: 16, top: '50%',
-              transform: 'translateY(-50%)', color: 'var(--ink-mute)',
+              transform: 'translateY(-50%)', color: 'var(--ink)',
             }} />
             <input
               data-testid="top-search"
