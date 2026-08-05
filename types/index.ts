@@ -1,7 +1,6 @@
 export type Role = 'ADMIN' | 'RESPONSABLE' | 'SURVEILLANT' | 'CORRECTEUR' | 'CANDIDAT';
 
 export interface User {
-  photo: any;
   _id: string;
   nom: string;
   prenom: string;
