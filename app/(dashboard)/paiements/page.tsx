@@ -213,7 +213,7 @@ export default function PaiementsPage() {
                         : '2px solid transparent',
                       background: mode === m.value 
                         ? 'var(--bg-soft)' 
-                        : 'linear-gradient(white, white) padding-box, linear-gradient(135deg, var(--ink-line) 0%, var(--ink-mute) 100%) border-box',
+                        : 'linear-gradient(white, white) padding-box, linear-gradient(135deg, var(--ink-line) 0%, var(--ink) 100%) border-box',
                       cursor: 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       boxShadow: mode === m.value ? '0 4px 12px rgba(0, 0, 0, 0.1)' : 'none',
