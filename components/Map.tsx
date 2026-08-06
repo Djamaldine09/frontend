@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { resolveFileUrl } from '@/lib/api';
 
 interface MapProps {
   latitude: number;
@@ -8,17 +9,24 @@ interface MapProps {
   centerName: string;
   address?: string;
   zoom?: number;
+  photo?: string;
 }
 
-export default function Map({ latitude, longitude, centerName, address, zoom = 15 }: MapProps) {
+export default function Map({ latitude, longitude, centerName, address, zoom = 15, photo }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
 
+  const photoUrl = photo ? resolveFileUrl(photo) : undefined;
+
   const buildPopupContent = useCallback(() => {
     const addressLine = address ? `<div style="margin-bottom: 6px; font-size: 13px; color: #3D4858;">${address}</div>` : '';
+    const photoBlock = photoUrl
+      ? `<img src="${photoUrl}" alt="${centerName}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 10px; margin-bottom: 8px; display: block;" />`
+      : '';
     return `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 10px; max-width: 220px;">
+        ${photoBlock}
         <div style="font-weight: 700; color: #15171C; margin-bottom: 6px; font-size: 14px;">
           ${centerName}
         </div>
@@ -29,7 +37,7 @@ export default function Map({ latitude, longitude, centerName, address, zoom = 1
         </div>
       </div>
     `;
-  }, [address, centerName, latitude, longitude]);
+  }, [address, centerName, latitude, longitude, photoUrl]);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -40,6 +48,10 @@ export default function Map({ latitude, longitude, centerName, address, zoom = 1
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19,
     }).addTo(map.current);
+
+    const markerInner = photoUrl
+      ? `<img src="${photoUrl}" alt="${centerName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" />`
+      : `<div style="font-size: 24px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🏫</div>`;
 
     const customIcon = L.divIcon({
       html: `
@@ -53,9 +65,9 @@ export default function Map({ latitude, longitude, centerName, address, zoom = 1
           align-items: center;
           justify-content: center;
           box-shadow: 0 4px 16px rgba(205, 245, 100, 0.5);
-          font-size: 24px;
+          overflow: hidden;
         ">
-          🏫
+          ${markerInner}
         </div>
       `,
       className: 'custom-marker',
@@ -76,7 +88,7 @@ export default function Map({ latitude, longitude, centerName, address, zoom = 1
         markerRef.current = null;
       }
     };
-  }, [buildPopupContent, latitude, longitude, zoom]);
+  }, [buildPopupContent, latitude, longitude, zoom, photoUrl, centerName]);
 
   useEffect(() => {
     if (!map.current || !markerRef.current) return;

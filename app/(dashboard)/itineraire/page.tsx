@@ -137,6 +137,7 @@ export default function ItinerairePage() {
             longitude={mapCoordinates.longitude}
             centerName={centre.nom}
             address={centreAddress}
+            photo={centre.photo}
           />
         </div>
 
