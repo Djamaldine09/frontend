@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { adminAPI, type AdminCentre } from '@/lib/api';
-import { Plus, Edit2, Trash2, Building2, MapPin, Users } from 'lucide-react';
+import { adminAPI, resolveFileUrl, type AdminCentre } from '@/lib/api';
+import { Plus, Edit2, Trash2, Building2, MapPin, Users, Camera, Loader2, X } from 'lucide-react';
+
+
 
 export default function CentresAdminPage() {
   const { user } = useAuth();
   const [centres, setCentres] = useState<AdminCentre[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +27,10 @@ export default function CentresAdminPage() {
     coords: { lat: '', lng: '' },
   });
   const [submitting, setSubmitting] = useState(false);
+  const [activeCentrePhoto, setActiveCentrePhoto] = useState<string | undefined>(undefined);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [deletingPhoto, setDeletingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch centres from API
   useEffect(() => {
@@ -80,7 +86,7 @@ export default function CentresAdminPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nom || !form.code || !form.ville || !form.region || !form.capaciteMaximale || !form.adresse) {
+    if (!form.nom || !form.code || !form.ville || !form.region || !form.adresse || !form.capaciteMaximale) {
       toast.error('Les champs requis doivent être complétés');
       return;
     }
@@ -108,10 +114,7 @@ export default function CentresAdminPage() {
         setSubmitting(false);
         return;
       }
-      payload.coords = {
-        lat: latitude,
-        lng: longitude,
-      };
+      payload.coords = { lat: latitude, lng: longitude };
     }
 
     setSubmitting(true);
@@ -126,22 +129,83 @@ export default function CentresAdminPage() {
       if (editing) {
         const response = await adminAPI.updateCentre(editing, payload);
         const updated = unwrapSingle(response) as AdminCentre | null;
-        if (updated) setCentres(centres.map(c => c._id === editing ? updated : c));
+        if (updated) {
+          setCentres(centres.map(c => c._id === editing ? updated : c));
+          setActiveCentrePhoto(updated.photo);
+        }
         toast.success('Centre modifié');
       } else {
         const response = await adminAPI.createCentre(payload);
         const created = unwrapSingle(response) as AdminCentre | null;
-        if (created) setCentres([created, ...centres]);
+        if (created) {
+          setCentres([created, ...centres]);
+          // On garde le formulaire ouvert en mode édition pour permettre d'ajouter une photo tout de suite
+          setEditing(created._id);
+          setActiveCentrePhoto(created.photo);
+          toast.success('Centre créé — vous pouvez maintenant ajouter une photo');
+          setSubmitting(false);
+          return;
+        }
         toast.success('Centre créé');
       }
-      
+
       setForm({ nom: '', code: '', ville: '', region: '', adresse: '', capaciteMaximale: 0, examensAcceptes: ['BAC'], coords: { lat: '', lng: '' } });
       setShowForm(false);
       setEditing(null);
+      setActiveCentrePhoto(undefined);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erreur');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePhotoPick = () => photoInputRef.current?.click();
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editing) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Format non supporté. Utilisez JPG, PNG, WEBP ou GIF.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('Image trop volumineuse (max 4 Mo).');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const response = await adminAPI.uploadCentrePhoto(editing, file);
+      const updated = (response.data as any)?.data as AdminCentre | undefined;
+      if (updated) {
+        setActiveCentrePhoto(updated.photo);
+        setCentres(prev => prev.map(c => c._id === editing ? updated : c));
+      }
+      toast.success('Photo du centre mise à jour');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Impossible d'uploader la photo");
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
+
+  const handlePhotoDelete = async () => {
+    if (!editing) return;
+    setDeletingPhoto(true);
+    try {
+      const response = await adminAPI.deleteCentrePhoto(editing);
+      const updated = (response.data as any)?.data as AdminCentre | undefined;
+      setActiveCentrePhoto(updated?.photo);
+      setCentres(prev => prev.map(c => c._id === editing ? { ...c, photo: undefined } : c));
+      toast.success('Photo du centre supprimée');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Impossible de supprimer la photo');
+    } finally {
+      setDeletingPhoto(false);
     }
   };
 
@@ -172,6 +236,7 @@ export default function CentresAdminPage() {
       },
     });
     setEditing(c._id);
+    setActiveCentrePhoto(c.photo);
     setShowForm(true);
   };
 
@@ -200,6 +265,7 @@ export default function CentresAdminPage() {
           onClick={() => {
             setShowForm(!showForm);
             if (showForm) setEditing(null);
+            setActiveCentrePhoto(undefined);
             setForm({
               nom: '',
               code: '',
@@ -352,16 +418,7 @@ export default function CentresAdminPage() {
                 onClick={() => {
                   setShowForm(false);
                   setEditing(null);
-                  setForm({
-                    nom: '',
-                    code: '',
-                    ville: '',
-                    region: '',
-                    adresse: '',
-                    capaciteMaximale: 0,
-                    examensAcceptes: ['BAC'],
-                    coords: { lat: '', lng: '' },
-                  });
+                  setForm({ nom: '', code: '', ville: '', region: '', adresse: '', capaciteMaximale: 0, examensAcceptes: ['BAC'], coords: { lat: '', lng: '' } });
                 }}
               >
                 Annuler
@@ -379,7 +436,7 @@ export default function CentresAdminPage() {
         <input
           type="text"
           className="input-field"
-          placeholder="🔍 Rechercher par nom ou code..."
+          placeholder="Rechercher par nom ou code..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{ flex: 1 }}
@@ -427,16 +484,6 @@ export default function CentresAdminPage() {
                     {centre.examensAcceptes.join(', ')}
                   </div>
                 </div>
-                {centre.adresse && (
-                  <div style={{ marginTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
-                    <strong>Adresse :</strong> {centre.adresse}
-                  </div>
-                )}
-                {centre.coords?.lat !== undefined && centre.coords?.lng !== undefined && (
-                  <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                    <strong>Coordonnées :</strong> {centre.coords.lat.toFixed(6)}, {centre.coords.lng.toFixed(6)}
-                  </div>
-                )}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
