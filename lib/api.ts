@@ -166,6 +166,8 @@ export const resultatsAPI = {
     api.post(`/resultats/anonymat/${encodeURIComponent(numeroAnonymat)}/notes`, data),
   leverAnonymat: (examenId: string, force = false) =>
     api.post(`/resultats/examens/${examenId}/anonymat/lever`, { force }),
+  publish: (examenId: string) =>
+    api.post(`/resultats/examen/${examenId}/publish`),
 };
 
 // Documents

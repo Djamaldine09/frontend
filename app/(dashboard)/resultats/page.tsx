@@ -26,6 +26,7 @@ export default function ResultatsPage() {
   const [examenId, setExamenId] = useState('');
   const [copies, setCopies] = useState<CopieAnonyme[]>([]);
   const [loading, setLoading] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [noteForm, setNoteForm] = useState({ numeroAnonymat: '', matiere: '', valeur: '', coefficient: '' });
 
@@ -98,6 +99,24 @@ export default function ResultatsPage() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!examenId) return;
+    const nomExamen = selectedExamen?.titre || 'cet examen';
+    if (!window.confirm(`Publier les résultats de "${nomExamen}" ? Les candidats pourront immédiatement consulter leurs notes.`)) {
+      return;
+    }
+
+    setPublishing(true);
+    try {
+      const res = await resultatsAPI.publish(examenId);
+      toast.success(res.data?.message || 'Résultats publiés');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erreur lors de la publication');
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -189,8 +208,24 @@ export default function ResultatsPage() {
           <button className="btn-ghost" onClick={() => handleLeverAnonymat(true)} disabled={loading || !copies.length}>
             Lever avec force
           </button>
+          <button
+            className="btn-primary"
+            style={{ background: 'var(--tile-mint)' }}
+            onClick={handlePublish}
+            disabled={publishing || !examenId || !copies.length || !copies.every((c) => c.anonymatLeve)}
+            title={
+              !copies.length
+                ? 'Générez et levez d’abord l’anonymat'
+                : !copies.every((c) => c.anonymatLeve)
+                ? 'L’anonymat doit être levé sur toutes les copies avant publication'
+                : 'Rendre les résultats visibles aux candidats'
+            }
+          >
+            {publishing ? 'Publication...' : 'Publier les résultats'}
+          </button>
           <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
             {copies.length} copie(s) dans la table
+            {copies.length > 0 && ` · ${copies.filter((c) => c.anonymatLeve).length}/${copies.length} anonymat(s) levé(s)`}
           </span>
         </div>
       )}
