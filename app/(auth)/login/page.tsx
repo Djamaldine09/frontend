@@ -81,6 +81,7 @@ function LoginContent() {
           email: userData.email,
           role: userData.role || 'CANDIDAT',
           telephone: userData.telephone || '',
+          photo: userData.photo,
           createdAt: userData.createdAt || new Date().toISOString(),
         };
 
@@ -154,6 +155,7 @@ function LoginContent() {
           email: userData.email,
           role: userData.role || 'CANDIDAT',
           telephone: userData.telephone || '',
+          photo: userData.photo,
           createdAt: userData.createdAt || new Date().toISOString(),
         };
 
@@ -195,6 +197,7 @@ function LoginContent() {
         email: data.email,
         role: data.role,
         telephone: data.telephone,
+        photo: data.photo,
         createdAt: data.createdAt || new Date().toISOString(),
       };
 
@@ -227,6 +230,7 @@ function LoginContent() {
         email: data.email,
         role: data.role,
         telephone: data.telephone,
+        photo: data.photo,
         createdAt: data.createdAt || new Date().toISOString(),
       };
 
@@ -278,6 +282,7 @@ function LoginContent() {
           email: data.email,
           role: data.role,
           telephone: data.telephone,
+          photo: data.photo,
           createdAt: data.createdAt || new Date().toISOString(),
       };
 

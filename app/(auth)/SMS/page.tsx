@@ -54,6 +54,7 @@ export default function PhoneLogin() {
         email: data.email,
         role: data.role,
         telephone: data.telephone,
+        photo: data.photo,
         createdAt: data.createdAt || new Date().toISOString(),
       });
 

@@ -65,6 +65,7 @@ export default function CompleteProfilePage() {
         prenom: updatedUser.prenom || '',
         email: updatedUser.email,
         telephone: updatedUser.telephone || '',
+        photo: updatedUser.photo || user?.photo,
         role: updatedUser.role,
         createdAt: updatedUser.createdAt || user?.createdAt || new Date().toISOString(),
       });
