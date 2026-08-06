@@ -218,6 +218,7 @@ export type CandidatMe = {
     longitude?: number;
     telephone?: string;
     email?: string;
+    photo?: string;
   };
   createdAt: string;
 };
@@ -306,6 +307,7 @@ export type AdminCentre = {
   capaciteMaximale: number;
   examensAcceptes: string[];
   candidatsAffectes: string[];
+  photo?: string;
 };
 
 export type NationalReport = {
@@ -347,6 +349,14 @@ export const adminAPI = {
   createCentre: (data: Partial<AdminCentre>) => api.post<AdminCentre>('/admin/centres', data),
   updateCentre: (id: string, data: Partial<AdminCentre>) => api.put<AdminCentre>(`/admin/centres/${id}`, data),
   deleteCentre: (id: string) => api.delete<void>(`/admin/centres/${id}`),
+  uploadCentrePhoto: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    return api.post<AdminCentre>(`/admin/centres/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  deleteCentrePhoto: (id: string) => api.delete<AdminCentre>(`/admin/centres/${id}/photo`),
 };
 
 

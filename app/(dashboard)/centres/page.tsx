@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { adminAPI, type AdminCentre } from '@/lib/api';
-import { Plus, Edit2, Trash2, Building2, MapPin, Users } from 'lucide-react';
+import { adminAPI, resolveFileUrl, type AdminCentre } from '@/lib/api';
+import { Plus, Edit2, Trash2, Building2, MapPin, Users, Camera, Loader2, X } from 'lucide-react';
 
 
 
@@ -27,6 +27,10 @@ export default function CentresAdminPage() {
     coords: { lat: '', lng: '' },
   });
   const [submitting, setSubmitting] = useState(false);
+  const [activeCentrePhoto, setActiveCentrePhoto] = useState<string | undefined>(undefined);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [deletingPhoto, setDeletingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch centres from API
   useEffect(() => {
@@ -125,22 +129,83 @@ export default function CentresAdminPage() {
       if (editing) {
         const response = await adminAPI.updateCentre(editing, payload);
         const updated = unwrapSingle(response) as AdminCentre | null;
-        if (updated) setCentres(centres.map(c => c._id === editing ? updated : c));
+        if (updated) {
+          setCentres(centres.map(c => c._id === editing ? updated : c));
+          setActiveCentrePhoto(updated.photo);
+        }
         toast.success('Centre modifié');
       } else {
         const response = await adminAPI.createCentre(payload);
         const created = unwrapSingle(response) as AdminCentre | null;
-        if (created) setCentres([created, ...centres]);
+        if (created) {
+          setCentres([created, ...centres]);
+          // On garde le formulaire ouvert en mode édition pour permettre d'ajouter une photo tout de suite
+          setEditing(created._id);
+          setActiveCentrePhoto(created.photo);
+          toast.success('Centre créé — vous pouvez maintenant ajouter une photo');
+          setSubmitting(false);
+          return;
+        }
         toast.success('Centre créé');
       }
-      
+
       setForm({ nom: '', code: '', ville: '', region: '', adresse: '', capaciteMaximale: 0, examensAcceptes: ['BAC'], coords: { lat: '', lng: '' } });
       setShowForm(false);
       setEditing(null);
+      setActiveCentrePhoto(undefined);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erreur');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePhotoPick = () => photoInputRef.current?.click();
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editing) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Format non supporté. Utilisez JPG, PNG, WEBP ou GIF.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('Image trop volumineuse (max 4 Mo).');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const response = await adminAPI.uploadCentrePhoto(editing, file);
+      const updated = (response.data as any)?.data as AdminCentre | undefined;
+      if (updated) {
+        setActiveCentrePhoto(updated.photo);
+        setCentres(prev => prev.map(c => c._id === editing ? updated : c));
+      }
+      toast.success('Photo du centre mise à jour');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Impossible d'uploader la photo");
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
+
+  const handlePhotoDelete = async () => {
+    if (!editing) return;
+    setDeletingPhoto(true);
+    try {
+      const response = await adminAPI.deleteCentrePhoto(editing);
+      const updated = (response.data as any)?.data as AdminCentre | undefined;
+      setActiveCentrePhoto(updated?.photo);
+      setCentres(prev => prev.map(c => c._id === editing ? { ...c, photo: undefined } : c));
+      toast.success('Photo du centre supprimée');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Impossible de supprimer la photo');
+    } finally {
+      setDeletingPhoto(false);
     }
   };
 
@@ -171,6 +236,7 @@ export default function CentresAdminPage() {
       },
     });
     setEditing(c._id);
+    setActiveCentrePhoto(c.photo);
     setShowForm(true);
   };
 
@@ -199,6 +265,7 @@ export default function CentresAdminPage() {
           onClick={() => {
             setShowForm(!showForm);
             if (showForm) setEditing(null);
+            setActiveCentrePhoto(undefined);
             setForm({
               nom: '',
               code: '',
