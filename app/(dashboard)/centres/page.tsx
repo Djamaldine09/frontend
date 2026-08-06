@@ -411,6 +411,72 @@ export default function CentresAdminPage() {
                 </div>
               </div>
             </div>
+
+            {/* Photo du centre — disponible seulement une fois le centre créé */}
+            {editing && (
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 4 }}>
+                <label>Photo du centre</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 8 }}>
+                  <div style={{
+                    width: 88, height: 88, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
+                    background: 'var(--bg-soft)', border: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+                  }}>
+                    {activeCentrePhoto ? (
+                      <img
+                        src={resolveFileUrl(activeCentrePhoto)}
+                        alt="Photo du centre"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: uploadingPhoto ? 0.5 : 1 }}
+                      />
+                    ) : (
+                      <Building2 size={26} style={{ color: 'var(--text-muted)' }} />
+                    )}
+                    {uploadingPhoto && (
+                      <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
+                        <Loader2 size={18} className="animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handlePhotoChange}
+                    style={{ display: 'none' }}
+                  />
+
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={handlePhotoPick}
+                      disabled={uploadingPhoto}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}
+                    >
+                      <Camera size={14} />
+                      {activeCentrePhoto ? 'Changer la photo' : 'Ajouter une photo'}
+                    </button>
+                    {activeCentrePhoto && (
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={handlePhotoDelete}
+                        disabled={deletingPhoto || uploadingPhoto}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--accent-red)' }}
+                      >
+                        <X size={14} />
+                        {deletingPhoto ? 'Suppression...' : 'Supprimer'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 8 }}>
+                  JPG, PNG, WEBP ou GIF. 4 Mo maximum. Visible par les candidats affectés à ce centre.
+                </p>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 type="button"
@@ -418,10 +484,11 @@ export default function CentresAdminPage() {
                 onClick={() => {
                   setShowForm(false);
                   setEditing(null);
+                  setActiveCentrePhoto(undefined);
                   setForm({ nom: '', code: '', ville: '', region: '', adresse: '', capaciteMaximale: 0, examensAcceptes: ['BAC'], coords: { lat: '', lng: '' } });
                 }}
               >
-                Annuler
+                {editing ? 'Terminé' : 'Annuler'}
               </button>
               <button type="submit" className="btn-primary" disabled={submitting}>
                 {submitting ? 'Enregistrement...' : editing ? 'Modifier' : 'Créer'}
