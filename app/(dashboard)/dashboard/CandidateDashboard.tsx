@@ -2,7 +2,7 @@
 import {
   CheckCircle2, Clock3, FileCheck, IdCard, MapPin, QrCode,
   ChevronRight, ChevronLeft, GraduationCap, Sparkles, Calculator,
-  Atom, BookText, FlaskConical, ArrowUpRight, Award,
+  Atom, BookText, FlaskConical, ArrowUpRight, Award, ZoomIn, X,
   LucideIcon,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -251,6 +251,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
   const { data, loading, error } = useCandidatData();
   const [downloading, setDownloading] = useState(false);
   const [revisionPeriod, setRevisionPeriod] = useState<'Hebdomadaire' | 'Mensuel'>('Hebdomadaire');
+  const [showCentrePhoto, setShowCentrePhoto] = useState(false);
   const router = useRouter();
 
   const revisionData = useMemo(() => buildRevisionHours(data?.planning ?? [], revisionPeriod), [data?.planning, revisionPeriod]);
@@ -619,18 +620,32 @@ export default function CandidateDashboard({ user }: { user: User }) {
           </div>
 
           <div style={{
-            marginTop: 16, height: 120, borderRadius: 14,
+            marginTop: 16, height: 220, borderRadius: 14,
             background: candidat.centreAffecte?.photo
               ? 'var(--bg-soft)'
               : 'radial-gradient(circle at 30% 60%, rgba(205,245,100,0.18), transparent 40%), linear-gradient(135deg, #20232B 0%, #1B1E25 100%)',
             border: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden',
-          }}>
+            cursor: candidat.centreAffecte?.photo ? 'zoom-in' : 'default',
+          }}
+          onClick={() => { if (candidat.centreAffecte?.photo) setShowCentrePhoto(true); }}
+          >
             {candidat.centreAffecte?.photo ? (
-              <img
-                src={resolveFileUrl(candidat.centreAffecte.photo)}
-                alt={`Photo du centre ${candidat.centreAffecte?.nom || ''}`}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
+              <>
+                <img
+                  src={resolveFileUrl(candidat.centreAffecte.photo)}
+                  alt={`Photo du centre ${candidat.centreAffecte?.nom || ''}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+                <div style={{
+                  position: 'absolute', bottom: 10, right: 10,
+                  background: 'rgba(0,0,0,0.55)', color: '#fff',
+                  fontSize: 11, fontWeight: 600, padding: '5px 10px',
+                  borderRadius: 999, display: 'flex', alignItems: 'center', gap: 5,
+                  backdropFilter: 'blur(4px)',
+                }}>
+                  <ZoomIn size={12} /> Agrandir
+                </div>
+              </>
             ) : (
               <svg width="100%" height="100%" viewBox="0 0 300 120" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
                 <defs>
@@ -651,6 +666,53 @@ export default function CandidateDashboard({ user }: { user: User }) {
           </button>
         </div>
       </section>
+
+      {/* Lightbox photo du centre */}
+      {showCentrePhoto && candidat.centreAffecte?.photo && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowCentrePhoto(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(10,10,12,0.88)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24, cursor: 'zoom-out',
+          }}
+        >
+          <button
+            onClick={() => setShowCentrePhoto(false)}
+            aria-label="Fermer"
+            style={{
+              position: 'absolute', top: 20, right: 20,
+              width: 38, height: 38, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.12)', color: '#fff',
+              border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={resolveFileUrl(candidat.centreAffecte.photo)}
+            alt={`Photo du centre ${candidat.centreAffecte?.nom || ''}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '92vw', maxHeight: '86vh', objectFit: 'contain',
+              borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            }}
+          />
+          <div style={{
+            position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+            color: '#fff', fontSize: 14, fontWeight: 600, textAlign: 'center',
+          }}>
+            {candidat.centreAffecte?.nom}
+            {candidat.centreAffecte?.ville && (
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 400 }}> · {candidat.centreAffecte.ville}</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
