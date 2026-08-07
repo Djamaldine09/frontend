@@ -4,9 +4,9 @@ import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 const DEFAULT_DATA = [
-  "https://images.unsplash.com/photo-1540968221243-29f5d70540bf?w=800&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1596135187959-562c650d98bc?w=800&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1628944682084-831f35256163?w=800&auto=format&fit=crop&q=60",
+  "https://madagascar.co.uk/application/files/3815/6051/9485/Education_banner-min.jpg",
+  "https://tse1.mm.bing.net/th/id/OIP.OBHl41Afmf2MPiN86K-FKAHaE8?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+  "https://th.bing.com/th/id/R.680542febe46876a0547407020c05204?rik=zmD7VhLqT7aQMg&riu=http%3a%2f%2fwomendeliver.org%2fwp-content%2fuploads%2f2016%2f09%2fGrad-time.jpg&ehk=IrOgIvYaNGvvv9n29YD0gQxWePylOnTsZCynCSjoPPc%3d&risl=&pid=ImgRaw&r=0",
   "https://images.unsplash.com/photo-1590013330451-3946e83e0392?w=800&auto=format&fit=crop&q=60",
   "https://images.unsplash.com/photo-1590421959604-741d0eec0a2e?w=800&auto=format&fit=crop&q=60",
   "https://images.unsplash.com/photo-1572613000712-eadc57acbecd?w=800&auto=format&fit=crop&q=60",
