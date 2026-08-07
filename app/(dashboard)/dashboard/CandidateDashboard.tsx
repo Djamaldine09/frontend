@@ -230,7 +230,12 @@ interface DocumentItem {
 }
 
 /* ---------- Phase tracker (derived from statutInscription + paiement) ---------- */
-function derivePhases(candidat: CandidatMe, planning: EpreuvePlanning[], convocation: Convocation | null): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
+function derivePhases(
+  candidat: CandidatMe,
+  planning: EpreuvePlanning[],
+  convocation: Convocation | null,
+  hasPublishedResults: boolean,
+): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
   const dossierDone = candidat.statutInscription === 'VALIDE';
   const paiementDone = candidat.paiement?.statut === 'PAYE';
   const preDone = dossierDone && paiementDone;
@@ -249,13 +254,16 @@ function derivePhases(candidat: CandidatMe, planning: EpreuvePlanning[], convoca
   const sortedExamDates = examDates.sort();
   const lastExamDate = sortedExamDates.length > 0 ? sortedExamDates[sortedExamDates.length - 1] : undefined;
   const examPassed = lastExamDate !== undefined && todayISO !== null && lastExamDate < todayISO;
-  const correctionActive = preDone && examPassed;
+
+  const examState = examPassed ? 'done' : preDone ? 'active' : 'idle';
+  const correctionState = hasPublishedResults ? 'done' : examPassed && preDone ? 'active' : 'idle';
+  const restitutionState = hasPublishedResults ? 'active' : 'idle';
 
   return [
     { key: 'pre',   label: 'Pré-examen',   state: (preDone ? 'done' : 'active') as 'done' | 'active' | 'idle' },
-    { key: 'exam',  label: 'Examen',       state: examPassed ? 'done' : preDone ? 'active' : 'idle' },
-    { key: 'post',  label: 'Correction',   state: correctionActive ? 'active' : 'idle' },
-    { key: 'final', label: 'Restitution',  state: 'idle' as const },
+    { key: 'exam',  label: 'Examen',       state: examState },
+    { key: 'post',  label: 'Correction',   state: correctionState },
+    { key: 'final', label: 'Restitution',  state: restitutionState },
   ];
 }
 
@@ -265,23 +273,11 @@ export default function CandidateDashboard({ user }: { user: User }) {
   const [downloading, setDownloading] = useState(false);
   const [revisionPeriod, setRevisionPeriod] = useState<'Hebdomadaire' | 'Mensuel'>('Hebdomadaire');
   const [showCentrePhoto, setShowCentrePhoto] = useState(false);
+  const [hasPublishedResults, setHasPublishedResults] = useState<boolean>(false);
   const router = useRouter();
   const { t, lang } = useLanguage();
 
   const revisionData = useMemo(() => buildRevisionHours(data?.planning ?? [], revisionPeriod, t, lang), [data?.planning, revisionPeriod, lang, t]);
-
-  if (loading) return <DashboardSkeleton />;
-  if (!data) {
-    return (
-      <div className="card" style={{ padding: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>Dossier candidat introuvable</h1>
-        <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{error || 'Aucun dossier réel n’est enregistré pour ce compte.'}</p>
-      </div>
-    );
-  }
-
-  const { candidat, convocation, planning } = data;
-  const [hasPublishedResults, setHasPublishedResults] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -301,6 +297,17 @@ export default function CandidateDashboard({ user }: { user: User }) {
     return () => { cancelled = true; };
   }, []);
 
+  if (loading) return <DashboardSkeleton />;
+  if (!data) {
+    return (
+      <div className="card" style={{ padding: 28 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>Dossier candidat introuvable</h1>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{error || 'Aucun dossier réel n’est enregistré pour ce compte.'}</p>
+      </div>
+    );
+  }
+
+  const { candidat, convocation, planning } = data;
   const phases = derivePhases(candidat, planning, convocation, hasPublishedResults);
 
   // Build calendar from real planning
