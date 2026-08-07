@@ -1,7 +1,42 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LANGUAGES } from '@/lib/i18n/translations';
+import { LANGUAGES, Lang } from '@/lib/i18n/translations';
+
+function FlagIcon({ code }: { code: Lang }) {
+  const common = { width: 22, height: 16, style: { borderRadius: 3, display: 'block', flexShrink: 0 } as React.CSSProperties };
+
+  if (code === 'fr') {
+    return (
+      <svg viewBox="0 0 3 2" {...common}>
+        <rect width="1" height="2" x="0" fill="#0055A4" />
+        <rect width="1" height="2" x="1" fill="#FFFFFF" />
+        <rect width="1" height="2" x="2" fill="#EF4135" />
+      </svg>
+    );
+  }
+
+  if (code === 'en') {
+    return (
+      <svg viewBox="0 0 60 40" {...common}>
+        <rect width="60" height="40" fill="#00247D" />
+        <path d="M0,0 L60,40 M60,0 L0,40" stroke="#FFFFFF" strokeWidth="8" />
+        <path d="M0,0 L60,40 M60,0 L0,40" stroke="#CF142B" strokeWidth="3" />
+        <path d="M30,0 V40 M0,20 H60" stroke="#FFFFFF" strokeWidth="13" />
+        <path d="M30,0 V40 M0,20 H60" stroke="#CF142B" strokeWidth="8" />
+      </svg>
+    );
+  }
+
+  // Madagascar
+  return (
+    <svg viewBox="0 0 3 2" {...common}>
+      <rect width="1" height="2" x="0" fill="#FFFFFF" />
+      <rect width="2" height="1" x="1" y="0" fill="#FC3D32" />
+      <rect width="2" height="1" x="1" y="1" fill="#007E3A" />
+    </svg>
+  );
+}
 
 export default function LanguageSwitcher() {
   const { lang, setLang, t } = useLanguage();
@@ -29,9 +64,9 @@ export default function LanguageSwitcher() {
         aria-label={t('topbar.language')}
         title={t('topbar.language')}
         data-testid="topbar-language"
-        style={{ fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <span style={{ fontSize: 17, lineHeight: 1 }}>{current.flag}</span>
+        <FlagIcon code={current.code} />
       </button>
 
       {open && (
@@ -62,7 +97,7 @@ export default function LanguageSwitcher() {
                 cursor: 'pointer', textAlign: 'left',
               }}
             >
-              <span style={{ fontSize: 17, lineHeight: 1 }}>{l.flag}</span>
+              <FlagIcon code={l.code} />
               {l.label}
             </button>
           ))}
