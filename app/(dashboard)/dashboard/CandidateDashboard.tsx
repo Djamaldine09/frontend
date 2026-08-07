@@ -8,11 +8,12 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { User } from '@/types';
 import { useCandidatData } from '@/lib/useCandidatData';
-import { documentsAPI, EpreuvePlanning, CandidatMe, Convocation, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
+import { documentsAPI, EpreuvePlanning, CandidatMe, Convocation, getDownloadErrorMessage, resolveFileUrl, resultatsExtendedAPI } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Lang } from '@/lib/i18n/translations';
 import { MONTHS_FULL, WEEKDAYS_MIN } from '@/lib/i18n/dates';
@@ -280,7 +281,27 @@ export default function CandidateDashboard({ user }: { user: User }) {
   }
 
   const { candidat, convocation, planning } = data;
-  const phases = derivePhases(candidat, planning, convocation);
+  const [hasPublishedResults, setHasPublishedResults] = useState<boolean>(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchMyResult = async () => {
+      try {
+        await resultatsExtendedAPI.getMyResult();
+        if (!cancelled) setHasPublishedResults(true);
+      } catch (error) {
+        if (!cancelled && axios.isAxiosError(error) && error.response?.status === 403) {
+          setHasPublishedResults(false);
+        }
+      }
+    };
+
+    fetchMyResult();
+    return () => { cancelled = true; };
+  }, []);
+
+  const phases = derivePhases(candidat, planning, convocation, hasPublishedResults);
 
   // Build calendar from real planning
   const examDates = new Set(planning

@@ -481,6 +481,9 @@ export const resultatsExtendedAPI = {
   // Récupérer les résultats d'un examen
   getByExamen: (examenId: string) => api.get(`/resultats/examen/${examenId}`),
   
+  // Récupérer les résultats du candidat courant
+  getMyResult: () => api.get('/resultats/mon-resultat'),
+  
   // Publier les résultats
   publish: (examenId: string) => api.post(`/resultats/examen/${examenId}/publish`),
   
