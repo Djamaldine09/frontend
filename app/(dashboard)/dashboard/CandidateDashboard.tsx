@@ -13,10 +13,12 @@ import toast from 'react-hot-toast';
 import { User } from '@/types';
 import { useCandidatData } from '@/lib/useCandidatData';
 import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Lang } from '@/lib/i18n/translations';
+import { MONTHS_FULL, WEEKDAYS_MIN, formatDayMonth, formatWeekdayDayMonth, formatMonthYear } from '@/lib/i18n/dates';
 
 /* ---------- Helpers ---------- */
-const FR_MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const FR_DAYS_SHORT = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
+type T = (key: string) => string;
 
 function daysUntil(value: string | Date | undefined | null): number | null {
   const target = parseDateSafely(value);
@@ -44,7 +46,7 @@ function areSameDay(a: Date, b: Date): boolean {
   return normalizeCalendarDate(a) === normalizeCalendarDate(b);
 }
 
-function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' | 'Mensuel', today = new Date()) {
+function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' | 'Mensuel', t: T, lang: Lang, today = new Date()) {
   const revisionItems = planning
     .filter((item) => item.type === 'REVISION')
     .map((item) => ({
@@ -54,14 +56,14 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
     .filter((item): item is EpreuvePlanning & { dateObj: Date } => item.dateObj !== null);
 
   if (revisionItems.length === 0) {
-    return { data: [], summary: 'Aucune donnée de révision planifiée.', trend: '' };
+    return { data: [], summary: t('cdash.revision.none'), trend: '' };
   }
 
   const computeTrend = (current: number, previous: number, context: string) => {
-    if (current === 0 && previous === 0) return `Aucune révision ${context} précédente.`;
-    if (previous === 0) return `+100% par rapport à ${context} précédente`; 
+    if (current === 0 && previous === 0) return t('cdash.revision.noneWeekPrevious').replace('{context}', context);
+    if (previous === 0) return t('cdash.revision.increaseFromPrevious').replace('{context}', context);
     const change = Math.round(((current - previous) / previous) * 100);
-    return `${change >= 0 ? '+' : ''}${change}% par rapport à ${context} précédente`;
+    return t('cdash.revision.changeFromPrevious').replace('{change}', `${change >= 0 ? '+' : ''}${change}`).replace('{context}', context);
   };
 
   if (period === 'Hebdomadaire') {
@@ -73,7 +75,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
       const slotDate = new Date(weekStart);
       slotDate.setDate(slotDate.getDate() + index);
       return {
-        d: FR_DAYS_SHORT[index],
+        d: WEEKDAYS_MIN[lang][index],
         v: 0,
         highlight: areSameDay(slotDate, today),
         ts: undefined as string | undefined,
@@ -100,15 +102,15 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
       if (slot) {
         slot.v += itemHours;
         if (areSameDay(item.dateObj, today)) {
-          slot.ts = `${formatHours(item.duree)} · aujourd'hui`;
+          slot.ts = `${formatHours(item.duree)} · ${t('cdash.revision.today')}`;
         }
       }
     });
 
     const summary = totalThisWeek > 0
-      ? `${formatHours(totalThisWeek * 60)} de révision cette semaine`
-      : 'Aucune révision programmée cette semaine.';
-    const trend = computeTrend(totalThisWeek, totalLastWeek, 'la semaine');
+      ? t('cdash.revision.thisWeek').replace('{hours}', formatHours(totalThisWeek * 60))
+      : t('cdash.revision.noneThisWeek');
+    const trend = computeTrend(totalThisWeek, totalLastWeek, t('cdash.revision.contextWeek'));
 
     return { data: slots.map(({ iso, ...slot }) => slot), summary, trend };
   }
@@ -153,7 +155,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
         weekSlot.v += itemHours;
         totalMonth += itemHours;
         if (weekSlot.highlight) {
-          weekSlot.ts = `${formatHours(item.duree)} · séance de révision`;
+          weekSlot.ts = `${formatHours(item.duree)} · ${t('cdash.revision.session')}`;
         }
       }
     }
@@ -163,9 +165,9 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
   });
 
   const summary = totalMonth > 0
-    ? `${formatHours(totalMonth * 60)} de révision ce mois-ci`
-    : 'Aucune révision programmée ce mois-ci.';
-  const trend = computeTrend(totalMonth, totalLastMonth, 'le mois');
+    ? t('cdash.revision.thisMonth').replace('{hours}', formatHours(totalMonth * 60))
+    : t('cdash.revision.noneThisMonth');
+  const trend = computeTrend(totalMonth, totalLastMonth, t('cdash.revision.contextMonth'));
 
   return { data: weeks.map(({ start, end, ...slot }) => slot), summary, trend };
 }
