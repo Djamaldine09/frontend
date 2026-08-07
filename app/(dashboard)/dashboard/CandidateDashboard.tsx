@@ -403,7 +403,8 @@ export default function CandidateDashboard({ user }: { user: User }) {
       <section style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div>
           <h1 data-testid="welcome-title" style={{ fontSize: 34, fontWeight: 800, letterSpacing: -1.2, color: 'var(--ink)', lineHeight: 1.05 }}>
-            {getGreeting()}    {user.prenom || candidat.user.prenom || user.nom}
+            <span style={{ marginRight: 10 }}>{getGreeting()}</span>
+            {user.prenom || candidat.user.prenom || user.nom}
           </h1>
           <p style={{ color: 'var(--ink-soft)', fontSize: 14.5, marginTop: 8 }}>
             {candidat.examen ?? 'Session 2025'} — Matricule <strong style={{ color: 'var(--ink)' }}>{candidat.numeroMatricule ?? '—'}</strong>
