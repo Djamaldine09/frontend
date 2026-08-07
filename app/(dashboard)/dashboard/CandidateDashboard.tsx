@@ -404,9 +404,6 @@ export default function CandidateDashboard({ user }: { user: User }) {
         <div>
           <h1 data-testid="welcome-title" style={{ fontSize: 34, fontWeight: 800, letterSpacing: -1.2, color: 'var(--ink)', lineHeight: 1.05 }}>
             {getGreeting()} {user.prenom || candidat.user.prenom || user.nom}
-            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--lime)', borderRadius: 12, padding: '3px 8px', marginLeft: 12, transform: 'translateY(-4px)' }}>
-              <Star size={20} strokeWidth={2.4} />
-            </span>
           </h1>
           <p style={{ color: 'var(--ink-soft)', fontSize: 14.5, marginTop: 8 }}>
             {candidat.examen ?? 'Session 2025'} — Matricule <strong style={{ color: 'var(--ink)' }}>{candidat.numeroMatricule ?? '—'}</strong>
