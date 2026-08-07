@@ -1,7 +1,7 @@
 'use client';
 import {
   CheckCircle2, Clock3, FileCheck, IdCard, MapPin, QrCode,
-  ChevronRight, ChevronLeft, Calculator, Sparkles,
+  ChevronRight, ChevronLeft, Calculator, Star,
   Atom, BookText, FlaskConical, ArrowUpRight, Award, ZoomIn, X,
   LucideIcon,
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { User } from '@/types';
 import { useCandidatData } from '@/lib/useCandidatData';
-import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
+import { documentsAPI, EpreuvePlanning, CandidatMe, Convocation, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Lang } from '@/lib/i18n/translations';
 import { MONTHS_FULL, WEEKDAYS_MIN } from '@/lib/i18n/dates';
@@ -112,7 +112,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
       : t('cdash.revision.noneThisWeek');
     const trend = computeTrend(totalThisWeek, totalLastWeek, t('cdash.revision.contextWeek'));
 
-    return { data: slots.map(({ iso: _iso, ...slot }) => slot), summary, trend };
+    return { data: slots.map((slot) => slot), summary, trend };
   }
 
   const month = today.getMonth();
@@ -169,7 +169,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
     : t('cdash.revision.noneThisMonth');
   const trend = computeTrend(totalMonth, totalLastMonth, t('cdash.revision.contextMonth'));
 
-  return { data: weeks.map(({ start: _start, end: _end, ...slot }) => slot), summary, trend };
+  return { data: weeks.map((slot) => slot), summary, trend };
 }
 
 function parseDateSafely(value: string | Date | undefined | null): Date | null {
@@ -229,16 +229,31 @@ interface DocumentItem {
 }
 
 /* ---------- Phase tracker (derived from statutInscription + paiement) ---------- */
-function derivePhases(candidat: CandidatMe): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
+function derivePhases(candidat: CandidatMe, planning: EpreuvePlanning[], convocation: Convocation | null): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
   const dossierDone = candidat.statutInscription === 'VALIDE';
   const paiementDone = candidat.paiement?.statut === 'PAYE';
-  const examDone = false; // backend would tell us
-
   const preDone = dossierDone && paiementDone;
+
+  const todayISO = normalizeCalendarDate(new Date());
+  const examDates = planning
+    .filter((item) => item.type === 'EPREUVE')
+    .map((item) => normalizeCalendarDate(item.date))
+    .filter((date): date is string => Boolean(date));
+
+  if (examDates.length === 0 && convocation?.dateEpreuve) {
+    const convDate = normalizeCalendarDate(convocation.dateEpreuve);
+    if (convDate) examDates.push(convDate);
+  }
+
+  const sortedExamDates = examDates.sort();
+  const lastExamDate = sortedExamDates.length > 0 ? sortedExamDates[sortedExamDates.length - 1] : undefined;
+  const examPassed = lastExamDate !== undefined && todayISO !== null && lastExamDate < todayISO;
+  const correctionActive = preDone && examPassed;
+
   return [
     { key: 'pre',   label: 'Pré-examen',   state: (preDone ? 'done' : 'active') as 'done' | 'active' | 'idle' },
-    { key: 'exam',  label: 'Examen',       state: (examDone ? 'done' : preDone ? 'active' : 'idle') as 'done' | 'active' | 'idle' },
-    { key: 'post',  label: 'Correction',   state: 'idle' as const },
+    { key: 'exam',  label: 'Examen',       state: examPassed ? 'done' : preDone ? 'active' : 'idle' },
+    { key: 'post',  label: 'Correction',   state: correctionActive ? 'active' : 'idle' },
     { key: 'final', label: 'Restitution',  state: 'idle' as const },
   ];
 }
@@ -265,7 +280,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
   }
 
   const { candidat, convocation, planning } = data;
-  const phases = derivePhases(candidat);
+  const phases = derivePhases(candidat, planning, convocation);
 
   // Build calendar from real planning
   const examDates = new Set(planning
@@ -355,7 +370,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           <h1 data-testid="welcome-title" style={{ fontSize: 34, fontWeight: 800, letterSpacing: -1.2, color: 'var(--ink)', lineHeight: 1.05 }}>
             Bonjour {user.prenom || candidat.user.prenom || user.nom}
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--lime)', borderRadius: 12, padding: '3px 8px', marginLeft: 12, transform: 'translateY(-4px)' }}>
-              <Sparkles size={20} strokeWidth={2.4} />
+              <Star size={20} strokeWidth={2.4} />
             </span>
           </h1>
           <p style={{ color: 'var(--ink-soft)', fontSize: 14.5, marginTop: 8 }}>
