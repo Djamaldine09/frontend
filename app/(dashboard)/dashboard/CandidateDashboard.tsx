@@ -1,7 +1,7 @@
 'use client';
 import {
   CheckCircle2, Clock3, FileCheck, IdCard, MapPin, QrCode,
-  ChevronRight, ChevronLeft, GraduationCap, Sparkles, Calculator,
+  ChevronRight, ChevronLeft, Calculator,
   Atom, BookText, FlaskConical, ArrowUpRight, Award, ZoomIn, X,
   LucideIcon,
 } from 'lucide-react';
@@ -10,12 +10,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { User } from '@/types';
+import { Resultat, User } from '@/types';
 import { useCandidatData } from '@/lib/useCandidatData';
 import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Lang } from '@/lib/i18n/translations';
-import { MONTHS_FULL, WEEKDAYS_MIN, formatDayMonth, formatWeekdayDayMonth, formatMonthYear } from '@/lib/i18n/dates';
+import { WEEKDAYS_MIN, formatDayMonth, formatWeekdayDayMonth, formatMonthYear } from '@/lib/i18n/dates';
 
 /* ---------- Helpers ---------- */
 type T = (key: string) => string;
@@ -112,7 +112,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
       : t('cdash.revision.noneThisWeek');
     const trend = computeTrend(totalThisWeek, totalLastWeek, t('cdash.revision.contextWeek'));
 
-    return { data: slots.map(({ iso, ...slot }) => slot), summary, trend };
+    return { data: slots.map((slot) => ({ d: slot.d, v: slot.v, highlight: slot.highlight, ts: slot.ts })), summary, trend };
   }
 
   const month = today.getMonth();
@@ -122,7 +122,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
   const monthEnd = new Date(year, month + 1, 0);
 
   const weeks: Array<{ d: string; v: number; highlight: boolean; ts?: string; start: Date; end: Date }> = [];
-  let weekStart = new Date(monthStart);
+  const weekStart = new Date(monthStart);
   let weekIndex = 0;
 
   while (weekStart <= monthEnd || weeks.length < 4) {
@@ -169,7 +169,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
     : t('cdash.revision.noneThisMonth');
   const trend = computeTrend(totalMonth, totalLastMonth, t('cdash.revision.contextMonth'));
 
-  return { data: weeks.map(({ start, end, ...slot }) => slot), summary, trend };
+  return { data: weeks.map(({ d, v, highlight, ts }) => ({ d, v, highlight, ts })), summary, trend };
 }
 
 function parseDateSafely(value: string | Date | undefined | null): Date | null {
@@ -187,8 +187,28 @@ function getValidDate(value: string | Date | undefined | null, fallback: Date = 
   return parseDateSafely(value) ?? fallback;
 }
 
-function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat('fr-FR', options).format(date);
+function getExamWindow(planning: EpreuvePlanning[], convocation: { dateEpreuve: string } | null) {
+  const examDates = planning
+    .filter((item) => item.type === 'EPREUVE')
+    .map((item) => parseDateSafely(item.date))
+    .filter((date): date is Date => date !== null);
+
+  if (convocation && parseDateSafely(convocation.dateEpreuve)) {
+    examDates.push(parseDateSafely(convocation.dateEpreuve) as Date);
+  }
+
+  if (examDates.length === 0) {
+    return { first: null, last: null };
+  }
+
+  const sorted = examDates.sort((a, b) => a.getTime() - b.getTime());
+  return { first: sorted[0], last: sorted[sorted.length - 1] };
+}
+
+function isDateBeforeDay(value: string | Date | undefined | null, compareTo: Date = new Date()): boolean {
+  const date = parseDateSafely(value);
+  if (!date) return false;
+  return normalizeCalendarDate(date)! < normalizeCalendarDate(compareTo)!;
 }
 
 function buildCalendar(year: number, month: number, examDates: Set<string>): { day: number | null; iso?: string; isExam?: boolean; isToday?: boolean }[] {
@@ -233,19 +253,29 @@ interface DocumentItem {
   state: 'valide' | 'attente' | 'manquant';
 }
 
-/* ---------- Phase tracker (derived from statutInscription + paiement) ---------- */
-function derivePhases(candidat: CandidatMe, t: T): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
+/* ---------- Phase tracker (derived from statutInscription + paiement + exam dates) ---------- */
+function derivePhases(
+  candidat: CandidatMe,
+  convocation: { dateEpreuve: string } | null,
+  planning: EpreuvePlanning[],
+  resultat: Resultat | null,
+  t: T
+): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
   const dossierDone = candidat.statutInscription === 'VALIDE';
   const paiementDone = candidat.paiement?.statut === 'PAYE';
-  const examDone = false; // backend would tell us
-  const finalDone = false;
-
   const preDone = dossierDone && paiementDone;
+  const { last: lastExam } = getExamWindow(planning, convocation);
+
+  const today = new Date();
+  const examFinished = lastExam !== null && isDateBeforeDay(lastExam, today);
+  const resultsPublished = resultat?.estPublie === true;
+  const finalPhaseActive = examFinished && resultsPublished;
+
   return [
-    { key: 'pre',   label: t('cdash.phase.pre'),   state: (preDone ? 'done' : 'active') as 'done' | 'active' | 'idle' },
-    { key: 'exam',  label: t('cdash.phase.exam'),  state: (examDone ? 'done' : preDone ? 'active' : 'idle') as 'done' | 'active' | 'idle' },
-    { key: 'post',  label: t('cdash.phase.post'),  state: 'idle' as const },
-    { key: 'final', label: t('cdash.phase.final'), state: 'idle' as const },
+    { key: 'pre',   label: t('cdash.phase.pre'),   state: preDone ? 'done' : 'active' },
+    { key: 'exam',  label: t('cdash.phase.exam'),  state: preDone ? (examFinished ? 'done' : 'active') : 'idle' },
+    { key: 'post',  label: t('cdash.phase.post'),  state: examFinished ? (finalPhaseActive ? 'done' : 'active') : 'idle' },
+    { key: 'final', label: t('cdash.phase.final'), state: finalPhaseActive ? 'active' : 'idle' },
   ];
 }
 
@@ -270,8 +300,8 @@ export default function CandidateDashboard({ user }: { user: User }) {
     );
   }
 
-  const { candidat, convocation, planning } = data;
-  const phases = derivePhases(candidat, t);
+  const { candidat, convocation, planning, resultat } = data;
+  const phases = derivePhases(candidat, convocation, planning, resultat, t);
 
   // Build calendar from real planning
   const examDates = new Set(planning
@@ -355,8 +385,6 @@ export default function CandidateDashboard({ user }: { user: User }) {
       setDownloading(false);
     }
   };
-
-  const hours: { d: string; v: number; highlight?: boolean; ts?: string }[] = revisionData.data;
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
@@ -639,6 +667,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           >
             {candidat.centreAffecte?.photo ? (
               <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={resolveFileUrl(candidat.centreAffecte.photo)}
                   alt={`${t('cdash.centre.title')} ${candidat.centreAffecte?.nom || ''}`}
@@ -701,6 +730,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           >
             <X size={18} />
           </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={resolveFileUrl(candidat.centreAffecte.photo)}
             alt={`${t('cdash.centre.title')} ${candidat.centreAffecte?.nom || ''}`}

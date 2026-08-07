@@ -60,6 +60,7 @@ export interface Resultat {
   notes: Note[];
   moyenneGenerale: number;
   statutFinal: 'EN_ATTENTE' | 'ADMIS' | 'REFUSE' | 'REPECHAGE';
+  estPublie?: boolean;
   createdAt: string;
 }
 

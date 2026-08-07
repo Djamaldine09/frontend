@@ -1,12 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { candidatAPI, CandidatMe, Convocation, EpreuvePlanning } from '@/lib/api';
+import { candidatAPI, CandidatMe, Convocation, EpreuvePlanning, resultatsExtendedAPI } from '@/lib/api';
+import { Resultat } from '@/types';
 
 export interface CandidatBundle {
   candidat: CandidatMe;
   convocation: Convocation | null;
   planning: EpreuvePlanning[];
+  resultat: Resultat | null;
 }
 
 function getApiMessage(error: unknown, fallback: string): string {
@@ -34,15 +36,17 @@ export function useCandidatData() {
 
     try {
       const meRes = await candidatAPI.me();
-      const [convRes, planRes] = await Promise.allSettled([
+      const [convRes, planRes, resultRes] = await Promise.allSettled([
         candidatAPI.convocation(),
         candidatAPI.planning(),
+        resultatsExtendedAPI.getMyResult(),
       ]);
 
       setData({
         candidat: unwrapApiData<CandidatMe>(meRes.data),
         convocation: convRes.status === 'fulfilled' ? unwrapApiData<Convocation>(convRes.value.data) : null,
         planning: planRes.status === 'fulfilled' ? unwrapApiData<EpreuvePlanning[]>(planRes.value.data) : [],
+        resultat: resultRes.status === 'fulfilled' ? unwrapApiData<Resultat>(resultRes.value.data) : null,
       });
 
       if (convRes.status === 'rejected') {
