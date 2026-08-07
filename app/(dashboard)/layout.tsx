@@ -38,7 +38,7 @@ const navItems = [
 ];
 
 const bottomNav = [
-  { href: '#notifications', labelKey: 'nav.notifications', icon: Bell, badge: 2 },
+  { href: '/notifications', labelKey: 'nav.notifications', icon: Bell, badge: 2 },
   { href: '/dashboard/parametres',      labelKey: 'nav.parametres',    icon: Settings },
 ];
 

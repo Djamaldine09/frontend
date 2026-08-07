@@ -1,20 +1,14 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { authAPI, resolveFileUrl } from '@/lib/api';
 import { Camera, Trash2, User, Mail, Phone, Save, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const roleLabels: Record<string, string> = {
-  ADMIN: 'Administrateur',
-  RESPONSABLE: 'Responsable',
-  SURVEILLANT: 'Surveillant',
-  CORRECTEUR: 'Correcteur',
-  CANDIDAT: 'Candidat',
-};
-
 export default function ProfilPage() {
   const { user, updateUser } = useAuth();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [uploading, setUploading] = useState(false);
@@ -32,8 +26,8 @@ export default function ProfilPage() {
   if (!user) {
     return (
       <div className="card" style={{ padding: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800 }}>Utilisateur non connecté</h1>
-        <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>Connectez-vous pour accéder à votre profil.</p>
+        <h1 style={{ fontSize: 24, fontWeight: 800 }}>{t('profil.notConnected.title')}</h1>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{t('profil.notConnected.subtitle')}</p>
       </div>
     );
   }
@@ -46,11 +40,11 @@ export default function ProfilPage() {
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Format non supporté. Utilisez JPG, PNG, WEBP ou GIF.");
+      toast.error(t('profil.toast.invalidFormat'));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image trop volumineuse (max 2 Mo).');
+      toast.error(t('profil.toast.tooLarge'));
       return;
     }
 
@@ -61,9 +55,9 @@ export default function ProfilPage() {
     try {
       const res = await authAPI.uploadPhoto(file);
       updateUser({ photo: res.data.user.photo });
-      toast.success('Photo de profil mise à jour');
+      toast.success(t('profil.toast.photoUpdated'));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Impossible d'uploader la photo");
+      toast.error(error.response?.data?.message || t('profil.toast.photoUploadError'));
     } finally {
       setUploading(false);
       URL.revokeObjectURL(localPreview);
@@ -78,9 +72,9 @@ export default function ProfilPage() {
     try {
       await authAPI.deletePhoto();
       updateUser({ photo: undefined });
-      toast.success('Photo de profil supprimée');
+      toast.success(t('profil.toast.photoDeleted'));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Impossible de supprimer la photo');
+      toast.error(error.response?.data?.message || t('profil.toast.photoDeleteError'));
     } finally {
       setDeleting(false);
     }
@@ -89,7 +83,7 @@ export default function ProfilPage() {
   const handleSaveInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nom.trim() || !form.prenom.trim() || !form.email.trim()) {
-      toast.error('Nom, prénom et email sont requis');
+      toast.error(t('profil.toast.requiredFields'));
       return;
     }
 
@@ -102,9 +96,9 @@ export default function ProfilPage() {
         telephone: form.telephone.trim() || undefined,
       });
       updateUser(res.data.user);
-      toast.success('Profil mis à jour');
+      toast.success(t('profil.toast.profileUpdated'));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Impossible de mettre à jour le profil');
+      toast.error(error.response?.data?.message || t('profil.toast.profileUpdateError'));
     } finally {
       setSaving(false);
     }
@@ -115,9 +109,9 @@ export default function ProfilPage() {
   return (
     <div className="animate-fade-in" data-testid="profil-page" style={{ display: 'grid', gap: 22 }}>
       <div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.6 }}>Mon profil</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.6 }}>{t('profil.title')}</h1>
         <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 4 }}>
-          Gérez votre photo de profil et vos informations personnelles.
+          {t('profil.subtitle')}
         </p>
       </div>
 
@@ -127,16 +121,16 @@ export default function ProfilPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <User size={20} />
             <div>
-              <h2 style={{ fontSize: 17, fontWeight: 800 }}>Informations personnelles</h2>
+              <h2 style={{ fontSize: 17, fontWeight: 800 }}>{t('profil.personalInfo.title')}</h2>
               <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 4 }}>
-                Ces informations sont visibles dans votre profil.
+                {t('profil.personalInfo.subtitle')}
               </p>
             </div>
           </div>
 
           <form onSubmit={handleSaveInfo} style={{ display: 'grid', gap: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <Field label="Prénom">
+              <Field label={t('profil.field.firstName')}>
                 <input
                   className="input-pill"
                   style={{ width: '100%' }}
@@ -146,7 +140,7 @@ export default function ProfilPage() {
                   required
                 />
               </Field>
-              <Field label="Nom">
+              <Field label={t('profil.field.lastName')}>
                 <input
                   className="input-pill"
                   style={{ width: '100%' }}
@@ -158,7 +152,7 @@ export default function ProfilPage() {
               </Field>
             </div>
 
-            <Field label="Email" icon={<Mail size={14} />}>
+            <Field label={t('profil.field.email')} icon={<Mail size={14} />}>
               <input
                 type="email"
                 className="input-pill"
@@ -170,7 +164,7 @@ export default function ProfilPage() {
               />
             </Field>
 
-            <Field label="Téléphone" icon={<Phone size={14} />}>
+            <Field label={t('profil.field.phone')} icon={<Phone size={14} />}>
               <input
                 className="input-pill"
                 style={{ width: '100%' }}
@@ -189,7 +183,7 @@ export default function ProfilPage() {
               data-testid="profil-save"
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              {saving ? t('profil.saving') : t('profil.save')}
             </button>
           </form>
         </section>
@@ -197,9 +191,9 @@ export default function ProfilPage() {
         {/* Carte photo de profil */}
         <aside className="card" style={{ padding: 22, display: 'grid', gap: 16, alignContent: 'start' }}>
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 800 }}>Photo de profil</h2>
+            <h2 style={{ fontSize: 17, fontWeight: 800 }}>{t('profil.photo.title')}</h2>
             <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 4 }}>
-              JPG, PNG, WEBP ou GIF. 2 Mo maximum.
+              {t('profil.photo.subtitle')}
             </p>
           </div>
 
@@ -248,7 +242,7 @@ export default function ProfilPage() {
                 data-testid="profil-photo-upload"
               >
                 <Camera size={14} />
-                {user.photo ? 'Changer la photo' : 'Ajouter une photo'}
+                {user.photo ? t('profil.photo.change') : t('profil.photo.add')}
               </button>
               {user.photo && (
                 <button
@@ -259,15 +253,15 @@ export default function ProfilPage() {
                   data-testid="profil-photo-delete"
                 >
                   <Trash2 size={14} />
-                  {deleting ? 'Suppression...' : 'Supprimer'}
+                  {deleting ? t('profil.photo.deleting') : t('profil.photo.delete')}
                 </button>
               )}
             </div>
           </div>
 
           <div style={{ borderTop: '1px solid var(--ink-line)', paddingTop: 14, display: 'grid', gap: 8 }}>
-            <Row label="Rôle" value={roleLabels[user.role] || user.role} />
-            <Row label="Membre depuis" value={new Date(user.createdAt).toLocaleDateString('fr-FR')} />
+            <Row label={t('profil.role')} value={t(`role.${user.role}`)} />
+            <Row label={t('profil.memberSince')} value={new Date(user.createdAt).toLocaleDateString('fr-FR')} />
           </div>
         </aside>
       </div>
