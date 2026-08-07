@@ -1,7 +1,7 @@
 'use client';
 import {
   CheckCircle2, Clock3, FileCheck, IdCard, MapPin, QrCode,
-  ChevronRight, ChevronLeft, GraduationCap, Sparkles, Calculator,
+  ChevronRight, ChevronLeft, Calculator,
   Atom, BookText, FlaskConical, ArrowUpRight, Award, ZoomIn, X,
   LucideIcon,
 } from 'lucide-react';
@@ -15,7 +15,7 @@ import { useCandidatData } from '@/lib/useCandidatData';
 import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Lang } from '@/lib/i18n/translations';
-import { MONTHS_FULL, WEEKDAYS_MIN, formatDayMonth, formatWeekdayDayMonth, formatMonthYear } from '@/lib/i18n/dates';
+import { MONTHS_FULL, WEEKDAYS_MIN } from '@/lib/i18n/dates';
 
 /* ---------- Helpers ---------- */
 type T = (key: string) => string;
@@ -112,7 +112,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
       : t('cdash.revision.noneThisWeek');
     const trend = computeTrend(totalThisWeek, totalLastWeek, t('cdash.revision.contextWeek'));
 
-    return { data: slots.map(({ iso, ...slot }) => slot), summary, trend };
+    return { data: slots.map(({ iso: _iso, ...slot }) => slot), summary, trend };
   }
 
   const month = today.getMonth();
@@ -122,7 +122,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
   const monthEnd = new Date(year, month + 1, 0);
 
   const weeks: Array<{ d: string; v: number; highlight: boolean; ts?: string; start: Date; end: Date }> = [];
-  let weekStart = new Date(monthStart);
+  const weekStart = new Date(monthStart);
   let weekIndex = 0;
 
   while (weekStart <= monthEnd || weeks.length < 4) {
@@ -169,7 +169,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
     : t('cdash.revision.noneThisMonth');
   const trend = computeTrend(totalMonth, totalLastMonth, t('cdash.revision.contextMonth'));
 
-  return { data: weeks.map(({ start, end, ...slot }) => slot), summary, trend };
+  return { data: weeks.map(({ start: _start, end: _end, ...slot }) => slot), summary, trend };
 }
 
 function parseDateSafely(value: string | Date | undefined | null): Date | null {
@@ -185,10 +185,6 @@ function normalizeCalendarDate(value: string | Date | undefined | null): string 
 
 function getValidDate(value: string | Date | undefined | null, fallback: Date = new Date()): Date {
   return parseDateSafely(value) ?? fallback;
-}
-
-function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat('fr-FR', options).format(date);
 }
 
 function buildCalendar(year: number, month: number, examDates: Set<string>): { day: number | null; iso?: string; isExam?: boolean; isToday?: boolean }[] {
@@ -237,7 +233,6 @@ function derivePhases(candidat: CandidatMe): Array<{ key: string; label: string;
   const dossierDone = candidat.statutInscription === 'VALIDE';
   const paiementDone = candidat.paiement?.statut === 'PAYE';
   const examDone = false; // backend would tell us
-  const finalDone = false;
 
   const preDone = dossierDone && paiementDone;
   return [
@@ -352,8 +347,6 @@ export default function CandidateDashboard({ user }: { user: User }) {
     }
   };
 
-  const hours: { d: string; v: number; highlight?: boolean; ts?: string }[] = revisionData.data;
-
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       {/* Greeting + phase tracker */}
@@ -367,7 +360,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           </h1>
           <p style={{ color: 'var(--ink-soft)', fontSize: 14.5, marginTop: 8 }}>
             {candidat.examen ?? 'Session 2025'} — Matricule <strong style={{ color: 'var(--ink)' }}>{candidat.numeroMatricule ?? '—'}</strong>
-            {days !== null && days > 0 && <> · Reste <strong style={{ color: 'var(--ink)' }}>{days} jour{days > 1 ? 's' : ''}</strong> avant l'épreuve.</>}
+            {days !== null && days > 0 && <> · Reste <strong style={{ color: 'var(--ink)' }}>{days} jour{days > 1 ? 's' : ''}</strong> avant l&apos;épreuve.</>}
           </p>
         </div>
 
@@ -527,7 +520,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
         <div className="card" style={{ padding: 20 }} data-testid="calendar-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <button className="btn-icon" style={{ width: 28, height: 28 }} aria-label="Mois précédent"><ChevronLeft size={15} /></button>
-            <div style={{ fontSize: 13.5, fontWeight: 700 }}>{FR_MONTHS[examMonth]} {examYear}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700 }}>{MONTHS_FULL[lang][examMonth]} {examYear}</div>
             <button className="btn-icon" style={{ width: 28, height: 28 }} aria-label="Mois suivant"><ChevronRight size={15} /></button>
           </div>
 
@@ -610,7 +603,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
             <div className="tile tile-sm" style={{ background: 'var(--lime)' }}>
               <MapPin size={17} strokeWidth={2.2} color="var(--ink)\" />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>Centre d'examen</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>Centre d&apos;examen</div>
           </div>
 
           <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, color: 'var(--ink)' }}>
