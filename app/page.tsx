@@ -10,7 +10,11 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading) {
-      router.replace(user ? '/dashboard' : '/login');
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/landing');
+      }
     }
   }, [user, isLoading, router]);
 
