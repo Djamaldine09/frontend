@@ -1,22 +1,21 @@
 'use client';
 import {
   CheckCircle2, Clock3, FileCheck, IdCard, MapPin, QrCode,
-  ChevronRight, ChevronLeft, Calculator, Star,
+  ChevronRight, ChevronLeft, GraduationCap, Sparkles, Calculator,
   Atom, BookText, FlaskConical, ArrowUpRight, Award, ZoomIn, X,
   LucideIcon,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { User } from '@/types';
 import { useCandidatData } from '@/lib/useCandidatData';
-import { documentsAPI, EpreuvePlanning, CandidatMe, Convocation, getDownloadErrorMessage, resolveFileUrl, resultatsExtendedAPI } from '@/lib/api';
+import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Lang } from '@/lib/i18n/translations';
-import { MONTHS_FULL, WEEKDAYS_MIN } from '@/lib/i18n/dates';
+import { MONTHS_FULL, WEEKDAYS_MIN, formatDayMonth, formatWeekdayDayMonth, formatMonthYear } from '@/lib/i18n/dates';
 
 /* ---------- Helpers ---------- */
 type T = (key: string) => string;
@@ -113,7 +112,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
       : t('cdash.revision.noneThisWeek');
     const trend = computeTrend(totalThisWeek, totalLastWeek, t('cdash.revision.contextWeek'));
 
-    return { data: slots.map((slot) => slot), summary, trend };
+    return { data: slots.map(({ iso, ...slot }) => slot), summary, trend };
   }
 
   const month = today.getMonth();
@@ -123,7 +122,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
   const monthEnd = new Date(year, month + 1, 0);
 
   const weeks: Array<{ d: string; v: number; highlight: boolean; ts?: string; start: Date; end: Date }> = [];
-  const weekStart = new Date(monthStart);
+  let weekStart = new Date(monthStart);
   let weekIndex = 0;
 
   while (weekStart <= monthEnd || weeks.length < 4) {
@@ -170,7 +169,7 @@ function buildRevisionHours(planning: EpreuvePlanning[], period: 'Hebdomadaire' 
     : t('cdash.revision.noneThisMonth');
   const trend = computeTrend(totalMonth, totalLastMonth, t('cdash.revision.contextMonth'));
 
-  return { data: weeks.map((slot) => slot), summary, trend };
+  return { data: weeks.map(({ start, end, ...slot }) => slot), summary, trend };
 }
 
 function parseDateSafely(value: string | Date | undefined | null): Date | null {
@@ -188,11 +187,8 @@ function getValidDate(value: string | Date | undefined | null, fallback: Date = 
   return parseDateSafely(value) ?? fallback;
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour >= 18) return 'Bonsoir';
-  if (hour >= 12) return 'Bon après-midi';
-  return 'Bonjour';
+function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat('fr-FR', options).format(date);
 }
 
 function buildCalendar(year: number, month: number, examDates: Set<string>): { day: number | null; iso?: string; isExam?: boolean; isToday?: boolean }[] {
@@ -221,6 +217,7 @@ const SUBJECT_FALLBACK_TONES = ['var(--tile-sky)','var(--tile-lila)','var(--tile
 
 /* ---------- Types ---------- */
 interface OverviewCard {
+  key: string;
   label: string;
   value: string;
   hint: string;
@@ -237,40 +234,18 @@ interface DocumentItem {
 }
 
 /* ---------- Phase tracker (derived from statutInscription + paiement) ---------- */
-function derivePhases(
-  candidat: CandidatMe,
-  planning: EpreuvePlanning[],
-  convocation: Convocation | null,
-  hasPublishedResults: boolean,
-): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
+function derivePhases(candidat: CandidatMe, t: T): Array<{ key: string; label: string; state: 'done' | 'active' | 'idle' }> {
   const dossierDone = candidat.statutInscription === 'VALIDE';
   const paiementDone = candidat.paiement?.statut === 'PAYE';
+  const examDone = false; // backend would tell us
+  const finalDone = false;
+
   const preDone = dossierDone && paiementDone;
-
-  const todayISO = normalizeCalendarDate(new Date());
-  const examDates = planning
-    .filter((item) => item.type === 'EPREUVE')
-    .map((item) => normalizeCalendarDate(item.date))
-    .filter((date): date is string => Boolean(date));
-
-  if (examDates.length === 0 && convocation?.dateEpreuve) {
-    const convDate = normalizeCalendarDate(convocation.dateEpreuve);
-    if (convDate) examDates.push(convDate);
-  }
-
-  const sortedExamDates = examDates.sort();
-  const lastExamDate = sortedExamDates.length > 0 ? sortedExamDates[sortedExamDates.length - 1] : undefined;
-  const examPassed = lastExamDate !== undefined && todayISO !== null && lastExamDate < todayISO;
-
-  const examState = examPassed ? 'done' : preDone ? 'active' : 'idle';
-  const correctionState = hasPublishedResults ? 'done' : examPassed && preDone ? 'active' : 'idle';
-  const restitutionState = hasPublishedResults ? 'active' : 'idle';
-
   return [
-    { key: 'pre',   label: 'Pré-examen',   state: (preDone ? 'done' : 'active') as 'done' | 'active' | 'idle' },
-    { key: 'exam',  label: 'Examen',       state: examState },
-    { key: 'post',  label: 'Correction',   state: correctionState },
-    { key: 'final', label: 'Restitution',  state: restitutionState },
+    { key: 'pre',   label: t('cdash.phase.pre'),   state: (preDone ? 'done' : 'active') as 'done' | 'active' | 'idle' },
+    { key: 'exam',  label: t('cdash.phase.exam'),  state: (examDone ? 'done' : preDone ? 'active' : 'idle') as 'done' | 'active' | 'idle' },
+    { key: 'post',  label: t('cdash.phase.post'),  state: 'idle' as const },
+    { key: 'final', label: t('cdash.phase.final'), state: 'idle' as const },
   ];
 }
 
@@ -280,42 +255,23 @@ export default function CandidateDashboard({ user }: { user: User }) {
   const [downloading, setDownloading] = useState(false);
   const [revisionPeriod, setRevisionPeriod] = useState<'Hebdomadaire' | 'Mensuel'>('Hebdomadaire');
   const [showCentrePhoto, setShowCentrePhoto] = useState(false);
-  const [hasPublishedResults, setHasPublishedResults] = useState<boolean>(false);
   const router = useRouter();
   const { t, lang } = useLanguage();
 
-  const revisionData = useMemo(() => buildRevisionHours(data?.planning ?? [], revisionPeriod, t, lang), [data?.planning, revisionPeriod, lang, t]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchMyResult = async () => {
-      try {
-        await resultatsExtendedAPI.getMyResult();
-        if (!cancelled) setHasPublishedResults(true);
-      } catch (error) {
-        if (!cancelled && axios.isAxiosError(error) && error.response?.status === 403) {
-          setHasPublishedResults(false);
-        }
-      }
-    };
-
-    fetchMyResult();
-    return () => { cancelled = true; };
-  }, []);
+  const revisionData = useMemo(() => buildRevisionHours(data?.planning ?? [], revisionPeriod, t, lang), [data?.planning, revisionPeriod, t, lang]);
 
   if (loading) return <DashboardSkeleton />;
   if (!data) {
     return (
       <div className="card" style={{ padding: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>Dossier candidat introuvable</h1>
-        <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{error || 'Aucun dossier réel n’est enregistré pour ce compte.'}</p>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>{t('cdash.notFound.title')}</h1>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{error || t('cdash.notFound.subtitle')}</p>
       </div>
     );
   }
 
   const { candidat, convocation, planning } = data;
-  const phases = derivePhases(candidat, planning, convocation, hasPublishedResults);
+  const phases = derivePhases(candidat, t);
 
   // Build calendar from real planning
   const examDates = new Set(planning
@@ -339,44 +295,47 @@ export default function CandidateDashboard({ user }: { user: User }) {
 
   const overviewCards: OverviewCard[] = [
     {
-      label: 'Dossier',
-      value: candidat.statutInscription === 'VALIDE' ? 'Validé' :
-             candidat.statutInscription === 'EN_ATTENTE_VALIDATION' ? 'En attente' :
-             candidat.statutInscription === 'REJETE' ? 'Rejeté' : 'À compléter',
-      hint: candidat.statutInscription === 'VALIDE' ? 'Confirmé' : 'À finaliser',
+      key: 'dossier',
+      label: t('cdash.card.dossier'),
+      value: candidat.statutInscription === 'VALIDE' ? t('cdash.dossier.valide') :
+             candidat.statutInscription === 'EN_ATTENTE_VALIDATION' ? t('cdash.dossier.enAttente') :
+             candidat.statutInscription === 'REJETE' ? t('cdash.dossier.rejete') : t('cdash.dossier.aCompleter'),
+      hint: candidat.statutInscription === 'VALIDE' ? t('cdash.dossier.confirme') : t('cdash.dossier.aFinaliser'),
       tone: 'var(--tile-mint)', Icon: FileCheck,
       dot: candidat.statutInscription === 'VALIDE' ? 'var(--status-green)' :
            candidat.statutInscription === 'REJETE' ? 'var(--status-red)' : 'var(--status-amber)',
     },
     {
-      label: 'Paiement',
+      key: 'paiement',
+      label: t('cdash.card.paiement'),
       value: candidat.paiement?.statut === 'PAYE'
         ? `${(candidat.paiement.montant || 25000).toLocaleString('fr-FR')} Ar`
-        : candidat.paiement?.statut === 'EN_COURS' ? 'En cours' : 'Non payé',
-      hint: candidat.paiement?.modePaiement ? `${candidat.paiement.modePaiement} · Réglé` : 'À régler',
+        : candidat.paiement?.statut === 'EN_COURS' ? t('cdash.paiement.enCours') : t('cdash.paiement.nonPaye'),
+      hint: candidat.paiement?.modePaiement ? `${candidat.paiement.modePaiement} · ${t('cdash.paiement.regle')}` : t('cdash.paiement.aRegler'),
       tone: 'var(--tile-sun)', Icon: Award,
       dot: candidat.paiement?.statut === 'PAYE' ? 'var(--status-green)' : 'var(--status-amber)',
     },
     {
-      label: 'Convocation',
-      value: convocation ? 'Prête' : 'Non disponible',
+      key: 'convocation',
+      label: t('cdash.card.convocation'),
+      value: convocation ? t('cdash.convocation.prete') : t('cdash.convocation.nonDisponible'),
       hint: convocation
-        ? `QR généré · ${new Date(convocation.dateEpreuve).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
-        : 'En attente de génération',
+        ? `${t('cdash.convocation.qrGenere')} · ${formatDayMonth(new Date(convocation.dateEpreuve), lang)}`
+        : t('cdash.convocation.enAttenteGeneration'),
       tone: 'var(--tile-lila)', Icon: QrCode,
       dot: convocation ? 'var(--status-violet)' : 'var(--ink-mute)',
     },
   ];
 
   const docs: DocumentItem[] = [
-    { key: 'photoIdentite',    label: "Pièce d'identité",     Icon: IdCard,    state: (typeof candidat.piecesJustificatives?.photoIdentite === 'string' ? 'valide' : candidat.piecesJustificatives?.photoIdentite?.status) ?? 'manquant' },
-    { key: 'acteNaissance',    label: 'Acte de naissance',    Icon: FileCheck, state: (typeof candidat.piecesJustificatives?.acteNaissance === 'string' ? 'valide' : candidat.piecesJustificatives?.acteNaissance?.status) ?? 'manquant' },
-    { key: 'photoSupp',        label: 'Photo identité (4x4)', Icon: IdCard,    state: (typeof candidat.piecesJustificatives?.photoSupp === 'string' ? 'valide' : candidat.piecesJustificatives?.photoSupp?.status) ?? 'manquant' },
+    { key: 'photoIdentite',    label: t('cdash.documents.photoIdentite'), Icon: IdCard,    state: (typeof candidat.piecesJustificatives?.photoIdentite === 'string' ? 'valide' : candidat.piecesJustificatives?.photoIdentite?.status) ?? 'manquant' },
+    { key: 'acteNaissance',    label: t('cdash.documents.acteNaissance'), Icon: FileCheck, state: (typeof candidat.piecesJustificatives?.acteNaissance === 'string' ? 'valide' : candidat.piecesJustificatives?.acteNaissance?.status) ?? 'manquant' },
+    { key: 'photoSupp',        label: t('cdash.documents.photoSupp'),     Icon: IdCard,    state: (typeof candidat.piecesJustificatives?.photoSupp === 'string' ? 'valide' : candidat.piecesJustificatives?.photoSupp?.status) ?? 'manquant' },
   ];
 
   const handleDownload = async () => {
     if (!convocation) {
-      toast.error('Convocation non disponible pour ce candidat.');
+      toast.error(t('cdash.toast.convocationIndisponible'));
       return;
     }
 
@@ -389,7 +348,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
       a.download = `convocation-${convocation.matricule}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
-      toast.success('Convocation téléchargée');
+      toast.success(t('cdash.toast.convocationTelechargee'));
     } catch (error) {
       toast.error(getDownloadErrorMessage(error));
     } finally {
@@ -397,18 +356,23 @@ export default function CandidateDashboard({ user }: { user: User }) {
     }
   };
 
+  const hours: { d: string; v: number; highlight?: boolean; ts?: string }[] = revisionData.data;
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       {/* Greeting + phase tracker */}
       <section style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div>
           <h1 data-testid="welcome-title" style={{ fontSize: 34, fontWeight: 800, letterSpacing: -1.2, color: 'var(--ink)', lineHeight: 1.05 }}>
-            <span style={{ marginRight: 10 }}>{getGreeting()}</span>
-            {user.prenom || candidat.user.prenom || user.nom}
+            {t('cdash.greeting')} {user.prenom || candidat.user.prenom || user.nom}
           </h1>
           <p style={{ color: 'var(--ink-soft)', fontSize: 14.5, marginTop: 8 }}>
-            {candidat.examen ?? 'Session 2025'} — Matricule <strong style={{ color: 'var(--ink)' }}>{candidat.numeroMatricule ?? '—'}</strong>
-            {days !== null && days > 0 && <> · Reste <strong style={{ color: 'var(--ink)' }}>{days} jour{days > 1 ? 's' : ''}</strong> avant l&apos;épreuve.</>}
+            {candidat.examen ?? t('cdash.session')} — {t('cdash.matricule')} <strong style={{ color: 'var(--ink)' }}>{candidat.numeroMatricule ?? '—'}</strong>
+            {days !== null && days > 0 && (
+              <>
+                {' '}· {t('cdash.daysLeft.before')} <strong style={{ color: 'var(--ink)' }}>{days} {days > 1 ? t('cdash.daysLeft.days') : t('cdash.daysLeft.day')}</strong> {t('cdash.daysLeft.after')}
+              </>
+            )}
           </p>
         </div>
 
@@ -427,10 +391,10 @@ export default function CandidateDashboard({ user }: { user: User }) {
       {/* Top row: 3 status cards + Convocation hero */}
       <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 312px', gap: 22, alignItems: 'stretch' }}>
         <div>
-          <SectionHeader title="Statut de mon dossier" cta={{ label: 'Tout voir', href: '/mon-dossier' }} />
+          <SectionHeader title={t('cdash.status.title')} cta={{ label: t('cdash.status.seeAll'), href: '/mon-dossier' }} />
           <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
             {overviewCards.map((c) => (
-              <div key={c.label} className="card card-hoverable" style={{ padding: 18 }} data-testid={`status-${c.label.toLowerCase()}`}>
+              <div key={c.key} className="card card-hoverable" style={{ padding: 18 }} data-testid={`status-${c.key}`}>
                 <div className="tile" style={{ background: c.tone, marginBottom: 14 }}>
                   <c.Icon size={20} strokeWidth={2} color="var(--ink)" />
                 </div>
@@ -461,16 +425,16 @@ export default function CandidateDashboard({ user }: { user: User }) {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--lime)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <QrCode size={16} strokeWidth={2.4} color="var(--ink)\" />
+              <QrCode size={16} strokeWidth={2.4} color="var(--ink)" />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-dark)' }}>Convocation</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-dark)' }}>{t('cdash.hero.title')}</div>
           </div>
 
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.15, color: 'var(--ink-dark)' }}>
-            Présentez ce QR le jour J
+            {t('cdash.hero.headline')}
           </div>
           <p style={{ fontSize: 12.5, color: 'var(--ink-dark-soft)', lineHeight: 1.4 }}>
-            Émargement automatique du surveillant via scan.
+            {t('cdash.hero.subtitle')}
           </p>
 
           {convocation && (
@@ -494,7 +458,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
             onClick={(e) => { e.preventDefault(); handleDownload(); }}
             disabled={downloading || !convocation}
           >
-            {downloading ? 'Préparation…' : 'Télécharger PDF'} <ArrowUpRight size={15} strokeWidth={2.4} />
+            {downloading ? t('cdash.hero.preparing') : t('cdash.hero.download')} <ArrowUpRight size={15} strokeWidth={2.4} />
           </button>
         </Link>
       </section>
@@ -505,7 +469,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
         <div className="card" style={{ padding: 22 }} data-testid="hours-activity-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
             <div>
-              <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>Heures de révision</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>{t('cdash.hours.title')}</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 50, background: 'var(--lime)' }}>
                   <ArrowUpRight size={13} strokeWidth={2.6} />
@@ -520,8 +484,8 @@ export default function CandidateDashboard({ user }: { user: User }) {
               value={revisionPeriod}
               onChange={(e) => setRevisionPeriod(e.target.value as 'Hebdomadaire' | 'Mensuel')}
               style={{ background: 'var(--bg-soft)', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', fontFamily: 'inherit', cursor: 'pointer' }}>
-              <option value="Hebdomadaire">Hebdomadaire</option>
-              <option value="Mensuel">Mensuel</option>
+              <option value="Hebdomadaire">{t('cdash.hours.weekly')}</option>
+              <option value="Mensuel">{t('cdash.hours.monthly')}</option>
             </select>
           </div>
           {revisionData.data.length > 0 ? (
@@ -540,7 +504,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
 
         {/* Schedule from planning */}
         <div className="card" style={{ padding: 22 }} data-testid="schedule-card">
-          <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4, marginBottom: 14 }}>Programme à venir</h3>
+          <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4, marginBottom: 14 }}>{t('cdash.schedule.title')}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {planning.slice(0, 4).map((s: EpreuvePlanning, idx: number) => {
               const meta = SUBJECT_TILE[s.matiere] ?? { tone: SUBJECT_FALLBACK_TONES[idx % SUBJECT_FALLBACK_TONES.length], Icon: BookText };
@@ -554,10 +518,10 @@ export default function CandidateDashboard({ user }: { user: User }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{s.matiere}</div>
                     <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
-                      {s.type === 'EPREUVE' ? 'Épreuve' : 'Révision'} · {new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })} · {s.heureDebut}
+                      {s.type === 'EPREUVE' ? t('cdash.schedule.epreuve') : t('cdash.schedule.revision')} · {formatWeekdayDayMonth(new Date(s.date), lang)} · {s.heureDebut}
                     </div>
                   </div>
-                  <ChevronRight size={16} color="var(--ink-mute)\" />
+                  <ChevronRight size={16} color="var(--ink-mute)" />
                 </div>
               );
             })}
@@ -567,13 +531,13 @@ export default function CandidateDashboard({ user }: { user: User }) {
         {/* Calendar */}
         <div className="card" style={{ padding: 20 }} data-testid="calendar-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <button className="btn-icon" style={{ width: 28, height: 28 }} aria-label="Mois précédent"><ChevronLeft size={15} /></button>
-            <div style={{ fontSize: 13.5, fontWeight: 700 }}>{MONTHS_FULL[lang][examMonth]} {examYear}</div>
-            <button className="btn-icon" style={{ width: 28, height: 28 }} aria-label="Mois suivant"><ChevronRight size={15} /></button>
+            <button className="btn-icon" style={{ width: 28, height: 28 }} aria-label={t('cdash.calendar.prevMonth')}><ChevronLeft size={15} /></button>
+            <div style={{ fontSize: 13.5, fontWeight: 700 }}>{formatMonthYear(examDate, lang)}</div>
+            <button className="btn-icon" style={{ width: 28, height: 28 }} aria-label={t('cdash.calendar.nextMonth')}><ChevronRight size={15} /></button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
-            {['L','M','M','J','V','S','D'].map((d, i) => (
+            {WEEKDAYS_MIN[lang].map((d, i) => (
               <div key={i} style={{ fontSize: 10.5, fontWeight: 700, textAlign: 'center', color: 'var(--ink-mute)', padding: '4px 0' }}>{d}</div>
             ))}
           </div>
@@ -598,10 +562,10 @@ export default function CandidateDashboard({ user }: { user: User }) {
           {nextExam && (
             <div style={{ marginTop: 14, padding: '10px 12px', borderRadius: 12, background: 'var(--bg-soft)' }}>
               <div style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Prochaine épreuve
+                {t('cdash.calendar.nextExam')}
               </div>
               <div style={{ fontSize: 13.5, fontWeight: 700, marginTop: 3 }}>
-                {new Date(nextExam.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} · {nextExam.matiere}
+                {formatDayMonth(new Date(nextExam.date), lang)} · {nextExam.matiere}
               </div>
             </div>
           )}
@@ -612,9 +576,9 @@ export default function CandidateDashboard({ user }: { user: User }) {
       <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 22 }}>
         <div className="card" style={{ padding: 22 }} data-testid="documents-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>Mes documents</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.4 }}>{t('cdash.documents.title')}</h3>
             <Link href="/mon-dossier" data-testid="upload-doc-btn" className="btn-ghost" style={{ padding: '6px 14px', fontSize: 12, textDecoration: 'none' }}>
-              + Téléverser
+              {t('cdash.documents.upload')}
             </Link>
           </div>
 
@@ -624,9 +588,9 @@ export default function CandidateDashboard({ user }: { user: User }) {
                 d.state === 'valide' ? 'var(--tile-mint)' :
                 d.state === 'attente' ? 'var(--tile-sun)' : 'var(--tile-rose)';
               const badge =
-                d.state === 'valide'  ? <span className="badge badge-green"><CheckCircle2 size={11} /> Validé</span> :
-                d.state === 'attente' ? <span className="badge badge-amber"><Clock3 size={11} /> En attente</span> :
-                                        <span className="badge badge-red">À fournir</span>;
+                d.state === 'valide'  ? <span className="badge badge-green"><CheckCircle2 size={11} /> {t('cdash.doc.valide')}</span> :
+                d.state === 'attente' ? <span className="badge badge-amber"><Clock3 size={11} /> {t('cdash.doc.enAttente')}</span> :
+                                        <span className="badge badge-red">{t('cdash.doc.aFournir')}</span>;
               return (
                 <div key={d.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, background: 'var(--bg-soft)' }}>
                   <div className="tile" style={{ background: tone }}>
@@ -635,7 +599,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{d.label}</div>
                     <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      {d.state === 'valide' ? 'Validé' : d.state === 'attente' ? 'En vérification' : 'À téléverser'}
+                      {d.state === 'valide' ? t('cdash.doc.valide') : d.state === 'attente' ? t('cdash.doc.enVerification') : t('cdash.doc.aTeleverser')}
                     </div>
                   </div>
                   {badge}
@@ -649,18 +613,18 @@ export default function CandidateDashboard({ user }: { user: User }) {
         <div className="card" data-testid="center-card" style={{ padding: 22, background: 'var(--bg-card)', color: 'var(--ink)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
             <div className="tile tile-sm" style={{ background: 'var(--lime)' }}>
-              <MapPin size={17} strokeWidth={2.2} color="var(--ink)\" />
+              <MapPin size={17} strokeWidth={2.2} color="var(--ink)" />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>Centre d&apos;examen</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>{t('cdash.centre.title')}</div>
           </div>
 
           <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, color: 'var(--ink)' }}>
-            {candidat.centreAffecte?.nom ?? '— En cours d\'affectation'}
+            {candidat.centreAffecte?.nom ?? t('cdash.centre.enCoursAffectation')}
           </div>
           <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
             {candidat.centreAffecte
-              ? `${candidat.centreAffecte.ville} · Salle ${candidat.centreAffecte.salle} · Place n° ${candidat.centreAffecte.numeroPlace}`
-              : 'Affectation par sectorisation automatique'}
+              ? `${candidat.centreAffecte.ville} · ${t('cdash.centre.salle')} ${candidat.centreAffecte.salle} · ${t('cdash.centre.place')} ${candidat.centreAffecte.numeroPlace}`
+              : t('cdash.centre.sectorisationAuto')}
           </div>
 
           <div style={{
@@ -677,7 +641,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
               <>
                 <img
                   src={resolveFileUrl(candidat.centreAffecte.photo)}
-                  alt={`Photo du centre ${candidat.centreAffecte?.nom || ''}`}
+                  alt={`${t('cdash.centre.title')} ${candidat.centreAffecte?.nom || ''}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
                 <div style={{
@@ -687,7 +651,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
                   borderRadius: 999, display: 'flex', alignItems: 'center', gap: 5,
                   backdropFilter: 'blur(4px)',
                 }}>
-                  <ZoomIn size={12} /> Agrandir
+                  <ZoomIn size={12} /> {t('cdash.centre.agrandir')}
                 </div>
               </>
             ) : (
@@ -706,7 +670,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           </div>
 
           <button className="btn-lime" style={{ marginTop: 14, padding: '9px 18px', fontSize: 13 }} data-testid="itinerary-btn" onClick={() => router.push('/itineraire')}>
-            Itinéraire <ArrowUpRight size={14} strokeWidth={2.4} />
+            {t('cdash.centre.itineraire')} <ArrowUpRight size={14} strokeWidth={2.4} />
           </button>
         </div>
       </section>
@@ -726,7 +690,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
         >
           <button
             onClick={() => setShowCentrePhoto(false)}
-            aria-label="Fermer"
+            aria-label={t('cdash.centre.fermer')}
             style={{
               position: 'absolute', top: 20, right: 20,
               width: 38, height: 38, borderRadius: '50%',
@@ -739,7 +703,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           </button>
           <img
             src={resolveFileUrl(candidat.centreAffecte.photo)}
-            alt={`Photo du centre ${candidat.centreAffecte?.nom || ''}`}
+            alt={`${t('cdash.centre.title')} ${candidat.centreAffecte?.nom || ''}`}
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '92vw', maxHeight: '86vh', objectFit: 'contain',
@@ -803,7 +767,7 @@ function BarChart({ data }: { data: { d: string; v: number; highlight?: boolean;
         {[0.25, 0.5, 0.75, 1].map((p, i) => (
           <line key={i} x1={padX} x2={W - padX}
             y1={H - padY - p * (H - padY * 2)} y2={H - padY - p * (H - padY * 2)}
-            stroke="rgba(20,23,28,0.06)\" strokeDasharray="3 5" />
+            stroke="rgba(20,23,28,0.06)" strokeDasharray="3 5" />
         ))}
         {data.map((d, i) => {
           const x = padX + i * ((W - padX * 2) / data.length) + 6;
@@ -813,7 +777,7 @@ function BarChart({ data }: { data: { d: string; v: number; highlight?: boolean;
           return (
             <g key={d.d}>
               <rect x={x} y={y} width={barW} height={h} rx={6} fill={fill} />
-              <text x={x + barW / 2} y={H - 6} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink-mute)" fontFamily="var(--font-display)\">{d.d}</text>
+              <text x={x + barW / 2} y={H - 6} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink-mute)" fontFamily="var(--font-display)">{d.d}</text>
             </g>
           );
         })}
