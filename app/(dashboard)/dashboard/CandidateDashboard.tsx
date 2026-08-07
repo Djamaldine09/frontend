@@ -255,8 +255,9 @@ export default function CandidateDashboard({ user }: { user: User }) {
   const [revisionPeriod, setRevisionPeriod] = useState<'Hebdomadaire' | 'Mensuel'>('Hebdomadaire');
   const [showCentrePhoto, setShowCentrePhoto] = useState(false);
   const router = useRouter();
+  const { t, lang } = useLanguage();
 
-  const revisionData = useMemo(() => buildRevisionHours(data?.planning ?? [], revisionPeriod), [data?.planning, revisionPeriod]);
+  const revisionData = useMemo(() => buildRevisionHours(data?.planning ?? [], revisionPeriod, t, lang), [data?.planning, revisionPeriod, lang, t]);
 
   if (loading) return <DashboardSkeleton />;
   if (!data) {
