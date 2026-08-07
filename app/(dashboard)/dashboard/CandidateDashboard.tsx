@@ -188,6 +188,13 @@ function getValidDate(value: string | Date | undefined | null, fallback: Date = 
   return parseDateSafely(value) ?? fallback;
 }
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 18) return 'Bonsoir';
+  if (hour >= 12) return 'Bon après-midi';
+  return 'Bonjour';
+}
+
 function buildCalendar(year: number, month: number, examDates: Set<string>): { day: number | null; iso?: string; isExam?: boolean; isToday?: boolean }[] {
   const firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon
   // Convert Sunday-first to Monday-first index: 0->6, 1->0 ... 6->5
@@ -396,7 +403,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
       <section style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div>
           <h1 data-testid="welcome-title" style={{ fontSize: 34, fontWeight: 800, letterSpacing: -1.2, color: 'var(--ink)', lineHeight: 1.05 }}>
-            Bonjour {user.prenom || candidat.user.prenom || user.nom}
+            {getGreeting()} {user.prenom || candidat.user.prenom || user.nom}
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--lime)', borderRadius: 12, padding: '3px 8px', marginLeft: 12, transform: 'translateY(-4px)' }}>
               <Star size={20} strokeWidth={2.4} />
             </span>
