@@ -1,7 +1,7 @@
 'use client';
 import {
   CheckCircle2, Clock3, FileCheck, IdCard, MapPin, QrCode,
-  ChevronRight, ChevronLeft, Calculator,
+  ChevronRight, ChevronLeft, Calculator, Sparkles,
   Atom, BookText, FlaskConical, ArrowUpRight, Award, ZoomIn, X,
   LucideIcon,
 } from 'lucide-react';
