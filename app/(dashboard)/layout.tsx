@@ -4,10 +4,12 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { resolveFileUrl } from '@/lib/api';
 import { Role } from '@/types';
 import Image from 'next/image';
 import NotificationBell from '@/components/NotificationBell';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   LayoutGrid, FileText, BookOpen, ScrollText, CreditCard, Building2,
   Bell, Settings, LogOut, Search, Download, ArrowUpRight, Calendar,
@@ -15,29 +17,29 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { href: '/dashboard',  label: 'Tableau de bord', icon: LayoutGrid,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
-  { href: '/dashboard/admin/utilisateurs', label: 'Utilisateurs',    icon: Users,       roles: ['ADMIN'] },
-  { href: '/supervision',  label: 'Supervision',     icon: Activity,    roles: ['ADMIN'] },
-  { href: '/mon-dossier',  label: 'Mon dossier',     icon: FileText,    roles: ['CANDIDAT'] },
-  { href: '/convocation',  label: 'Convocation',     icon: ScrollText,    roles: ['CANDIDAT'] },
-  { href: '/dashboard/admin/candidat',  label: 'Candidats',       icon: FileText,    roles: ['ADMIN'] },
-  { href: '/matieres', label: 'Matières',        icon: BookOpen,    roles: ['ADMIN'] },
-  { href: '/examens',    label: 'Examens',         icon: BookOpen,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
-  { href: '/resultats',  label: 'Résultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','CORRECTEUR','CANDIDAT'] },
-  { href: '/affectation-automatique',  label: 'Affectations',     icon: ScrollText,    roles: ['RESPONSABLE'] },
-  { href: '/presence',      label: 'Présences',       icon: Activity,      roles: ['SURVEILLANT'] },
-  { href: '/notation',      label: 'Saisir les notes', icon: FileText,      roles: ['CORRECTEUR'] },
-  { href: '/validation',    label: 'Valider résultats',icon: CheckCircle,   roles: ['CORRECTEUR'] },
-  { href: '/rapports',   label: 'Rapports', icon: BarChart3,   roles: ['ADMIN'] },
-  { href: '/paiements',  label: 'Paiements',       icon: CreditCard,  roles: ['ADMIN','RESPONSABLE','CANDIDAT'] },
-  { href: '/centres',    label: 'Centres',         icon: Building2,   roles: ['ADMIN','RESPONSABLE'] },
-  { href: '/securite',   label: 'Sécurité',        icon: ShieldCheck, roles: ['ADMIN'] },
-  { href: '/systeme',    label: 'Système',         icon: Wrench,      roles: ['ADMIN'] },
+  { href: '/dashboard',  labelKey: 'nav.dashboard', icon: LayoutGrid,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
+  { href: '/dashboard/admin/utilisateurs', labelKey: 'nav.utilisateurs',    icon: Users,       roles: ['ADMIN'] },
+  { href: '/supervision',  labelKey: 'nav.supervision',     icon: Activity,    roles: ['ADMIN'] },
+  { href: '/mon-dossier',  labelKey: 'nav.monDossier',     icon: FileText,    roles: ['CANDIDAT'] },
+  { href: '/convocation',  labelKey: 'nav.convocation',     icon: ScrollText,    roles: ['CANDIDAT'] },
+  { href: '/dashboard/admin/candidat',  labelKey: 'nav.candidats',       icon: FileText,    roles: ['ADMIN'] },
+  { href: '/matieres', labelKey: 'nav.matieres',        icon: BookOpen,    roles: ['ADMIN'] },
+  { href: '/examens',    labelKey: 'nav.examens',         icon: BookOpen,    roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
+  { href: '/resultats',  labelKey: 'nav.resultats',       icon: ScrollText,  roles: ['ADMIN','RESPONSABLE','CORRECTEUR','CANDIDAT'] },
+  { href: '/affectation-automatique',  labelKey: 'nav.affectations',     icon: ScrollText,    roles: ['RESPONSABLE'] },
+  { href: '/presence',      labelKey: 'nav.presences',       icon: Activity,      roles: ['SURVEILLANT'] },
+  { href: '/notation',      labelKey: 'nav.saisirNotes', icon: FileText,      roles: ['CORRECTEUR'] },
+  { href: '/validation',    labelKey: 'nav.validerResultats',icon: CheckCircle,   roles: ['CORRECTEUR'] },
+  { href: '/rapports',   labelKey: 'nav.rapports', icon: BarChart3,   roles: ['ADMIN'] },
+  { href: '/paiements',  labelKey: 'nav.paiements',       icon: CreditCard,  roles: ['ADMIN','RESPONSABLE','CANDIDAT'] },
+  { href: '/centres',    labelKey: 'nav.centres',         icon: Building2,   roles: ['ADMIN','RESPONSABLE'] },
+  { href: '/securite',   labelKey: 'nav.securite',        icon: ShieldCheck, roles: ['ADMIN'] },
+  { href: '/systeme',    labelKey: 'nav.systeme',      icon: Wrench,      roles: ['ADMIN'] },
 ];
 
-const bottomNav: Array<{ href: string; label: string; icon: typeof Bell; badge?: number }> = [
-  { href: '/notifications', label: 'Notifications', icon: Bell },
-  { href: '/dashboard/parametres',      label: 'Paramètres',    icon: Settings },
+const bottomNav = [
+  { href: '#notifications', labelKey: 'nav.notifications', icon: Bell, badge: 2 },
+  { href: '/dashboard/parametres',      labelKey: 'nav.parametres',    icon: Settings },
 ];
 
 const roleColors: Record<Role, string> = {
@@ -50,6 +52,7 @@ const roleColors: Record<Role, string> = {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isLoading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -271,7 +274,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={`${item.href}-${idx}`}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                data-testid={`nav-${item.labelKey.replace(/\./g, '-')}`}
                 style={{
                   display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
                   padding: sidebarCollapsed ? '12px' : '11px 14px', borderRadius: 999,
@@ -289,10 +292,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onMouseLeave={(e) => {
                   if (!isFirstActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
                 }}
-                title={sidebarCollapsed ? item.label : undefined}
+                title={sidebarCollapsed ? t(item.labelKey) : undefined}
               >
                 <Icon size={18} strokeWidth={isFirstActive ? 2.4 : 1.9} />
-                {!sidebarCollapsed && <span>{item.label}</span>}
+                {!sidebarCollapsed && <span>{t(item.labelKey)}</span>}
               </Link>
             );
           })}
@@ -304,7 +307,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const itemContent = (
               <>
                 <Icon size={18} strokeWidth={1.9} />
-                {!sidebarCollapsed && <span style={{ flex: 1 }}>{b.label}</span>}
+                {!sidebarCollapsed && <span style={{ flex: 1 }}>{t(b.labelKey)}</span>}
                 {!sidebarCollapsed && b.badge && (
                   <span style={{
                     background: '#FF6B5B', color: '#fff',
@@ -319,10 +322,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             if (b.href.startsWith('/')) {
               return (
                 <Link
-                  key={b.label}
+                  key={b.labelKey}
                   href={b.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  data-testid={`nav-${b.label.toLowerCase()}`}
+                  data-testid={`nav-${b.labelKey.replace(/\./g, '-')}`}
                   style={{
                     display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : 12,
                     padding: sidebarCollapsed ? '12px' : '11px 14px', borderRadius: 999,
@@ -341,7 +344,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.background = 'transparent';
                   }}
-                  title={sidebarCollapsed ? b.label : undefined}
+                  title={sidebarCollapsed ? t(b.labelKey) : undefined}
                 >
                   {itemContent}
                 </Link>
@@ -350,8 +353,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             return (
               <button
-                key={b.label}
-                data-testid={`nav-${b.label.toLowerCase()}`}
+                key={b.labelKey}
+                data-testid={`nav-${b.labelKey.replace(/\./g, '-')}`}
                 onClick={() => {
                   if (b.href.startsWith('#')) {
                     window.location.hash = b.href;
@@ -370,7 +373,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}
                 onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = 'var(--bg-sidebar-hover)'}
                 onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                title={sidebarCollapsed ? b.label : undefined}
+                title={sidebarCollapsed ? t(b.labelKey) : undefined}
               >
                 {itemContent}
               </button>
@@ -425,10 +428,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             fontSize: 13, fontFamily: 'inherit', fontWeight: 500,
             justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
           }}
-          title={sidebarCollapsed ? 'Déconnexion' : undefined}
+          title={sidebarCollapsed ? t('topbar.logout') : undefined}
         >
           <LogOut size={16} />
-          {!sidebarCollapsed && <span>Déconnexion</span>}
+          {!sidebarCollapsed && <span>{t('topbar.logout')}</span>}
         </button>
       </aside>
 
@@ -454,29 +457,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div style={{ position: 'relative', flex: 1, maxWidth: 380 }}>
             <Search size={17} strokeWidth={2} style={{
               position: 'absolute', left: 16, top: '50%',
-              transform: 'translateY(-50%)', color: 'var(--ink)',
+              transform: 'translateY(-50%)', color: 'var(--ink-mute)',
             }} />
             <input
               data-testid="top-search"
               className="input-pill"
-              placeholder="Rechercher un examen, un centre..."
+              placeholder={t('topbar.search')}
             />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button className="btn-icon" aria-label="Calendrier" data-testid="topbar-calendar">
+            <LanguageSwitcher />
+            <button className="btn-icon" aria-label={t('topbar.calendar')} data-testid="topbar-calendar">
               <Calendar size={17} strokeWidth={2} />
             </button>
             <NotificationBell />
-            <button className="btn-icon" aria-label="Télécharger" data-testid="topbar-download">
+            <button className="btn-icon" aria-label={t('topbar.download')} data-testid="topbar-download">
               <Download size={17} strokeWidth={2} />
             </button>
             <button 
               onClick={toggleTheme}
               className="btn-icon" 
-              aria-label="Changer le thème" 
+              aria-label={t('topbar.themeDark')}
               data-testid="topbar-theme"
-              title={darkMode ? 'Mode clair' : 'Mode sombre'}
+              title={darkMode ? t('topbar.themeLight') : t('topbar.themeDark')}
             >
               {darkMode ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
             </button>
@@ -484,7 +488,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link
               href="/profil"
               data-testid="user-chip"
-              title="Voir mon profil"
+              title={t('topbar.viewProfile')}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '4px 14px 4px 4px', background: 'var(--bg-card)',
