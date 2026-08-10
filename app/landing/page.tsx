@@ -86,6 +86,15 @@ export default function LandingPage() {
         .to('.hero-title-line', { y: -50, ease: 'none' }, 0)
         .to('.hero-subtitle', { y: -20, ease: 'none' }, 0);
 
+      // 3) Entrée du widget "Tableau de bord" : glisse de droite à gauche
+      gsap.from('.hero-dashboard-wrapper', {
+        x: 150,
+        opacity: 0,
+        duration: 1.3,
+        ease: 'power3.out',
+        delay: 0.4,
+      });
+
       // Stats counter animation (reveal + léger effet d'échelle, comme les grilles d'images de About.jsx)
       gsap.from('.stat-card', {
         scrollTrigger: {
@@ -317,7 +326,7 @@ export default function LandingPage() {
 
             
             {/* Widget Tableau de bord avec styles ajustés */}
-            <div style={{ position: 'relative' }}>
+            <div className="hero-dashboard-wrapper" style={{ position: 'relative' }}>
               <div className="hero-glow" style={{
                 position: 'absolute',
                 inset: '-20px',
