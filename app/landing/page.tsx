@@ -95,6 +95,42 @@ export default function LandingPage() {
         delay: 0.4,
       });
 
+      // 4) Compteurs animés : tous les chiffres (stats + widget dashboard)
+      //    comptent progressivement jusqu'à leur valeur finale au scroll.
+      const counterEls = gsap.utils.toArray<HTMLElement>('.counter-number');
+
+      counterEls.forEach((el) => {
+        const target = parseFloat(el.dataset.target || '0');
+        const suffix = el.dataset.suffix || '';
+        const useComma = el.dataset.comma === 'true';
+        const counterProxy = { val: 0 };
+
+        gsap.to(counterProxy, {
+          val: target,
+          duration: 2,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 85%',
+          },
+          onUpdate: () => {
+            const rounded = Math.round(counterProxy.val);
+            el.textContent = (useComma ? rounded.toLocaleString('en-US') : String(rounded)) + suffix;
+          },
+        });
+      });
+
+      // Barre de progression du widget dashboard (largeur animée en même temps que le %)
+      gsap.from('.progress-bar-fill', {
+        width: '0%',
+        duration: 2,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.hero-dashboard-wrapper',
+          start: 'top 85%',
+        },
+      });
+
       // Stats counter animation (reveal + léger effet d'échelle, comme les grilles d'images de About.jsx)
       gsap.from('.stat-card', {
         scrollTrigger: {
@@ -355,22 +391,36 @@ export default function LandingPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
                     <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                       <Users style={{ width: 28, height: 28, color: '#0C6478', marginBottom: '0.75rem' }} />
-                      <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}>1,234</p>
+                      <p
+                        className="counter-number"
+                        data-target="1234"
+                        data-comma="true"
+                        style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                      >0</p>
                       <p style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>Candidats</p>
                     </div>
                     <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                       <FileText style={{ width: 28, height: 28, color: '#0C6478', marginBottom: '0.75rem' }} />
-                      <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}>89</p>
+                      <p
+                        className="counter-number"
+                        data-target="89"
+                        style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                      >0</p>
                       <p style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>Examens</p>
                     </div>
                   </div>
                   <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>Progression</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0C6478' }}>78%</span>
+                      <span
+                        className="counter-number"
+                        data-target="78"
+                        data-suffix="%"
+                        style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0C6478' }}
+                      >0%</span>
                     </div>
                     <div style={{ width: '100%', backgroundColor: 'rgba(226, 232, 240, 0.5)', borderRadius: '9999px', height: '0.5rem' }}>
-                      <div style={{
+                      <div className="progress-bar-fill" style={{
                         background: 'linear-gradient(90deg, #0C6478, #BDEE98)',
                         height: '100%',
                         borderRadius: '9999px',
@@ -396,10 +446,10 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2rem' }}>
-            {[{ icon: Users, val: '50K+', label: 'Candidats Inscrits' },
-              { icon: FileText, val: '500+', label: 'Examens Organisés' },
-              { icon: Award, val: '98%', label: 'Taux de Réussite' },
-              { icon: TrendingUp, val: '24/7', label: 'Support Disponible' }
+            {[{ icon: Users, target: 50, suffix: 'K+', label: 'Candidats Inscrits' },
+              { icon: FileText, target: 500, suffix: '+', label: 'Examens Organisés' },
+              { icon: Award, target: 98, suffix: '%', label: 'Taux de Réussite' },
+              { icon: TrendingUp, target: 24, suffix: '/7', label: 'Support Disponible' }
             ].map((stat, i) => (
               <div key={i} className="stat-card" style={{ 
                 textAlign: 'center', 
@@ -420,7 +470,12 @@ export default function LandingPage() {
                 }}>
                   <stat.icon style={{ width: 32, height: 32, color: '#0C6478' }} />
                 </div>
-                <p style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.03em' }}>{stat.val}</p>
+                <p
+                  className="counter-number"
+                  data-target={stat.target}
+                  data-suffix={stat.suffix}
+                  style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.03em' }}
+                >0{stat.suffix}</p>
                 <p style={{ color: '#475569', fontWeight: 500 }}>{stat.label}</p>
               </div>
             ))}
