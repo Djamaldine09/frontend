@@ -1,6 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
 import Link from 'next/link';
 import { ArrowRight, BarChart3, Bell, CheckCircle2, FileCheck2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import '../landing.css';
