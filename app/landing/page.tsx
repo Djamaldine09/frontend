@@ -466,7 +466,7 @@ export default function LandingPage() {
         background: 'linear-gradient(135deg, #0C6478 0%, #1087a3 100%)',
         position: 'relative'
       }}>
-        <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relat      // Stats counter animation
+        <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative'      // Stats counter animation
       gsap.from('.stat-card', {
         scrollTrigger: {
           trigger: statsRef.current,
