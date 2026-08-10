@@ -23,6 +23,7 @@ export default function LandingPage() {
   const featuresRef = useRef<HTMLDivElement>(null);
   const heroTitleSplitRef = useRef<SplitText | null>(null);
   const heroSubtitleSplitRef = useRef<SplitText | null>(null);
+  const cardCleanupsRef = useRef<Array<() => void>>([]);
 
   const [hoverLogin, setHoverLogin] = useState(false);
 
@@ -85,36 +86,72 @@ export default function LandingPage() {
         .to('.hero-title-line', { y: -50, ease: 'none' }, 0)
         .to('.hero-subtitle', { y: -20, ease: 'none' }, 0);
 
-      // Stats counter animation
+      // Stats counter animation (reveal + léger effet d'échelle, comme les grilles d'images de About.jsx)
       gsap.from('.stat-card', {
         scrollTrigger: {
           trigger: statsRef.current,
           start: 'top 80%',
         },
         opacity: 0,
-        y: 30,
+        y: 40,
+        scale: 0.9,
         stagger: 0.1,
-        duration: 0.8,
+        duration: 0.9,
         ease: 'power2.out',
       });
 
-      // Features animation
+      // Features animation (reveal + échelle)
       gsap.from('.feature-item', {
         scrollTrigger: {
           trigger: featuresRef.current,
           start: 'top 80%',
         },
         opacity: 0,
-        y: 40,
+        y: 50,
+        scale: 0.92,
         stagger: 0.15,
-        duration: 0.8,
+        duration: 0.9,
         ease: 'power2.out',
+      });
+
+      // Effet de survol "lift" sur les cartes (feature-item et stat-card),
+      // comme un hover premium : la carte se soulève et grossit légèrement.
+      const hoverCards = gsap.utils.toArray<HTMLElement>('.feature-item, .stat-card');
+
+      hoverCards.forEach((card) => {
+        card.style.transition = 'box-shadow 0.4s ease';
+        const enter = () => {
+          gsap.to(card, {
+            y: -10,
+            scale: 1.03,
+            duration: 0.4,
+            ease: 'power2.out',
+          });
+          card.style.boxShadow = '0 25px 45px -12px rgba(12, 100, 120, 0.25)';
+        };
+        const leave = () => {
+          gsap.to(card, {
+            y: 0,
+            scale: 1,
+            duration: 0.4,
+            ease: 'power2.out',
+          });
+          card.style.boxShadow = '0 10px 40px -10px rgba(0, 0, 0, 0.05)';
+        };
+        card.addEventListener('mouseenter', enter);
+        card.addEventListener('mouseleave', leave);
+        cardCleanupsRef.current.push(() => {
+          card.removeEventListener('mouseenter', enter);
+          card.removeEventListener('mouseleave', leave);
+        });
       });
 
     }, containerRef);
 
     return () => {
       ctx.revert();
+      cardCleanupsRef.current.forEach((cleanup) => cleanup());
+      cardCleanupsRef.current = [];
       heroTitleSplitRef.current?.revert();
       heroSubtitleSplitRef.current?.revert();
     };
