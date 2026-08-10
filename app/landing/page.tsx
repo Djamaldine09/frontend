@@ -1,34 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { ArrowRight, BarChart3, Bell, CheckCircle2, FileCheck2, LockKeyhole, ShieldCheck } from 'lucide-react';
-import '../landing.css';
-
-const stats = [
-  { value: '100%', label: 'suivi numerique' },
-  { value: '24/7', label: 'portail disponible' },
-  { value: '5 roles', label: 'acces securises' },
-];
-
-const features = [
-  {
-    icon: FileCheck2,
-    title: 'Dossiers candidats',
-    text: 'Inscription, pieces justificatives, paiement et convocation dans un seul espace.',
-  },
-  {
-    icon: Bell,
-    title: 'Notifications',
-    text: 'Les candidats restent informes des convocations, paiements, corrections et resultats.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Pilotage national',
-    text: 'Tableaux de bord pour suivre les centres, les presences et la publication des resultats.',
-  },
-];
-
-export default function LandingPage() {
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -149,42 +120,104 @@ export default function LandingPage() {
     };
   }, []);
 
->>>>>>> 9185738ff998183c2b63858404407b0d2bdef89a
   return (
-    <main className="landing-page">
-      <nav className="landing-nav" aria-label="Navigation principale">
-        <Link href="/landing" className="landing-brand">
-          <span>ExamGest MG</span>
-        </Link>
+    <div ref={containerRef} style={{
+      minHeight: '100vh',
+      overflowX: 'hidden',
+      color: '#0f172a',
+      fontFamily: '"Roboto", sans-serif',
+      position: 'relative',
+      backgroundColor: 'transparent'
+    }}>
+      
+      {/* Wrapper pour l'effet Iridescence en arrière-plan complet */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        
+      }}>
+        <Iridescence
+          speed={1}
+          amplitude={0.1}
+          mouseReact
+        />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
-        <div className="landing-links">
-          <a href="#plateforme">Plateforme</a>
-          <a href="#securite">Securite</a>
-          <a href="#roles">Roles</a>
-        </div>
-
-        <div className="landing-actions">
-          <Link href="/login" className="landing-link-button">Connexion</Link>
-          <Link href="/register" className="landing-primary-button">
-            Commencer
-            <ArrowRight size={16} />
-          </Link>
+      {/* Navigation */}
+      {/* Navigation */}
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.35)', /* Plus transparent (35%) pour laisser passer l'animation */
+        backdropFilter: 'blur(24px)', /* Flou beaucoup plus fort pour adoucir les mouvements de l'arrière-plan */
+        WebkitBackdropFilter: 'blur(24px)',
+        zIndex: 50,
+        borderBottom: '1px solid rgba(255, 255, 255, 0.6)', /* Bordure blanche un peu plus nette */
+        boxShadow: '0 8px 32px 0 rgba(12, 100, 120, 0.12)' /* Ombre délicate teintée avec ton bleu #0C6478 */
+      }}>
+        <div style={{
+          maxWidth: '80rem',
+          margin: '0 auto',
+          padding: '0.01rem 0.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+            <img 
+              src="/logo/logo-app.png" 
+              alt="Exam Mada Logo" 
+              style={{ width: 90, height: 90, objectFit: 'contain' }}
+            />
+            
+          </div>
+          
+          {/* Liens de Navigation */}
+          <div style={{ display: 'none', alignItems: 'center', gap: '2.5rem' }}>
+            <a href="#features" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Fonctionnalités</a>
+            <a href="#stats" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Statistiques</a>
+            <a href="#contact" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Contact</a>
+          </div>
+          
+          {/* Boutons d'Action */}
+          {/* Boutons d'Action Animés */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <a 
+              href="/login" 
+              onMouseEnter={() => setHoverLogin(true)}
+              onMouseLeave={() => setHoverLogin(false)}
+              style={{
+                color: hoverLogin ? '#8BCC62' : '#0C6478', /* Devient un vert un peu plus lisible au survol */
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                transition: 'all 0.3s ease',
+                transform: hoverLogin ? 'translateY(-2px)' : 'translateY(0)', /* Se soulève légèrement */
+                opacity: hoverLogin ? 0.8 : 1
+              }}
+            >
+              Connexion
+            </a>
+            <a href="/register" style={{ display: 'inline-block' }}>
+              <MagneticButton 
+                variant="dark" 
+                /* On enlève size="md" au cas où il imposerait une largeur fixe */
+                className="!w-auto !px-8 !py-2.5 !rounded-full whitespace-nowrap cursor-pointer"
+              >
+                S&lsquo;inscrire
+              </MagneticButton>
+            </a>
+          </div>
         </div>
       </nav>
 
-<<<<<<< HEAD
-      <section className="landing-hero">
-        <div className="landing-container hero-grid">
-          <div className="hero-copy">
-            <div className="hero-kicker">
-              <ShieldCheck size={17} />
-              Gestion nationale des examens
-            </div>
-            <h1>Une plateforme moderne pour organiser les examens nationaux.</h1>
-            <p className="hero-lead">
-              Centralisez les inscriptions, les affectations, les presences, les notes anonymisees et les resultats
-              avec un parcours clair pour les candidats et les equipes administratives.
-=======
       {/* Hero Section */}
       <section ref={heroRef} style={{ paddingTop: '10rem', paddingBottom: '6rem', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
@@ -383,109 +416,173 @@ export default function LandingPage() {
               lineHeight: 1.6
             }}>
               Tout ce dont vous avez besoin pour gérer efficacement vos examens nationaux
->>>>>>> 9185738ff998183c2b63858404407b0d2bdef89a
             </p>
-            <div className="hero-buttons">
-              <Link href="/register" className="hero-primary">
-                Creer un compte
-                <ArrowRight size={18} />
-              </Link>
-              <Link href="/login" className="hero-secondary">Se connecter</Link>
-            </div>
-            <div className="hero-proof">
-              <CheckCircle2 size={16} />
-              Anonymat, controle des roles et notifications integrees
-            </div>
           </div>
-
-          <div className="hero-visual" aria-label="Apercu plateforme">
-            <div className="visual-topbar">
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="visual-header">
-              <div>
-                <p>Session nationale</p>
-                <strong>Baccalaureat 2026</strong>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2.5rem' }}>
+            {[
+              { icon: Users, title: 'Gestion des Candidats', desc: 'Inscription, suivi et gestion complète des candidats avec un système de profil détaillé.' },
+              { icon: FileText, title: 'Organisation d\'Examens', desc: 'Créez et gérez facilement vos examens avec planning automatique et allocation des salles.' },
+              { icon: Shield, title: 'Sécurité Avancée', desc: 'Protection des données et authentification sécurisée pour tous les utilisateurs.' },
+              { icon: Clock, title: 'Suivi en Temps Réel', desc: 'Tableau de bord interactif avec statistiques et mises à jour en temps réel.' },
+              { icon: Award, title: 'Rapports Détaillés', desc: 'Génération automatique de rapports et analyses pour une meilleure prise de décision.' },
+              { icon: TrendingUp, title: 'Analytics Avancés', desc: 'Outils d\'analyse et de visualisation pour suivre les performances et tendances.' }
+            ].map((feat, i) => (
+              <div key={i} className="feature-item" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                padding: '2.5rem',
+                borderRadius: '1.5rem',
+                boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)'
+              }}>
+                <div style={{
+                  width: 60,
+                  height: 60,
+                  background: 'linear-gradient(135deg, #0C6478, #BDEE98)',
+                  borderRadius: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1.5rem',
+                  boxShadow: '0 8px 16px -4px rgba(12, 100, 120, 0.3)'
+                }}>
+                  <feat.icon style={{ width: 28, height: 28, color: '#ffffff' }} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem' }}>{feat.title}</h3>
+                <p style={{ color: '#475569', lineHeight: 1.7, fontSize: '0.95rem' }}>
+                  {feat.desc}
+                </p>
               </div>
-              <span className="status-pill">Actif</span>
-            </div>
-            <div className="visual-map">
-              <span className="orbit-dot" style={{ top: '26%', left: '32%' }} />
-              <span className="orbit-dot" style={{ top: '58%', left: '58%' }} />
-              <span className="orbit-dot" style={{ top: '42%', left: '72%' }} />
-            </div>
-            <div className="visual-grid">
-              <div>
-                <strong>1 284</strong>
-                <span>Convocations</span>
-              </div>
-              <div>
-                <strong>96%</strong>
-                <span>Presences</span>
-              </div>
-              <div>
-                <strong>72%</strong>
-                <span>Corrections</span>
-              </div>
-              <div>
-                <strong>5</strong>
-                <span>Roles</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="plateforme" className="landing-section workflow-section">
-        <div className="landing-container">
-          <div className="section-heading">
-            <span className="section-eyebrow">Plateforme</span>
-            <h2>Les actions importantes sont au meme endroit.</h2>
-            <p>Chaque role accede aux outils utiles sans melanger les responsabilites.</p>
+      {/* CTA Section */}
+      <section id="contact" style={{
+        padding: '6rem 1.5rem',
+        background: 'linear-gradient(135deg, #0C6478 0%, #1087a3 100%)',
+        position: 'relative'
+      }}>
+        <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <h2 style={{
+            fontSize: '2.75rem',
+            fontWeight: 900,
+            color: '#ffffff',
+            marginBottom: '1.5rem',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2
+          }}>
+            Prêt à Transformer
+            <br />
+            la Gestion de vos Examens?
+          </h2>
+          <p style={{
+            fontSize: '1.15rem',
+            color: 'rgba(255, 255, 255, 0.85)',
+            marginBottom: '2.5rem',
+            maxWidth: '36rem',
+            margin: '0 auto 2.5rem',
+            lineHeight: 1.6
+          }}>
+            Rejoignez des centaines d&lsquo;établissements qui font confiance à ExamGest pour leurs examens nationaux.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', justifyContent: 'center' }}>
+            <a href="/login" style={{
+              padding: '1.1rem 2.5rem',
+              backgroundColor: '#ffffff',
+              color: '#0C6478',
+              textDecoration: 'none',
+              fontWeight: 700,
+              borderRadius: '1rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}>
+              <span>Commencer Gratuitement</span>
+              <ChevronRight style={{ width: 20, height: 20 }} />
+            </a>
+            <a href="#" style={{
+              padding: '1.1rem 2.5rem',
+              backgroundColor: 'transparent',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontWeight: 600,
+              borderRadius: '1rem',
+              border: '2px solid rgba(255, 255, 255, 0.3)'
+            }}>
+              Contacter l&lsquo;Équipe
+            </a>
           </div>
         </div>
-        <div className="landing-container workflow-grid">
-          {features.map((feature) => (
-            <article className="workflow-card" key={feature.title}>
-              <div className="workflow-icon">
-                <feature.icon size={24} />
+      </section>
+
+      {/* Footer */}
+      {/* Footer */}
+      <footer style={{
+        backgroundColor: 'rgba(15, 23, 42, 0.65)', /* Couleur sombre avec 65% d'opacité */
+        backdropFilter: 'blur(16px)', /* Effet de flou sur l'animation en arrière-plan */
+        WebkitBackdropFilter: 'blur(16px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)', /* Ligne subtile pour séparer le contenu */
+        color: '#ffffff',
+        padding: '5rem 1.5rem 3rem',
+        position: 'relative'
+      }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem', marginBottom: '4rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <img 
+                  src="/logo/logo-app.png" 
+                  alt="Exam Mada Logo" 
+                  style={{ width: 110, height: 110, objectFit: 'contain' }}
+                />
+                {/* <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>Exam Mada</span> */}
               </div>
-              <h3>{feature.title}</h3>
-              <p>{feature.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="securite" className="landing-section security-band">
-        <div className="landing-container security-grid">
-          <div className="security-card">
-            <div className="hero-kicker">
-              <LockKeyhole size={17} />
-              Flux securise
+              <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                Plateforme de gestion des examens nationaux de Madagascar
+              </p>
             </div>
-            <h2>Anonymat des copies et roles strictement separes.</h2>
-          </div>
-          <div className="security-points">
-            <div>Numero anonymat pour les corrections</div>
-            <div>Levee d'anonymat par administrateur</div>
-            <div>2FA et controle JWT pour les espaces sensibles</div>
-          </div>
-        </div>
-      </section>
-
-      <section id="roles" className="landing-section">
-        <div className="landing-container metric-strip">
-          {stats.map((item) => (
-            <div className="metric-item" key={item.label}>
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
+            <div>
+              <h4 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Produit</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <a href="#features" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Fonctionnalités</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Tarifs</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Documentation</a>
+              </div>
             </div>
-          ))}
+            <div>
+              <h4 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Support</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Centre d&lsquo;aide</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Contact</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>FAQ</a>
+              </div>
+            </div>
+            <div>
+              <h4 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Légal</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Confidentialité</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Conditions</a>
+              </div>
+            </div>
+          </div>
+          <div style={{ 
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)', 
+            paddingTop: '2rem', 
+            textAlign: 'center', 
+            color: 'rgba(255, 255, 255, 0.5)', 
+            fontSize: '0.85rem' 
+          }}>
+            <p>© 2026 Exam Mada. Tous droits réservés.</p>
+          </div>
         </div>
-      </section>
-    </main>
+      </footer>
+          </div>
+    </div>
   );
 }
