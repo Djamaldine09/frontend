@@ -84,7 +84,7 @@ function TypewriterText({
   }, []);
 
   return (
-    <span style={{ display: 'inline-block', fontSize, fontWeight: 900, color, whiteSpace: 'nowrap' }}>
+    <span className="hero-typewriter" style={{ display: 'inline-block', marginLeft: '0.35em', fontSize, fontWeight: 900, color, whiteSpace: 'nowrap' }}>
       {text}
       <span
         ref={cursorRef}
@@ -133,6 +133,15 @@ export default function LandingPage() {
         duration: 1.2,
         ease: 'expo.out',
         stagger: 0.03,
+        delay: 0.2,
+      });
+
+      // Le TypewriterText (mot tapé automatiquement) apparaît en même temps que le titre
+      gsap.from('.hero-typewriter', {
+        opacity: 0,
+        y: 30,
+        duration: 1,
+        ease: 'expo.out',
         delay: 0.2,
       });
 
