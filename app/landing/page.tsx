@@ -145,6 +145,19 @@ export default function LandingPage() {
         ease: 'power2.out',
       });
 
+      // Header de la section Fonctionnalités : sort de bas en haut, en cascade
+      gsap.from('.features-header-item', {
+        scrollTrigger: {
+          trigger: featuresRef.current,
+          start: 'top 85%',
+        },
+        opacity: 0,
+        y: 60,
+        duration: 1,
+        stagger: 0.15,
+        ease: 'power3.out',
+      });
+
       // Features animation (reveal + échelle)
       gsap.from('.feature-item', {
         scrollTrigger: {
@@ -518,7 +531,7 @@ export default function LandingPage() {
       <section ref={featuresRef} id="features" style={{ padding: '8rem 1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
-            <div style={{
+            <div className="features-header-item" style={{
               display: 'inline-flex',
               alignItems: 'center',
               backgroundColor: 'rgba(12, 100, 120, 0.08)',
@@ -533,7 +546,7 @@ export default function LandingPage() {
             }}>
               Fonctionnalités Clés
             </div>
-            <h2 style={{
+            <h2 className="features-header-item" style={{
               fontSize: '2.75rem',
               fontWeight: 900,
               color: '#0f172a',
@@ -550,7 +563,7 @@ export default function LandingPage() {
                 {' '}Puissantes
               </span>
             </h2>
-            <p style={{
+            <p className="features-header-item" style={{
               fontSize: '1.15rem',
               color: '#475569',
               maxWidth: '36rem',
