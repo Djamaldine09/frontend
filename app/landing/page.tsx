@@ -149,7 +149,7 @@ export default function LandingPage() {
       gsap.from('.features-header-item', {
         scrollTrigger: {
           trigger: featuresRef.current,
-          start: 'top 85%',
+          start: 'top bottom',
         },
         opacity: 0,
         y: 60,
@@ -162,7 +162,7 @@ export default function LandingPage() {
       gsap.from('.feature-item', {
         scrollTrigger: {
           trigger: featuresRef.current,
-          start: 'top 80%',
+          start: 'top bottom',
         },
         opacity: 0,
         y: 50,
