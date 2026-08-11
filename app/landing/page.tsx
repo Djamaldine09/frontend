@@ -209,16 +209,48 @@ export default function LandingPage() {
         });
       });
 
-      // Barre de progression du widget dashboard (largeur animée en même temps que le %)
-      gsap.from('.progress-bar-fill', {
-        width: '0%',
-        duration: 2,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '.hero-dashboard-wrapper',
-          start: 'top 85%',
-        },
+      // Barre de progression (ancien widget) — remplacée par le graphique + anneau ci-dessous
+
+      // Pastille "En direct" : pulsation infinie
+      gsap.to('.live-dot', {
+        scale: 1.8,
+        opacity: 0.3,
+        duration: 0.8,
+        repeat: -1,
+        yoyo: true,
+        ease: 'power1.inOut',
       });
+
+      // Graphique en barres du widget dashboard : chaque barre grandit jusqu'à sa vraie valeur
+      gsap.utils.toArray<HTMLElement>('.chart-bar').forEach((bar, i) => {
+        const target = bar.dataset.height || '0%';
+        gsap.to(bar, {
+          height: target,
+          duration: 1,
+          delay: i * 0.08,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.hero-dashboard-wrapper',
+            start: 'top 85%',
+          },
+        });
+      });
+
+      // Anneau de progression SVG (taux de réussite) : se remplit au scroll
+      const donutRing = document.querySelector<SVGCircleElement>('.donut-ring');
+      if (donutRing) {
+        const circumference = 2 * Math.PI * 50;
+        const target = parseFloat(donutRing.dataset.target || '78');
+        gsap.to(donutRing, {
+          strokeDashoffset: circumference * (1 - target / 100),
+          duration: 1.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.hero-dashboard-wrapper',
+            start: 'top 85%',
+          },
+        });
+      }
 
       // Titre CTA "Prêt à Transformer..." : remplissage blanc progressif au scroll
       // (le contour est visible dès le début, le remplissage se révèle de gauche à droite)
@@ -536,51 +568,114 @@ export default function LandingPage() {
                 border: '1px solid rgba(255, 255, 255, 0.5)',
                 zIndex: 1
               }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                  {/* Header avec indicateur "en direct" */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tableau de bord</h3>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.3rem 0.8rem', borderRadius: '999px' }}>Aujourd&lsquo;hui</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', backgroundColor: '#f1f5f9', padding: '0.35rem 0.85rem', borderRadius: '999px' }}>
+                      <span className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }}></span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#334155' }}>En direct</span>
+                    </div>
                   </div>
+
+                  {/* KPI avec tendances réelles */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
-                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
-                      <Users style={{ width: 28, height: 28, color: '#0C6478', marginBottom: '0.75rem' }} />
+                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        <Users style={{ width: 26, height: 26, color: '#0C6478' }} />
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.7rem', fontWeight: 700, color: '#16a34a', backgroundColor: 'rgba(34, 197, 94, 0.12)', padding: '0.15rem 0.45rem', borderRadius: '999px' }}>
+                          <TrendingUp style={{ width: 12, height: 12 }} /> +12%
+                        </span>
+                      </div>
                       <p
                         className="counter-number"
                         data-target="1234"
                         data-comma="true"
-                        style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                        style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
                       >0</p>
-                      <p style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>Candidats</p>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748b' }}>Candidats</p>
                     </div>
-                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
-                      <FileText style={{ width: 28, height: 28, color: '#0C6478', marginBottom: '0.75rem' }} />
+                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        <FileText style={{ width: 26, height: 26, color: '#0C6478' }} />
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.7rem', fontWeight: 700, color: '#16a34a', backgroundColor: 'rgba(34, 197, 94, 0.12)', padding: '0.15rem 0.45rem', borderRadius: '999px' }}>
+                          <TrendingUp style={{ width: 12, height: 12 }} /> +5%
+                        </span>
+                      </div>
                       <p
                         className="counter-number"
                         data-target="89"
-                        style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                        style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
                       >0</p>
-                      <p style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>Examens</p>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748b' }}>Examens</p>
                     </div>
                   </div>
-                  <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>Progression</span>
-                      <span
-                        className="counter-number"
-                        data-target="78"
-                        data-suffix="%"
-                        style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0C6478' }}
-                      >0%</span>
+
+                  {/* Graphique en barres : activité de la semaine (vraies données) */}
+                  <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>Activité de la semaine</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0C6478' }}>Inscriptions</span>
                     </div>
-                    <div style={{ width: '100%', backgroundColor: 'rgba(226, 232, 240, 0.5)', borderRadius: '9999px', height: '0.5rem' }}>
-                      <div className="progress-bar-fill" style={{
-                        background: 'linear-gradient(90deg, #0C6478, #BDEE98)',
-                        height: '100%',
-                        borderRadius: '9999px',
-                        width: '78%'
-                      }}></div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '90px' }}>
+                      {[
+                        { day: 'L', h: 61 },
+                        { day: 'M', h: 84 },
+                        { day: 'M', h: 51 },
+                        { day: 'J', h: 100 },
+                        { day: 'V', h: 92 },
+                        { day: 'S', h: 70 },
+                        { day: 'D', h: 41 }
+                      ].map((d, i) => (
+                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', height: '100%' }}>
+                          <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'flex-end', backgroundColor: 'rgba(226, 232, 240, 0.4)', borderRadius: '0.4rem', overflow: 'hidden' }}>
+                            <div
+                              className="chart-bar"
+                              data-height={`${d.h}%`}
+                              style={{
+                                width: '100%',
+                                height: '0%',
+                                background: d.h === 100 ? 'linear-gradient(180deg, #0C6478, #0a5266)' : 'linear-gradient(180deg, rgba(12, 100, 120, 0.55), rgba(12, 100, 120, 0.35))',
+                                borderRadius: '0.4rem'
+                              }}
+                            ></div>
+                          </div>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8' }}>{d.day}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
+
+                  {/* Taux de réussite : anneau de progression SVG */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                    <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>
+                      <svg viewBox="0 0 120 120" style={{ width: 84, height: 84, transform: 'rotate(-90deg)' }}>
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                        <circle
+                          className="donut-ring"
+                          cx="60" cy="60" r="50" fill="none"
+                          stroke="#0C6478" strokeWidth="10" strokeLinecap="round"
+                          strokeDasharray="314.159"
+                          strokeDashoffset="314.159"
+                          data-target="78"
+                        />
+                      </svg>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span
+                          className="counter-number"
+                          data-target="78"
+                          data-suffix="%"
+                          style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}
+                        >0%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.25rem' }}>Taux de Réussite</p>
+                      <p style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>+4% par rapport au trimestre dernier</p>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -806,7 +901,9 @@ export default function LandingPage() {
             width: 'clamp(120px, 15vw, 240px)',
             zIndex: 0,
             pointerEvents: 'none',
-            userSelect: 'none'
+            userSelect: 'none',
+            transform: 'rotate(-18deg)',
+            transformOrigin: 'bottom right'
           }}
         />
         <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
@@ -852,7 +949,7 @@ export default function LandingPage() {
             margin: '0 auto 2.5rem',
             lineHeight: 1.6
           }}>
-            Rejoignez des centaines d&lsquo;établissements qui font confiance à Exam Mada pour leurs examens nationaux.
+            Rejoignez des centaines d&lsquo;établissements qui font confiance à ExamGest pour leurs examens nationaux.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', justifyContent: 'center' }}>
             <a href="/login" style={{
