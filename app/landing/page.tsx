@@ -242,15 +242,16 @@ export default function LandingPage() {
         });
       }
 
-      // Titre CTA "Prêt à Transformer..." : remplissage blanc progressif au scroll
-      // (le contour est visible dès le début, le remplissage se révèle de gauche à droite)
+      // Titre CTA "Prêt à Transformer..." : remplissage blanc du bas vers le haut,
+      // suivant directement la position du scroll (scrub, pas un déclenchement unique)
       gsap.to('.cta-title-fill', {
-        clipPath: 'inset(0 0% 0 0)',
-        duration: 1.8,
-        ease: 'power3.inOut',
+        clipPath: 'inset(0% 0 0 0)',
+        ease: 'none',
         scrollTrigger: {
           trigger: '.cta-title-wrapper',
-          start: 'top 75%',
+          start: 'top 85%',
+          end: 'top 25%',
+          scrub: true,
         },
       });
 
@@ -887,7 +888,7 @@ export default function LandingPage() {
               lineHeight: 1.15,
               color: '#ffffff',
               margin: 0,
-              clipPath: 'inset(0 100% 0 0)'
+              clipPath: 'inset(100% 0 0 0)'
             }}>
               Prêt à Transformer
               <br />
