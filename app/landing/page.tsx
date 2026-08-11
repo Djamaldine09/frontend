@@ -566,6 +566,39 @@ export default function LandingPage() {
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tableau de bord</h3>
                   </div>
 
+                  {/* KPI avec tendances réelles */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
+                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        <Users style={{ width: 26, height: 26, color: '#0C6478' }} />
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.7rem', fontWeight: 700, color: '#16a34a', backgroundColor: 'rgba(34, 197, 94, 0.12)', padding: '0.15rem 0.45rem', borderRadius: '999px' }}>
+                          <TrendingUp style={{ width: 12, height: 12 }} /> +12%
+                        </span>
+                      </div>
+                      <p
+                        className="counter-number"
+                        data-target="1234"
+                        data-comma="true"
+                        style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                      >0</p>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748b' }}>Candidats</p>
+                    </div>
+                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        <FileText style={{ width: 26, height: 26, color: '#0C6478' }} />
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.7rem', fontWeight: 700, color: '#16a34a', backgroundColor: 'rgba(34, 197, 94, 0.12)', padding: '0.15rem 0.45rem', borderRadius: '999px' }}>
+                          <TrendingUp style={{ width: 12, height: 12 }} /> +5%
+                        </span>
+                      </div>
+                      <p
+                        className="counter-number"
+                        data-target="89"
+                        style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                      >0</p>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748b' }}>Examens</p>
+                    </div>
+                  </div>
+
                   {/* Graphique en barres : activité de la semaine (vraies données) */}
                   <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
