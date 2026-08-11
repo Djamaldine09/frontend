@@ -570,15 +570,6 @@ export default function LandingPage() {
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                  {/* Header avec indicateur "en direct" */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tableau de bord</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', backgroundColor: '#f1f5f9', padding: '0.35rem 0.85rem', borderRadius: '999px' }}>
-                      <span className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }}></span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#334155' }}>En direct</span>
-                    </div>
-                  </div>
-
                   {/* KPI avec tendances réelles */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
                     <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
