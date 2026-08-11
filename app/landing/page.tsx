@@ -9,12 +9,92 @@ import {
   CheckCircle, TrendingUp, Clock, Award, ChevronRight
 } from 'lucide-react';
 import Iridescence from '../../components/Iridescence';
-import { MorphText } from "@/components/ui/morph-text";
 import ImageSlider3D from "@/components/lightswind/3d-image-slider";
 import { MagneticButton } from "@/components/lightswind/magnetic-button";
 import { RadialGlowButton } from "@/components/ui/radial-glow-button"
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
+
+// Machine à écrire : tape un mot, pause, l'efface, passe au mot suivant — en boucle infinie.
+function TypewriterText({
+  words,
+  fontSize = 'clamp(2rem, 4vw, 4rem)',
+  color = '#0C6478',
+}: {
+  words: string[];
+  fontSize?: string;
+  color?: string;
+}) {
+  const [text, setText] = useState('');
+  const cursorRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    let wordIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const TYPING_SPEED = 90;
+    const DELETING_SPEED = 45;
+    const PAUSE_AFTER_WORD = 1400;
+    const PAUSE_BEFORE_NEXT = 400;
+
+    const tick = () => {
+      const currentWord = words[wordIndex];
+
+      if (!isDeleting) {
+        charIndex += 1;
+        setText(currentWord.slice(0, charIndex));
+        if (charIndex === currentWord.length) {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, PAUSE_AFTER_WORD);
+          return;
+        }
+        timeoutId = setTimeout(tick, TYPING_SPEED);
+      } else {
+        charIndex -= 1;
+        setText(currentWord.slice(0, charIndex));
+        if (charIndex === 0) {
+          isDeleting = false;
+          wordIndex = (wordIndex + 1) % words.length;
+          timeoutId = setTimeout(tick, PAUSE_BEFORE_NEXT);
+          return;
+        }
+        timeoutId = setTimeout(tick, DELETING_SPEED);
+      }
+    };
+
+    timeoutId = setTimeout(tick, PAUSE_BEFORE_NEXT);
+    return () => clearTimeout(timeoutId);
+  }, [words]);
+
+  // Curseur clignotant (GSAP)
+  useEffect(() => {
+    if (!cursorRef.current) return;
+    const tween = gsap.to(cursorRef.current, {
+      opacity: 0,
+      duration: 0.5,
+      repeat: -1,
+      yoyo: true,
+      ease: 'power1.inOut',
+    });
+    return () => {
+      tween.kill();
+    };
+  }, []);
+
+  return (
+    <span style={{ display: 'inline-block', fontSize, fontWeight: 900, color, whiteSpace: 'nowrap' }}>
+      {text}
+      <span
+        ref={cursorRef}
+        style={{ display: 'inline-block', width: '3px', marginLeft: '3px', color, transform: 'translateY(2px)' }}
+      >
+        |
+      </span>
+    </span>
+  );
+}
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -353,10 +433,8 @@ export default function LandingPage() {
                 letterSpacing: '-0.03em'
               }}>
                 <span className="hero-title-line">Gérez vos</span>
-                <MorphText
+                <TypewriterText
                     words={["EXAMEN", "RESULTAT", "DASH"]}
-                    interval={2500}
-                    subtext="Move fast. Break things."
                     fontSize="clamp(2rem, 4vw, 4rem)"
                 />
                 <br />
