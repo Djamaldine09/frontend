@@ -209,23 +209,6 @@ export default function LandingPage() {
         });
       });
 
-      // Barre de progression (ancien widget) — remplacée par le graphique + anneau ci-dessous
-
-      // Graphique en barres du widget dashboard : chaque barre grandit jusqu'à sa vraie valeur
-      gsap.utils.toArray<HTMLElement>('.chart-bar').forEach((bar, i) => {
-        const target = bar.dataset.height || '0%';
-        gsap.to(bar, {
-          height: target,
-          duration: 1,
-          delay: i * 0.08,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.hero-dashboard-wrapper',
-            start: 'top 85%',
-          },
-        });
-      });
-
       // Anneau de progression SVG (taux de réussite) : se remplit au scroll
       const donutRing = document.querySelector<SVGCircleElement>('.donut-ring');
       if (donutRing) {
@@ -596,41 +579,6 @@ export default function LandingPage() {
                         style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
                       >0</p>
                       <p style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748b' }}>Examens</p>
-                    </div>
-                  </div>
-
-                  {/* Graphique en barres : activité de la semaine (vraies données) */}
-                  <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>Activité de la semaine</span>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#0C6478' }}>Inscriptions</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '90px' }}>
-                      {[
-                        { day: 'L', h: 61 },
-                        { day: 'M', h: 84 },
-                        { day: 'M', h: 51 },
-                        { day: 'J', h: 100 },
-                        { day: 'V', h: 92 },
-                        { day: 'S', h: 70 },
-                        { day: 'D', h: 41 }
-                      ].map((d, i) => (
-                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', height: '100%' }}>
-                          <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'flex-end', backgroundColor: 'rgba(226, 232, 240, 0.4)', borderRadius: '0.4rem', overflow: 'hidden' }}>
-                            <div
-                              className="chart-bar"
-                              data-height={`${d.h}%`}
-                              style={{
-                                width: '100%',
-                                height: '0%',
-                                background: d.h === 100 ? 'linear-gradient(180deg, #0C6478, #0a5266)' : 'linear-gradient(180deg, rgba(12, 100, 120, 0.55), rgba(12, 100, 120, 0.35))',
-                                borderRadius: '0.4rem'
-                              }}
-                            ></div>
-                          </div>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8' }}>{d.day}</span>
-                        </div>
-                      ))}
                     </div>
                   </div>
 
