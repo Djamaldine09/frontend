@@ -161,18 +161,34 @@ export default function LandingPage() {
 
       // Effet de survol "lift" sur les cartes (feature-item et stat-card),
       // comme un hover premium : la carte se soulève et grossit légèrement.
+      // Pour .feature-item : bordure qui s'illumine, glow radial, flèche "En savoir plus" qui glisse.
       const hoverCards = gsap.utils.toArray<HTMLElement>('.feature-item, .stat-card');
 
       hoverCards.forEach((card) => {
-        card.style.transition = 'box-shadow 0.4s ease';
+        const isFeature = card.classList.contains('feature-item');
+        card.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
+
+        const glow = card.querySelector<HTMLElement>('.feature-item-glow');
+        const arrow = card.querySelector<HTMLElement>('.feature-item-arrow');
+
         const enter = () => {
           gsap.to(card, {
-            y: -10,
-            scale: 1.03,
+            y: isFeature ? -8 : -10,
+            scale: isFeature ? 1.015 : 1.03,
             duration: 0.4,
             ease: 'power2.out',
           });
-          card.style.boxShadow = '0 25px 45px -12px rgba(12, 100, 120, 0.25)';
+          if (isFeature) {
+            card.style.boxShadow = '0 20px 40px -15px rgba(12, 100, 120, 0.18)';
+            card.style.borderColor = 'rgba(12, 100, 120, 0.35)';
+            if (glow) glow.style.opacity = '1';
+            if (arrow) {
+              arrow.style.opacity = '1';
+              arrow.style.transform = 'translateX(0)';
+            }
+          } else {
+            card.style.boxShadow = '0 25px 45px -12px rgba(12, 100, 120, 0.25)';
+          }
         };
         const leave = () => {
           gsap.to(card, {
@@ -181,7 +197,17 @@ export default function LandingPage() {
             duration: 0.4,
             ease: 'power2.out',
           });
-          card.style.boxShadow = '0 10px 40px -10px rgba(0, 0, 0, 0.05)';
+          if (isFeature) {
+            card.style.boxShadow = '0 10px 30px -12px rgba(0, 0, 0, 0.06)';
+            card.style.borderColor = '#e2e8f0';
+            if (glow) glow.style.opacity = '0';
+            if (arrow) {
+              arrow.style.opacity = '0';
+              arrow.style.transform = 'translateX(-8px)';
+            }
+          } else {
+            card.style.boxShadow = '0 10px 40px -10px rgba(0, 0, 0, 0.05)';
+          }
         };
         card.addEventListener('mouseenter', enter);
         card.addEventListener('mouseleave', leave);
@@ -492,6 +518,21 @@ export default function LandingPage() {
       <section ref={featuresRef} id="features" style={{ padding: '8rem 1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(12, 100, 120, 0.08)',
+              color: '#0C6478',
+              padding: '0.45rem 1.1rem',
+              borderRadius: '999px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              marginBottom: '1.5rem'
+            }}>
+              Fonctionnalités Clés
+            </div>
             <h2 style={{
               fontSize: '2.75rem',
               fontWeight: 900,
@@ -520,7 +561,7 @@ export default function LandingPage() {
             </p>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.75rem' }}>
             {[
               { icon: Users, title: 'Gestion des Candidats', desc: 'Inscription, suivi et gestion complète des candidats avec un système de profil détaillé.' },
               { icon: FileText, title: 'Organisation d\'Examens', desc: 'Créez et gérez facilement vos examens avec planning automatique et allocation des salles.' },
@@ -530,31 +571,75 @@ export default function LandingPage() {
               { icon: TrendingUp, title: 'Analytics Avancés', desc: 'Outils d\'analyse et de visualisation pour suivre les performances et tendances.' }
             ].map((feat, i) => (
               <div key={i} className="feature-item" style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                padding: '2.5rem',
-                borderRadius: '1.5rem',
-                boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)'
+                position: 'relative',
+                backgroundColor: '#ffffff',
+                padding: '2.25rem',
+                borderRadius: '1.25rem',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 10px 30px -12px rgba(0, 0, 0, 0.06)',
+                overflow: 'hidden'
               }}>
+                <div className="feature-item-glow" style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'radial-gradient(circle at 20% 0%, rgba(12, 100, 120, 0.10), transparent 60%)',
+                  opacity: 0,
+                  transition: 'opacity 0.4s ease',
+                  pointerEvents: 'none'
+                }}></div>
+
                 <div style={{
-                  width: 60,
-                  height: 60,
-                  background: 'linear-gradient(135deg, #0C6478, #BDEE98)',
-                  borderRadius: '1.25rem',
+                  position: 'relative',
+                  zIndex: 1,
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '1.5rem',
-                  boxShadow: '0 8px 16px -4px rgba(12, 100, 120, 0.3)'
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '1.75rem'
                 }}>
-                  <feat.icon style={{ width: 28, height: 28, color: '#ffffff' }} />
+                  <div style={{
+                    width: 52,
+                    height: 52,
+                    backgroundColor: 'rgba(12, 100, 120, 0.08)',
+                    borderRadius: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <feat.icon style={{ width: 24, height: 24, color: '#0C6478' }} />
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: '#cbd5e1',
+                    letterSpacing: '0.05em'
+                  }}>
+                    0{i + 1}
+                  </span>
                 </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem' }}>{feat.title}</h3>
-                <p style={{ color: '#475569', lineHeight: 1.7, fontSize: '0.95rem' }}>
+
+                <h3 style={{ position: 'relative', zIndex: 1, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem' }}>
+                  {feat.title}
+                </h3>
+                <p style={{ position: 'relative', zIndex: 1, color: '#64748b', lineHeight: 1.7, fontSize: '0.92rem', marginBottom: '1.5rem' }}>
                   {feat.desc}
                 </p>
+
+                <div className="feature-item-arrow" style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: '#0C6478',
+                  opacity: 0,
+                  transform: 'translateX(-8px)',
+                  transition: 'opacity 0.3s ease, transform 0.3s ease'
+                }}>
+                  En savoir plus
+                  <ArrowRight style={{ width: 16, height: 16 }} />
+                </div>
               </div>
             ))}
           </div>
