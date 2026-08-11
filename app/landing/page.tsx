@@ -232,6 +232,21 @@ export default function LandingPage() {
         },
       });
 
+      // Parallax des images gauche/droite dans la section CTA,
+      // identique à #c-left-leaf / #c-right-leaf dans Cocktails.jsx du projet gsap_cocktails.
+      const ctaParallaxTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#contact',
+          start: 'top 30%',
+          end: 'bottom 80%',
+          scrub: true,
+        },
+      });
+
+      ctaParallaxTimeline
+        .from('#cta-left-leaf', { x: -100, y: 100 })
+        .from('#cta-right-leaf', { x: 100, y: 100 });
+
       // Stats counter animation (reveal + léger effet d'échelle, comme les grilles d'images de About.jsx)
       gsap.from('.stat-card', {
         scrollTrigger: {
@@ -762,8 +777,38 @@ export default function LandingPage() {
       <section id="contact" style={{
         padding: '6rem 1.5rem',
         background: 'linear-gradient(135deg, #0C6478 0%, #1087a3 100%)',
-        position: 'relative'
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Images décoratives gauche/droite, comme #c-left-leaf / #c-right-leaf dans gsap_cocktails */}
+        <img
+          src="/images/cta-left-pencil.png"
+          alt="crayon"
+          id="cta-left-leaf"
+          style={{
+            position: 'absolute',
+            left: 'clamp(-3rem, -2vw, -1rem)',
+            bottom: 'clamp(-2rem, -1vw, 0px)',
+            width: 'clamp(110px, 14vw, 220px)',
+            zIndex: 0,
+            pointerEvents: 'none',
+            userSelect: 'none'
+          }}
+        />
+        <img
+          src="/images/cta-right-notebook.png"
+          alt="cahier"
+          id="cta-right-leaf"
+          style={{
+            position: 'absolute',
+            right: 'clamp(-2rem, -1.5vw, -0.5rem)',
+            bottom: 'clamp(-1rem, -0.5vw, 0px)',
+            width: 'clamp(120px, 15vw, 240px)',
+            zIndex: 0,
+            pointerEvents: 'none',
+            userSelect: 'none'
+          }}
+        />
         <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <div className="cta-title-wrapper" style={{ position: 'relative', marginBottom: '1.5rem' }}>
             {/* Calque 1 : texte creux (contour blanc, sans remplissage) — visible dès le départ */}
