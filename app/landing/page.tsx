@@ -220,6 +220,18 @@ export default function LandingPage() {
         },
       });
 
+      // Titre CTA "Prêt à Transformer..." : remplissage blanc progressif au scroll
+      // (le contour est visible dès le début, le remplissage se révèle de gauche à droite)
+      gsap.to('.cta-title-fill', {
+        clipPath: 'inset(0 0% 0 0)',
+        duration: 1.8,
+        ease: 'power3.inOut',
+        scrollTrigger: {
+          trigger: '.cta-title-wrapper',
+          start: 'top 75%',
+        },
+      });
+
       // Stats counter animation (reveal + léger effet d'échelle, comme les grilles d'images de About.jsx)
       gsap.from('.stat-card', {
         scrollTrigger: {
@@ -753,18 +765,40 @@ export default function LandingPage() {
         position: 'relative'
       }}>
         <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <h2 style={{
-            fontSize: '2.75rem',
-            fontWeight: 900,
-            color: '#ffffff',
-            marginBottom: '1.5rem',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.2
-          }}>
-            Prêt à Transformer
-            <br />
-            la Gestion de vos Examens?
-          </h2>
+          <div className="cta-title-wrapper" style={{ position: 'relative', marginBottom: '1.5rem' }}>
+            {/* Calque 1 : texte creux (contour blanc, sans remplissage) — visible dès le départ */}
+            <h2 style={{
+              fontFamily: "'Anton', sans-serif",
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.01em',
+              lineHeight: 1.15,
+              color: 'transparent',
+              WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.85)',
+              margin: 0
+            }}>
+              Prêt à Transformer
+              <br />
+              la Gestion de vos Examens?
+            </h2>
+            {/* Calque 2 : texte plein blanc, masqué au départ, révélé au scroll (wipe gauche → droite) */}
+            <h2 className="cta-title-fill" style={{
+              position: 'absolute',
+              inset: 0,
+              fontFamily: "'Anton', sans-serif",
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.01em',
+              lineHeight: 1.15,
+              color: '#ffffff',
+              margin: 0,
+              clipPath: 'inset(0 100% 0 0)'
+            }}>
+              Prêt à Transformer
+              <br />
+              la Gestion de vos Examens?
+            </h2>
+          </div>
           <p style={{
             fontSize: '1.15rem',
             color: 'rgba(255, 255, 255, 0.85)',
