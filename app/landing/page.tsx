@@ -852,7 +852,7 @@ export default function LandingPage() {
             margin: '0 auto 2.5rem',
             lineHeight: 1.6
           }}>
-            Rejoignez des centaines d&lsquo;établissements qui font confiance à ExamGest pour leurs examens nationaux.
+            Rejoignez des centaines d&lsquo;établissements qui font confiance à Exam Mada pour leurs examens nationaux.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', justifyContent: 'center' }}>
             <a href="/login" style={{
