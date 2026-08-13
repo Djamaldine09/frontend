@@ -16,7 +16,7 @@ import {
 import Lottie from 'lottie-react';
 import { publicAPI, PublicResult } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
-import confettiAnimation from '@/public/animations/Confetti.json';
+import confettiAnimation from '@/public/Confetti.json';
 
 function getMention(moyenne: number) {
   if (moyenne >= 16) return { label: 'Très bien', color: '#7c3aed', emoji: '🏆' };
