@@ -24,7 +24,10 @@ import CandidateDashboard from './CandidateDashboard';
 import { adminAPI, type AdminDashboard } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatWeekdayDayMonth } from '@/lib/i18n/dates';
-import { AvatarGroup } from '@/components/animate-ui/components/animate/avatar-group';
+import {
+  AvatarGroup,
+  AvatarGroupTooltip,
+} from '@/components/animate-ui/components/animate/avatar-group';
 import {
   BarChart,
   Bar,
@@ -120,6 +123,13 @@ const fallbackStats: Record<Exclude<Role, 'CANDIDAT'>, DashboardStat[]> = {
     { labelKey: 'adash.stat.tempsRestant', value: '...', hintKey: 'adash.loadingGeneric', tone: 'var(--tile-peach)', Icon: Layers },
   ],
 };
+
+const activeTeamMembers = [
+  { initials: 'JD', name: 'Jean Dupont', color: 'linear-gradient(135deg, #5c54f3, #7c9cff)' },
+  { initials: 'MB', name: 'Marie Blanc', color: 'linear-gradient(135deg, #22c55e, #34d399)' },
+  { initials: 'PR', name: 'Pierre Rouge', color: 'linear-gradient(135deg, #f59e0b, #f97316)' },
+  { initials: 'AV', name: 'Anne Vert', color: 'linear-gradient(135deg, #ec4899, #8b5cf6)' },
+];
 
 const quickLinks: Record<Exclude<Role, 'CANDIDAT'>, QuickLink[]> = {
   ADMIN: [
@@ -277,6 +287,44 @@ export default function DashboardPage() {
           <p style={{ color: 'var(--ink-soft)', marginTop: 6, fontSize: 14.5 }}>
             {t('adash.welcome')} <strong style={{ color: 'var(--ink)' }}> {user.prenom} {user.nom}</strong>
           </p>
+
+          <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 18, background: 'rgba(92, 84, 243, 0.04)' }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-mute)', letterSpacing: 0.7, textTransform: 'uppercase' }}>
+                Équipe active
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
+                4 utilisateurs connectés aujourd&apos;hui
+              </div>
+            </div>
+            <AvatarGroup style={{ display: 'flex', alignItems: 'center' }}>
+              {activeTeamMembers.map((member, index) => (
+                <div
+                  key={member.initials}
+                  style={{
+                    position: 'relative',
+                    width: 42,
+                    height: 42,
+                    borderRadius: '50%',
+                    background: member.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontWeight: 800,
+                    fontSize: 12,
+                    border: '2px solid var(--bg-app)',
+                    marginLeft: index === 0 ? 0 : -10,
+                    boxShadow: '0 8px 20px rgba(92,84,243,0.18)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {member.initials}
+                  <AvatarGroupTooltip>{member.name}</AvatarGroupTooltip>
+                </div>
+              ))}
+            </AvatarGroup>
+          </div>
         </section>
 
         <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
@@ -502,6 +550,44 @@ export default function DashboardPage() {
         <p style={{ color: 'var(--ink-soft)', marginTop: 6, fontSize: 14.5 }}>
           {t('adash.welcome')} <strong style={{ color: 'var(--ink)' }}>{user.prenom} {user.nom}</strong> — vue d&apos;ensemble de la session.
         </p>
+
+        <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 18, background: 'rgba(92, 84, 243, 0.04)' }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-mute)', letterSpacing: 0.7, textTransform: 'uppercase' }}>
+              Équipe active
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
+              4 utilisateurs connectés aujourd&apos;hui
+            </div>
+          </div>
+          <AvatarGroup style={{ display: 'flex', alignItems: 'center' }}>
+            {activeTeamMembers.map((member, index) => (
+              <div
+                key={member.initials}
+                style={{
+                  position: 'relative',
+                  width: 42,
+                  height: 42,
+                  borderRadius: '50%',
+                  background: member.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: 12,
+                  border: '2px solid var(--bg-app)',
+                  marginLeft: index === 0 ? 0 : -10,
+                  boxShadow: '0 8px 20px rgba(92,84,243,0.18)',
+                  cursor: 'pointer',
+                }}
+              >
+                {member.initials}
+                <AvatarGroupTooltip>{member.name}</AvatarGroupTooltip>
+              </div>
+            ))}
+          </AvatarGroup>
+        </div>
       </section>
 
       <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
