@@ -485,7 +485,7 @@ function LoginContent() {
                   <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Mot de passe</label>
                   <div style={{ position: 'relative', width: '100%' }}>
                     <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '14px', color: '#9ca3af', display: 'flex', alignItems: 'center' }}>
-                      <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <svg style={{ width: '19px', height: '19px' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0V10.5m-3 13.5h15a2.25 2.25 0 002.25-2.25V13.5a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 13.5v7.5a2.25 2.25 0 002.25 2.25z" />
                       </svg>
                     </div>
