@@ -553,10 +553,12 @@ export default function DashboardPage() {
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>Utilisateurs en ligne</div>
             <AvatarGroup>
-              {[{ initials: 'JD', name: 'Jean Dupont' },
+              {[
+                { initials: 'JD', name: 'Jean Dupont' },
                 { initials: 'MB', name: 'Marie Blanc' },
                 { initials: 'PR', name: 'Pierre Rouge' },
-                { initials: 'AV', name: 'Anne Vert' }].map((member) => (
+                { initials: 'AV', name: 'Anne Vert' },
+              ].map((member) => (
                 <div
                   key={member.initials}
                   title={member.name}
@@ -572,6 +574,8 @@ export default function DashboardPage() {
                     fontWeight: 700,
                     fontSize: 14,
                     border: '2px solid var(--bg-app)',
+                    userSelect: 'none',
+                    boxShadow: '0 6px 18px rgba(92, 84, 243, 0.18)',
                   }}
                 >
                   {member.initials}
