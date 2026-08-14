@@ -714,7 +714,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={loading}
-                    style={{ width: '100%', backgroundColor: '#10b981', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '12px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
+                    style={{ width: '100%', backgroundColor: '#10b981', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '35px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
                   >
                     {loading ? <span style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : 'Valider et se connecter'}
                   </button>
@@ -758,7 +758,7 @@ function LoginContent() {
           display: flex;
           align-items: center;
           background-color: #f0f4f9;
-          border-radius: 12px;
+          border-radius: 35px;
           border: none;
           padding: 0;
           overflow: hidden;
