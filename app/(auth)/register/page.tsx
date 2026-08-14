@@ -91,7 +91,7 @@ export default function RegisterPage() {
           padding: 14px 14px !important;
           background-color: #f0f4f9 !important;
           border: none !important;
-          border-radius: 12px !important;
+          border-radius: 35px !important;
           font-size: 14px !important;
           color: #111827 !important;
           outline: none !important;
@@ -252,7 +252,7 @@ export default function RegisterPage() {
                 color: '#ffffff',
                 fontWeight: 600,
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '35px',
                 padding: '14px',
                 fontSize: '14px',
                 cursor: loading ? 'not-allowed' : 'pointer',
@@ -292,7 +292,7 @@ export default function RegisterPage() {
           display: flex;
           align-items: center;
           background-color: #f0f4f9;
-          border-radius: 12px;
+          border-radius: 35px;
           border: none;
           padding: 0;
           overflow: hidden;
@@ -321,7 +321,7 @@ const inputStyle: React.CSSProperties = {
   padding: '14px',
   backgroundColor: '#f0f4f9',
   border: 'none',
-  borderRadius: '12px',
+  borderRadius: '35px',
   fontSize: '14px',
   color: '#111827',
   outline: 'none',
