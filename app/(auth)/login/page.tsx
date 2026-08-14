@@ -527,7 +527,7 @@ function LoginContent() {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ width: '100%', backgroundColor: '#5c54f3', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '12px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(92, 84, 243, 0.2)' }}
+                  style={{ width: '100%', backgroundColor: '#5c54f3', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '35px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(92, 84, 243, 0.2)' }}
                 >
                   {loading ? <span style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : twoFactorToken ? 'Valider le code 2FA' : 'Se connecter'}
                 </button>
@@ -552,7 +552,7 @@ function LoginContent() {
                       justifyContent: 'center', 
                       gap: '10px', 
                       border: 'none', 
-                      borderRadius: '12px', 
+                      borderRadius: '35px', 
                       padding: '12px', 
                       backgroundColor: '#ffffff',
                       cursor: loading ? 'not-allowed' : 'pointer', 
@@ -596,7 +596,7 @@ function LoginContent() {
                       justifyContent: 'center',
                       gap: '10px',
                       border: 'none',
-                      borderRadius: '12px',
+                      borderRadius: '35px',
                       padding: '12px',
                       backgroundColor: '#ffffff',
                       cursor: loading ? 'not-allowed' : 'pointer',
@@ -637,7 +637,7 @@ function LoginContent() {
                     justifyContent: 'center', 
                     gap: '10px', 
                     border: '2px solid #e5e7eb', 
-                    borderRadius: '12px', 
+                    borderRadius: '35px', 
                     padding: '12px', 
                     backgroundColor: '#ffffff',
                     cursor: loading ? 'not-allowed' : 'pointer', 
@@ -686,7 +686,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={loading}
-                    style={{ width: '100%', backgroundColor: '#5c54f3', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '12px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(92, 84, 243, 0.2)' }}
+                    style={{ width: '100%', backgroundColor: '#5c54f3', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '35px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(92, 84, 243, 0.2)' }}
                   >
                     {loading ? <span style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : 'Recevoir le code'}
                   </button>
