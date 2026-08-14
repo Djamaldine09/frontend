@@ -204,7 +204,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div style={{ width: sidebarCollapsed ? 44 : 48, height: sidebarCollapsed ? 44 : 48, flexShrink: 0, position: 'relative' }}>
               <Image
                 src="/logo/logo-app1.png"
-                alt="Logo ExamenMG"
+                alt="Logo Exam Mada"
                 fill
                 style={{ 
                   objectFit: 'contain',
