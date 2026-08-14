@@ -2,9 +2,21 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search, Trophy, CheckCircle2, XCircle, Clock3, Share2, Sparkles, ArrowLeft, GraduationCap } from 'lucide-react';
+import {
+  Search,
+  Trophy,
+  CheckCircle2,
+  XCircle,
+  Clock3,
+  Share2,
+  Sparkles,
+  ArrowLeft,
+  GraduationCap,
+} from 'lucide-react';
+import Lottie from 'lottie-react';
 import { publicAPI, PublicResult } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import confettiAnimation from '@/public/Confetti.json';
 
 function getMention(moyenne: number) {
   if (moyenne >= 16) return { label: 'Très bien', color: '#7c3aed', emoji: '🏆' };
@@ -14,11 +26,39 @@ function getMention(moyenne: number) {
   return { label: '—', color: '#94a3b8', emoji: '' };
 }
 
-const STATUT_STYLES: Record<PublicResult['statut'], { label: string; bg: string; fg: string; Icon: any }> = {
-  ADMIS: { label: 'ADMIS', bg: '#dcfce7', fg: '#15803d', Icon: CheckCircle2 },
-  REFUSE: { label: 'NON ADMIS', bg: '#fee2e2', fg: '#b91c1c', Icon: XCircle },
-  REPECHAGE: { label: 'REPÊCHAGE', bg: '#fef3c7', fg: '#a16207', Icon: Clock3 },
-  EN_ATTENTE: { label: 'EN ATTENTE', bg: '#e5e7eb', fg: '#4b5563', Icon: Clock3 },
+const STATUT_STYLES: Record<
+  PublicResult['statut'],
+  {
+    label: string;
+    bg: string;
+    fg: string;
+    Icon: any;
+  }
+> = {
+  ADMIS: {
+    label: 'ADMIS',
+    bg: '#dcfce7',
+    fg: '#15803d',
+    Icon: CheckCircle2,
+  },
+  REFUSE: {
+    label: 'NON ADMIS',
+    bg: '#fee2e2',
+    fg: '#b91c1c',
+    Icon: XCircle,
+  },
+  REPECHAGE: {
+    label: 'REPÊCHAGE',
+    bg: '#fef3c7',
+    fg: '#a16207',
+    Icon: Clock3,
+  },
+  EN_ATTENTE: {
+    label: 'EN ATTENTE',
+    bg: '#e5e7eb',
+    fg: '#4b5563',
+    Icon: Clock3,
+  },
 };
 
 function PublicResultatContent() {
@@ -31,29 +71,60 @@ function PublicResultatContent() {
   const [result, setResult] = useState<PublicResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // 🎉 Contrôle de l'animation confetti
+  const [showConfetti, setShowConfetti] = useState(false);
+
   const search = async (m: string) => {
     const clean = m.trim().toUpperCase();
+
     if (!clean) {
       setError('Veuillez saisir un matricule');
       return;
     }
+
     setLoading(true);
     setError(null);
     setResult(null);
+
+    // Arrêter les anciens confettis lors d'une nouvelle recherche
+    setShowConfetti(false);
+
     try {
       const res = await publicAPI.getResultByMatricule(clean);
-      setResult(res.data);
+
+      const newResult = res.data;
+
+      setResult(newResult);
+
       const url = new URL(window.location.href);
       url.searchParams.set('matricule', clean);
       window.history.replaceState({}, '', url.toString());
+
+      // 🎉 CONFETTIS UNIQUEMENT POUR UN CANDIDAT ADMIS
+      if (newResult.statut === 'ADMIS') {
+        setShowConfetti(true);
+
+        // Arrêter l'animation après 5 secondes
+        setTimeout(() => {
+          setShowConfetti(false);
+        }, 5000);
+      }
     } catch (err: any) {
       const status = err.response?.status;
+
       if (status === 404) {
-        setError(`Aucun résultat trouvé pour le matricule « ${clean} ». Vérifiez l'orthographe.`);
+        setError(
+          `Aucun résultat trouvé pour le matricule « ${clean} ». Vérifiez l'orthographe.`
+        );
       } else if (status === 403) {
-        setError('Les résultats ne sont pas encore publiés officiellement.');
+        setError(
+          'Les résultats ne sont pas encore publiés officiellement.'
+        );
       } else {
-        setError(err.response?.data?.message || 'Service temporairement indisponible. Réessayez plus tard.');
+        setError(
+          err.response?.data?.message ||
+            'Service temporairement indisponible. Réessayez plus tard.'
+        );
       }
     } finally {
       setLoading(false);
@@ -62,16 +133,26 @@ function PublicResultatContent() {
 
   useEffect(() => {
     if (initialMatricule) search(initialMatricule);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleShare = async () => {
     if (!result) return;
+
     const url = window.location.href;
-    const text = `Résultat de ${result.nomComplet} — ${result.examen} : ${STATUT_STYLES[result.statut].label} (${result.moyenne.toFixed(2)}/20)`;
+
+    const text = `Résultat de ${result.nomComplet} — ${result.examen} : ${
+      STATUT_STYLES[result.statut].label
+    } (${result.moyenne.toFixed(2)}/20)`;
+
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Résultat examen', text, url });
+        await navigator.share({
+          title: 'Résultat examen',
+          text,
+          url,
+        });
       } catch {}
     } else {
       try {
@@ -95,9 +176,47 @@ function PublicResultatContent() {
     >
       <Toaster position="top-center" />
 
+      {/* ================================================== */}
+      {/* 🎉 ANIMATION LOTTIE CONFETTI */}
+      {/* ================================================== */}
+
+      {showConfetti && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 9999,
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+          }}
+        >
+          <Lottie
+            animationData={confettiAnimation}
+            loop={false}
+            autoplay
+            style={{
+              width: '100%',
+              height: '100%',
+            }}
+          />
+        </div>
+      )}
+
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
+
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 28,
+          }}
+        >
           <button
             onClick={() => router.push('/')}
             data-testid="back-home"
@@ -116,10 +235,22 @@ function PublicResultatContent() {
               fontWeight: 500,
             }}
           >
-            <ArrowLeft size={14} /> Accueil
+            <ArrowLeft size={14} />
+            Accueil
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#64748b', fontWeight: 500 }}>
-            <GraduationCap size={14} /> Résultats officiels
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 12,
+              color: '#64748b',
+              fontWeight: 500,
+            }}
+          >
+            <GraduationCap size={14} />
+            Résultats officiels
           </div>
         </div>
 
@@ -139,8 +270,10 @@ function PublicResultatContent() {
               marginBottom: 18,
             }}
           >
-            <Sparkles size={14} /> Consultation publique
+            <Sparkles size={14} />
+            Consultation publique
           </div>
+
           <h1
             style={{
               fontSize: 'clamp(28px, 5vw, 44px)',
@@ -153,9 +286,19 @@ function PublicResultatContent() {
           >
             Résultats des examens nationaux
           </h1>
-          <p style={{ marginTop: 12, color: '#475569', fontSize: 15, lineHeight: 1.6 }}>
-            Saisissez le matricule du candidat pour consulter son résultat officiel.
-            <br />Aucune connexion requise — partagez librement !
+
+          <p
+            style={{
+              marginTop: 12,
+              color: '#475569',
+              fontSize: 15,
+              lineHeight: 1.6,
+            }}
+          >
+            Saisissez le matricule du candidat pour consulter son résultat
+            officiel.
+            <br />
+            Aucune connexion requise — partagez librement !
           </p>
         </div>
 
@@ -176,8 +319,23 @@ function PublicResultatContent() {
             marginBottom: 22,
           }}
         >
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={18} style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <div
+            style={{
+              position: 'relative',
+              flex: 1,
+            }}
+          >
+            <Search
+              size={18}
+              style={{
+                position: 'absolute',
+                left: 18,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#94a3b8',
+              }}
+            />
+
             <input
               data-testid="matricule-input"
               value={matricule}
@@ -196,6 +354,7 @@ function PublicResultatContent() {
               }}
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -229,6 +388,7 @@ function PublicResultatContent() {
             ) : (
               <Search size={15} />
             )}
+
             {loading ? 'Recherche…' : 'Rechercher'}
           </button>
         </form>
@@ -268,29 +428,63 @@ function PublicResultatContent() {
             {/* Banner */}
             <div
               style={{
-                background: result.statut === 'ADMIS'
-                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                  : result.statut === 'REPECHAGE'
-                  ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-                  : result.statut === 'REFUSE'
-                  ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)'
-                  : 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                background:
+                  result.statut === 'ADMIS'
+                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                    : result.statut === 'REPECHAGE'
+                    ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                    : result.statut === 'REFUSE'
+                    ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)'
+                    : 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
                 color: '#fff',
                 padding: '32px 28px',
                 position: 'relative',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 16,
+                  flexWrap: 'wrap',
+                }}
+              >
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, opacity: 0.85, textTransform: 'uppercase' }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: 1.2,
+                      opacity: 0.85,
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     Matricule {result.matricule}
                   </div>
-                  <div style={{ fontSize: 26, fontWeight: 800, marginTop: 6 }}>{result.nomComplet}</div>
-                  <div style={{ fontSize: 14, opacity: 0.85, marginTop: 4 }}>
+
+                  <div
+                    style={{
+                      fontSize: 26,
+                      fontWeight: 800,
+                      marginTop: 6,
+                    }}
+                  >
+                    {result.nomComplet}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 14,
+                      opacity: 0.85,
+                      marginTop: 4,
+                    }}
+                  >
                     {result.examen}
                     {result.centre && <> · {result.centre}</>}
                   </div>
                 </div>
+
                 <div
                   style={{
                     background: 'rgba(255,255,255,0.18)',
@@ -304,27 +498,77 @@ function PublicResultatContent() {
                     gap: 6,
                   }}
                 >
-                  {(() => { const I = STATUT_STYLES[result.statut].Icon; return <I size={15} />; })()}
+                  {(() => {
+                    const I = STATUT_STYLES[result.statut].Icon;
+                    return <I size={15} />;
+                  })()}
+
                   {STATUT_STYLES[result.statut].label}
                 </div>
               </div>
             </div>
 
             {/* Score */}
-            <div style={{ padding: '32px 28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 18 }}>
+            <div
+              style={{
+                padding: '32px 28px',
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: 18,
+              }}
+            >
               <div>
-                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, letterSpacing: 0.8 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    letterSpacing: 0.8,
+                  }}
+                >
                   Moyenne générale
                 </div>
-                <div style={{ fontSize: 44, fontWeight: 800, color: '#0f172a', lineHeight: 1, marginTop: 6, fontFamily: 'monospace' }}>
+
+                <div
+                  style={{
+                    fontSize: 44,
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    lineHeight: 1,
+                    marginTop: 6,
+                    fontFamily: 'monospace',
+                  }}
+                >
                   {result.moyenne.toFixed(2)}
-                  <span style={{ fontSize: 18, color: '#94a3b8', fontWeight: 500 }}> /20</span>
+
+                  <span
+                    style={{
+                      fontSize: 18,
+                      color: '#94a3b8',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {' '}
+                    /20
+                  </span>
                 </div>
               </div>
+
               <div>
-                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, letterSpacing: 0.8 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    letterSpacing: 0.8,
+                  }}
+                >
                   Mention
                 </div>
+
                 <div
                   style={{
                     display: 'inline-flex',
@@ -339,8 +583,12 @@ function PublicResultatContent() {
                     fontSize: 16,
                   }}
                 >
-                  <span>{getMention(result.moyenne).emoji}</span>
-                  {result.mention || getMention(result.moyenne).label}
+                  <span>
+                    {getMention(result.moyenne).emoji}
+                  </span>
+
+                  {result.mention ||
+                    getMention(result.moyenne).label}
                 </div>
               </div>
             </div>
@@ -348,30 +596,72 @@ function PublicResultatContent() {
             {/* Notes par matière */}
             {result.notes && result.notes.length > 0 && (
               <div style={{ padding: '0 28px 24px' }}>
-                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', fontWeight: 600, letterSpacing: 0.8, marginBottom: 10 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    letterSpacing: 0.8,
+                    marginBottom: 10,
+                  }}
+                >
                   Détail par matière
                 </div>
-                <div style={{ border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
+
+                <div
+                  style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 14,
+                    overflow: 'hidden',
+                  }}
+                >
                   {result.notes.map((n, i) => (
                     <div
                       key={i}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr auto auto',
+                        gridTemplateColumns:
+                          '1fr auto auto',
                         gap: 14,
                         alignItems: 'center',
                         padding: '12px 16px',
-                        borderBottom: i < result.notes!.length - 1 ? '1px solid #f1f5f9' : 'none',
-                        background: i % 2 === 0 ? '#fafbfc' : '#fff',
+                        borderBottom:
+                          i < result.notes!.length - 1
+                            ? '1px solid #f1f5f9'
+                            : 'none',
+                        background:
+                          i % 2 === 0
+                            ? '#fafbfc'
+                            : '#fff',
                       }}
                     >
-                      <div style={{ fontWeight: 500, color: '#0f172a' }}>{n.matiere}</div>
-                      <div style={{ fontSize: 12, color: '#64748b' }}>Coef. {n.coefficient}</div>
+                      <div
+                        style={{
+                          fontWeight: 500,
+                          color: '#0f172a',
+                        }}
+                      >
+                        {n.matiere}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        Coef. {n.coefficient}
+                      </div>
+
                       <div
                         style={{
                           fontFamily: 'monospace',
                           fontWeight: 700,
-                          color: n.valeur >= 10 ? '#15803d' : '#b91c1c',
+                          color:
+                            n.valeur >= 10
+                              ? '#15803d'
+                              : '#b91c1c',
                           minWidth: 56,
                           textAlign: 'right',
                         }}
@@ -384,7 +674,7 @@ function PublicResultatContent() {
               </div>
             )}
 
-            {/* Footer */}
+{/* Footer */}
             <div
               style={{
                 padding: '18px 28px',

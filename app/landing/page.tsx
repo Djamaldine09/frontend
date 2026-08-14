@@ -1,36 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
-import Link from 'next/link';
-import { ArrowRight, BarChart3, Bell, CheckCircle2, FileCheck2, LockKeyhole, ShieldCheck } from 'lucide-react';
-import '../landing.css';
-
-const stats = [
-  { value: '100%', label: 'suivi numerique' },
-  { value: '24/7', label: 'portail disponible' },
-  { value: '5 roles', label: 'acces securises' },
-];
-
-const features = [
-  {
-    icon: FileCheck2,
-    title: 'Dossiers candidats',
-    text: 'Inscription, pieces justificatives, paiement et convocation dans un seul espace.',
-  },
-  {
-    icon: Bell,
-    title: 'Notifications',
-    text: 'Les candidats restent informes des convocations, paiements, corrections et resultats.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Pilotage national',
-    text: 'Tableaux de bord pour suivre les centres, les presences et la publication des resultats.',
-  },
-];
-
-export default function LandingPage() {
-=======
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -40,12 +9,92 @@ import {
   CheckCircle, TrendingUp, Clock, Award, ChevronRight
 } from 'lucide-react';
 import Iridescence from '../../components/Iridescence';
-import { MorphText } from "@/components/ui/morph-text";
 import ImageSlider3D from "@/components/lightswind/3d-image-slider";
 import { MagneticButton } from "@/components/lightswind/magnetic-button";
 import { RadialGlowButton } from "@/components/ui/radial-glow-button"
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
+
+// Machine à écrire : tape un mot, pause, l'efface, passe au mot suivant — en boucle infinie.
+function TypewriterText({
+  words,
+  fontSize = 'clamp(2rem, 4vw, 4rem)',
+  color = '#0C6478',
+}: {
+  words: string[];
+  fontSize?: string;
+  color?: string;
+}) {
+  const [text, setText] = useState('');
+  const cursorRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    let wordIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const TYPING_SPEED = 90;
+    const DELETING_SPEED = 45;
+    const PAUSE_AFTER_WORD = 1400;
+    const PAUSE_BEFORE_NEXT = 400;
+
+    const tick = () => {
+      const currentWord = words[wordIndex];
+
+      if (!isDeleting) {
+        charIndex += 1;
+        setText(currentWord.slice(0, charIndex));
+        if (charIndex === currentWord.length) {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, PAUSE_AFTER_WORD);
+          return;
+        }
+        timeoutId = setTimeout(tick, TYPING_SPEED);
+      } else {
+        charIndex -= 1;
+        setText(currentWord.slice(0, charIndex));
+        if (charIndex === 0) {
+          isDeleting = false;
+          wordIndex = (wordIndex + 1) % words.length;
+          timeoutId = setTimeout(tick, PAUSE_BEFORE_NEXT);
+          return;
+        }
+        timeoutId = setTimeout(tick, DELETING_SPEED);
+      }
+    };
+
+    timeoutId = setTimeout(tick, PAUSE_BEFORE_NEXT);
+    return () => clearTimeout(timeoutId);
+  }, [words]);
+
+  // Curseur clignotant (GSAP)
+  useEffect(() => {
+    if (!cursorRef.current) return;
+    const tween = gsap.to(cursorRef.current, {
+      opacity: 0,
+      duration: 0.5,
+      repeat: -1,
+      yoyo: true,
+      ease: 'power1.inOut',
+    });
+    return () => {
+      tween.kill();
+    };
+  }, []);
+
+  return (
+    <span className="hero-typewriter" style={{ display: 'inline-block', marginLeft: '0.35em', fontSize, fontWeight: 900, color, whiteSpace: 'nowrap' }}>
+      {text}
+      <span
+        ref={cursorRef}
+        style={{ display: 'inline-block', width: '3px', marginLeft: '3px', color, transform: 'translateY(2px)' }}
+      >
+        |
+      </span>
+    </span>
+  );
+}
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,6 +103,7 @@ export default function LandingPage() {
   const featuresRef = useRef<HTMLDivElement>(null);
   const heroTitleSplitRef = useRef<SplitText | null>(null);
   const heroSubtitleSplitRef = useRef<SplitText | null>(null);
+  const cardCleanupsRef = useRef<Array<() => void>>([]);
 
   const [hoverLogin, setHoverLogin] = useState(false);
 
@@ -83,6 +133,15 @@ export default function LandingPage() {
         duration: 1.2,
         ease: 'expo.out',
         stagger: 0.03,
+        delay: 0.2,
+      });
+
+      // Le TypewriterText (mot tapé automatiquement) apparaît en même temps que le titre
+      gsap.from('.hero-typewriter', {
+        opacity: 0,
+        y: 30,
+        duration: 1,
+        ease: 'expo.out',
         delay: 0.2,
       });
 
@@ -116,77 +175,292 @@ export default function LandingPage() {
         .to('.hero-title-line', { y: -50, ease: 'none' }, 0)
         .to('.hero-subtitle', { y: -20, ease: 'none' }, 0);
 
-      // Stats counter animation
+      // 3) Entrée du widget "Tableau de bord" : glisse de droite à gauche
+      gsap.from('.hero-dashboard-wrapper', {
+        x: 150,
+        opacity: 0,
+        duration: 1.3,
+        ease: 'power3.out',
+        delay: 0.4,
+      });
+
+      // 4) Compteurs animés : tous les chiffres (stats + widget dashboard)
+      //    comptent progressivement jusqu'à leur valeur finale au scroll.
+      const counterEls = gsap.utils.toArray<HTMLElement>('.counter-number');
+
+      counterEls.forEach((el) => {
+        const target = parseFloat(el.dataset.target || '0');
+        const suffix = el.dataset.suffix || '';
+        const useComma = el.dataset.comma === 'true';
+        const counterProxy = { val: 0 };
+
+        gsap.to(counterProxy, {
+          val: target,
+          duration: 2,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 85%',
+          },
+          onUpdate: () => {
+            const rounded = Math.round(counterProxy.val);
+            el.textContent = (useComma ? rounded.toLocaleString('en-US') : String(rounded)) + suffix;
+          },
+        });
+      });
+
+      // Anneau de progression SVG (taux de réussite) : se remplit au scroll
+      const donutRing = document.querySelector<SVGCircleElement>('.donut-ring');
+      if (donutRing) {
+        const circumference = 2 * Math.PI * 50;
+        const target = parseFloat(donutRing.dataset.target || '78');
+        gsap.to(donutRing, {
+          strokeDashoffset: circumference * (1 - target / 100),
+          duration: 1.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.hero-dashboard-wrapper',
+            start: 'top 85%',
+          },
+        });
+      }
+
+      // Titre CTA "Prêt à Transformer..." : remplissage blanc du bas vers le haut,
+      // suivant directement la position du scroll (scrub, pas un déclenchement unique)
+      gsap.to('.cta-title-fill', {
+        clipPath: 'inset(0% 0 0 0)',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.cta-title-wrapper',
+          start: 'top 85%',
+          end: 'top 25%',
+          scrub: true,
+        },
+      });
+
+      // Parallax des images gauche/droite dans la section CTA,
+      // identique à #c-left-leaf / #c-right-leaf dans Cocktails.jsx du projet gsap_cocktails.
+      const ctaParallaxTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#contact',
+          start: 'top 30%',
+          end: 'bottom 80%',
+          scrub: true,
+        },
+      });
+
+      ctaParallaxTimeline
+        .from('#cta-left-leaf', { x: -100, y: 100 })
+        .from('#cta-right-leaf', { x: 100, y: 100 });
+
+      // Stats counter animation (reveal + léger effet d'échelle, comme les grilles d'images de About.jsx)
       gsap.from('.stat-card', {
         scrollTrigger: {
           trigger: statsRef.current,
           start: 'top 80%',
         },
         opacity: 0,
-        y: 30,
+        y: 40,
+        scale: 0.9,
         stagger: 0.1,
-        duration: 0.8,
+        duration: 0.9,
         ease: 'power2.out',
       });
 
-      // Features animation
+      // Header de la section Fonctionnalités : sort de bas en haut, en cascade
+      gsap.from('.features-header-item', {
+        scrollTrigger: {
+          trigger: featuresRef.current,
+          start: 'top bottom',
+        },
+        opacity: 0,
+        y: 60,
+        duration: 1,
+        stagger: 0.15,
+        ease: 'power3.out',
+      });
+
+      // Features animation (reveal + échelle)
       gsap.from('.feature-item', {
         scrollTrigger: {
           trigger: featuresRef.current,
-          start: 'top 80%',
+          start: 'top bottom',
         },
         opacity: 0,
-        y: 40,
+        y: 50,
+        scale: 0.92,
         stagger: 0.15,
-        duration: 0.8,
+        duration: 0.9,
         ease: 'power2.out',
+      });
+
+      // Effet de survol "lift" sur les cartes (feature-item et stat-card),
+      // comme un hover premium : la carte se soulève et grossit légèrement.
+      // Pour .feature-item : bordure qui s'illumine, glow radial, flèche "En savoir plus" qui glisse.
+      const hoverCards = gsap.utils.toArray<HTMLElement>('.feature-item, .stat-card');
+
+      hoverCards.forEach((card) => {
+        const isFeature = card.classList.contains('feature-item');
+        card.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
+
+        const glow = card.querySelector<HTMLElement>('.feature-item-glow');
+        const arrow = card.querySelector<HTMLElement>('.feature-item-arrow');
+
+        const enter = () => {
+          gsap.to(card, {
+            y: isFeature ? -8 : -10,
+            scale: isFeature ? 1.015 : 1.03,
+            duration: 0.4,
+            ease: 'power2.out',
+          });
+          if (isFeature) {
+            card.style.boxShadow = '0 20px 40px -15px rgba(12, 100, 120, 0.18)';
+            card.style.borderColor = 'rgba(12, 100, 120, 0.35)';
+            if (glow) glow.style.opacity = '1';
+            if (arrow) {
+              arrow.style.opacity = '1';
+              arrow.style.transform = 'translateX(0)';
+            }
+          } else {
+            card.style.boxShadow = '0 25px 45px -12px rgba(12, 100, 120, 0.25)';
+          }
+        };
+        const leave = () => {
+          gsap.to(card, {
+            y: 0,
+            scale: 1,
+            duration: 0.4,
+            ease: 'power2.out',
+          });
+          if (isFeature) {
+            card.style.boxShadow = '0 10px 30px -12px rgba(0, 0, 0, 0.06)';
+            card.style.borderColor = '#e2e8f0';
+            if (glow) glow.style.opacity = '0';
+            if (arrow) {
+              arrow.style.opacity = '0';
+              arrow.style.transform = 'translateX(-8px)';
+            }
+          } else {
+            card.style.boxShadow = '0 10px 40px -10px rgba(0, 0, 0, 0.05)';
+          }
+        };
+        card.addEventListener('mouseenter', enter);
+        card.addEventListener('mouseleave', leave);
+        cardCleanupsRef.current.push(() => {
+          card.removeEventListener('mouseenter', enter);
+          card.removeEventListener('mouseleave', leave);
+        });
       });
 
     }, containerRef);
 
     return () => {
       ctx.revert();
+      cardCleanupsRef.current.forEach((cleanup) => cleanup());
+      cardCleanupsRef.current = [];
       heroTitleSplitRef.current?.revert();
       heroSubtitleSplitRef.current?.revert();
     };
   }, []);
 
->>>>>>> 9185738ff998183c2b63858404407b0d2bdef89a
   return (
-    <main className="landing-page">
-      <nav className="landing-nav" aria-label="Navigation principale">
-        <Link href="/landing" className="landing-brand">
-          <span>ExamGest MG</span>
-        </Link>
+    <div ref={containerRef} style={{
+      minHeight: '100vh',
+      overflowX: 'hidden',
+      color: '#0f172a',
+      fontFamily: '"Roboto", sans-serif',
+      position: 'relative',
+      backgroundColor: 'transparent'
+    }}>
+      
+      {/* Wrapper pour l'effet Iridescence en arrière-plan complet */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        
+      }}>
+        <Iridescence
+          speed={1}
+          amplitude={0.1}
+          mouseReact
+        />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
-        <div className="landing-links">
-          <a href="#plateforme">Plateforme</a>
-          <a href="#securite">Securite</a>
-          <a href="#roles">Roles</a>
-        </div>
-
-        <div className="landing-actions">
-          <Link href="/login" className="landing-link-button">Connexion</Link>
-          <Link href="/register" className="landing-primary-button">
-            Commencer
-            <ArrowRight size={16} />
-          </Link>
+      {/* Navigation */}
+      {/* Navigation */}
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.35)', /* Plus transparent (35%) pour laisser passer l'animation */
+        backdropFilter: 'blur(24px)', /* Flou beaucoup plus fort pour adoucir les mouvements de l'arrière-plan */
+        WebkitBackdropFilter: 'blur(24px)',
+        zIndex: 50,
+        borderBottom: '1px solid rgba(255, 255, 255, 0.6)', /* Bordure blanche un peu plus nette */
+        boxShadow: '0 8px 32px 0 rgba(12, 100, 120, 0.12)' /* Ombre délicate teintée avec ton bleu #0C6478 */
+      }}>
+        <div style={{
+          maxWidth: '80rem',
+          margin: '0 auto',
+          padding: '0.01rem 0.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+            <img 
+              src="/logo/logo-app.png" 
+              alt="Exam Mada Logo" 
+              style={{ width: 90, height: 90, objectFit: 'contain' }}
+            />
+            
+          </div>
+          
+          {/* Liens de Navigation */}
+          <div style={{ display: 'none', alignItems: 'center', gap: '2.5rem' }}>
+            <a href="#features" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Fonctionnalités</a>
+            <a href="#stats" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Statistiques</a>
+            <a href="#contact" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Contact</a>
+          </div>
+          
+          {/* Boutons d'Action */}
+          {/* Boutons d'Action Animés */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <a 
+              href="/login" 
+              onMouseEnter={() => setHoverLogin(true)}
+              onMouseLeave={() => setHoverLogin(false)}
+              style={{
+                color: hoverLogin ? '#8BCC62' : '#0C6478', /* Devient un vert un peu plus lisible au survol */
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                transition: 'all 0.3s ease',
+                transform: hoverLogin ? 'translateY(-2px)' : 'translateY(0)', /* Se soulève légèrement */
+                opacity: hoverLogin ? 0.8 : 1
+              }}
+            >
+              Connexion
+            </a>
+            <a href="/register" style={{ display: 'inline-block' }}>
+              <MagneticButton 
+                variant="dark" 
+                /* On enlève size="md" au cas où il imposerait une largeur fixe */
+                className="!w-auto !px-8 !py-2.5 !rounded-full whitespace-nowrap cursor-pointer"
+              >
+                S&lsquo;inscrire
+              </MagneticButton>
+            </a>
+          </div>
         </div>
       </nav>
 
-<<<<<<< HEAD
-      <section className="landing-hero">
-        <div className="landing-container hero-grid">
-          <div className="hero-copy">
-            <div className="hero-kicker">
-              <ShieldCheck size={17} />
-              Gestion nationale des examens
-            </div>
-            <h1>Une plateforme moderne pour organiser les examens nationaux.</h1>
-            <p className="hero-lead">
-              Centralisez les inscriptions, les affectations, les presences, les notes anonymisees et les resultats
-              avec un parcours clair pour les candidats et les equipes administratives.
-=======
       {/* Hero Section */}
       <section ref={heroRef} style={{ paddingTop: '10rem', paddingBottom: '6rem', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
@@ -201,10 +475,8 @@ export default function LandingPage() {
                 letterSpacing: '-0.03em'
               }}>
                 <span className="hero-title-line">Gérez vos</span>
-                <MorphText
+                <TypewriterText
                     words={["EXAMEN", "RESULTAT", "DASH"]}
-                    interval={2500}
-                    subtext="Move fast. Break things."
                     fontSize="clamp(2rem, 4vw, 4rem)"
                 />
                 <br />
@@ -249,7 +521,7 @@ export default function LandingPage() {
 
             
             {/* Widget Tableau de bord avec styles ajustés */}
-            <div style={{ position: 'relative' }}>
+            <div className="hero-dashboard-wrapper" style={{ position: 'relative' }}>
               <div className="hero-glow" style={{
                 position: 'absolute',
                 inset: '-20px',
@@ -270,37 +542,75 @@ export default function LandingPage() {
                 border: '1px solid rgba(255, 255, 255, 0.5)',
                 zIndex: 1
               }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                  {/* Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tableau de bord</h3>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.3rem 0.8rem', borderRadius: '999px' }}>Aujourd&lsquo;hui</span>
                   </div>
+
+                  {/* KPI avec tendances réelles */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
-                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
-                      <Users style={{ width: 28, height: 28, color: '#0C6478', marginBottom: '0.75rem' }} />
-                      <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}>1,234</p>
-                      <p style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>Candidats</p>
+                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        <Users style={{ width: 26, height: 26, color: '#0C6478' }} />
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.7rem', fontWeight: 700, color: '#16a34a', backgroundColor: 'rgba(34, 197, 94, 0.12)', padding: '0.15rem 0.45rem', borderRadius: '999px' }}>
+                          <TrendingUp style={{ width: 12, height: 12 }} /> +12%
+                        </span>
+                      </div>
+                      <p
+                        className="counter-number"
+                        data-target="1234"
+                        data-comma="true"
+                        style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                      >0</p>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748b' }}>Candidats</p>
                     </div>
-                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
-                      <FileText style={{ width: 28, height: 28, color: '#0C6478', marginBottom: '0.75rem' }} />
-                      <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}>89</p>
-                      <p style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>Examens</p>
+                    <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        <FileText style={{ width: 26, height: 26, color: '#0C6478' }} />
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.7rem', fontWeight: 700, color: '#16a34a', backgroundColor: 'rgba(34, 197, 94, 0.12)', padding: '0.15rem 0.45rem', borderRadius: '999px' }}>
+                          <TrendingUp style={{ width: 12, height: 12 }} /> +5%
+                        </span>
+                      </div>
+                      <p
+                        className="counter-number"
+                        data-target="89"
+                        style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em' }}
+                      >0</p>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748b' }}>Examens</p>
                     </div>
                   </div>
-                  <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.25rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>Progression</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0C6478' }}>78%</span>
+
+                  {/* Taux de réussite : anneau de progression SVG */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                    <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>
+                      <svg viewBox="0 0 120 120" style={{ width: 84, height: 84, transform: 'rotate(-90deg)' }}>
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                        <circle
+                          className="donut-ring"
+                          cx="60" cy="60" r="50" fill="none"
+                          stroke="#0C6478" strokeWidth="10" strokeLinecap="round"
+                          strokeDasharray="314.159"
+                          strokeDashoffset="314.159"
+                          data-target="78"
+                        />
+                      </svg>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span
+                          className="counter-number"
+                          data-target="78"
+                          data-suffix="%"
+                          style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}
+                        >0%</span>
+                      </div>
                     </div>
-                    <div style={{ width: '100%', backgroundColor: 'rgba(226, 232, 240, 0.5)', borderRadius: '9999px', height: '0.5rem' }}>
-                      <div style={{
-                        background: 'linear-gradient(90deg, #0C6478, #BDEE98)',
-                        height: '100%',
-                        borderRadius: '9999px',
-                        width: '78%'
-                      }}></div>
+                    <div>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.25rem' }}>Taux de Réussite</p>
+                      <p style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>+4% par rapport au trimestre dernier</p>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -319,10 +629,10 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2rem' }}>
-            {[{ icon: Users, val: '50K+', label: 'Candidats Inscrits' },
-              { icon: FileText, val: '500+', label: 'Examens Organisés' },
-              { icon: Award, val: '98%', label: 'Taux de Réussite' },
-              { icon: TrendingUp, val: '24/7', label: 'Support Disponible' }
+            {[{ icon: Users, target: 50, suffix: 'K+', label: 'Candidats Inscrits' },
+              { icon: FileText, target: 500, suffix: '+', label: 'Examens Organisés' },
+              { icon: Award, target: 98, suffix: '%', label: 'Taux de Réussite' },
+              { icon: TrendingUp, target: 24, suffix: '/7', label: 'Support Disponible' }
             ].map((stat, i) => (
               <div key={i} className="stat-card" style={{ 
                 textAlign: 'center', 
@@ -343,7 +653,12 @@ export default function LandingPage() {
                 }}>
                   <stat.icon style={{ width: 32, height: 32, color: '#0C6478' }} />
                 </div>
-                <p style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.03em' }}>{stat.val}</p>
+                <p
+                  className="counter-number"
+                  data-target={stat.target}
+                  data-suffix={stat.suffix}
+                  style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.25rem', letterSpacing: '-0.03em' }}
+                >0{stat.suffix}</p>
                 <p style={{ color: '#475569', fontWeight: 500 }}>{stat.label}</p>
               </div>
             ))}
@@ -360,7 +675,22 @@ export default function LandingPage() {
       <section ref={featuresRef} id="features" style={{ padding: '8rem 1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
-            <h2 style={{
+            <div className="features-header-item" style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(12, 100, 120, 0.08)',
+              color: '#0C6478',
+              padding: '0.45rem 1.1rem',
+              borderRadius: '999px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              marginBottom: '1.5rem'
+            }}>
+              Fonctionnalités Clés
+            </div>
+            <h2 className="features-header-item" style={{
               fontSize: '2.75rem',
               fontWeight: 900,
               color: '#0f172a',
@@ -377,7 +707,7 @@ export default function LandingPage() {
                 {' '}Puissantes
               </span>
             </h2>
-            <p style={{
+            <p className="features-header-item" style={{
               fontSize: '1.15rem',
               color: '#475569',
               maxWidth: '36rem',
@@ -385,109 +715,271 @@ export default function LandingPage() {
               lineHeight: 1.6
             }}>
               Tout ce dont vous avez besoin pour gérer efficacement vos examens nationaux
->>>>>>> 9185738ff998183c2b63858404407b0d2bdef89a
             </p>
-            <div className="hero-buttons">
-              <Link href="/register" className="hero-primary">
-                Creer un compte
-                <ArrowRight size={18} />
-              </Link>
-              <Link href="/login" className="hero-secondary">Se connecter</Link>
-            </div>
-            <div className="hero-proof">
-              <CheckCircle2 size={16} />
-              Anonymat, controle des roles et notifications integrees
-            </div>
           </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.75rem' }}>
+            {[
+              { icon: Users, title: 'Gestion des Candidats', desc: 'Inscription, suivi et gestion complète des candidats avec un système de profil détaillé.' },
+              { icon: FileText, title: 'Organisation d\'Examens', desc: 'Créez et gérez facilement vos examens avec planning automatique et allocation des salles.' },
+              { icon: Shield, title: 'Sécurité Avancée', desc: 'Protection des données et authentification sécurisée pour tous les utilisateurs.' },
+              { icon: Clock, title: 'Suivi en Temps Réel', desc: 'Tableau de bord interactif avec statistiques et mises à jour en temps réel.' },
+              { icon: Award, title: 'Rapports Détaillés', desc: 'Génération automatique de rapports et analyses pour une meilleure prise de décision.' },
+              { icon: TrendingUp, title: 'Analytics Avancés', desc: 'Outils d\'analyse et de visualisation pour suivre les performances et tendances.' }
+            ].map((feat, i) => (
+              <div key={i} className="feature-item" style={{
+                position: 'relative',
+                backgroundColor: '#ffffff',
+                padding: '2.25rem',
+                borderRadius: '1.25rem',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 10px 30px -12px rgba(0, 0, 0, 0.06)',
+                overflow: 'hidden'
+              }}>
+                <div className="feature-item-glow" style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'radial-gradient(circle at 20% 0%, rgba(12, 100, 120, 0.10), transparent 60%)',
+                  opacity: 0,
+                  transition: 'opacity 0.4s ease',
+                  pointerEvents: 'none'
+                }}></div>
 
-          <div className="hero-visual" aria-label="Apercu plateforme">
-            <div className="visual-topbar">
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="visual-header">
-              <div>
-                <p>Session nationale</p>
-                <strong>Baccalaureat 2026</strong>
+                <div style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '1.75rem'
+                }}>
+                  <div style={{
+                    width: 52,
+                    height: 52,
+                    backgroundColor: 'rgba(12, 100, 120, 0.08)',
+                    borderRadius: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <feat.icon style={{ width: 24, height: 24, color: '#0C6478' }} />
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: '#cbd5e1',
+                    letterSpacing: '0.05em'
+                  }}>
+                    0{i + 1}
+                  </span>
+                </div>
+
+                <h3 style={{ position: 'relative', zIndex: 1, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem' }}>
+                  {feat.title}
+                </h3>
+                <p style={{ position: 'relative', zIndex: 1, color: '#64748b', lineHeight: 1.7, fontSize: '0.92rem', marginBottom: '1.5rem' }}>
+                  {feat.desc}
+                </p>
+
+                <div className="feature-item-arrow" style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: '#0C6478',
+                  opacity: 0,
+                  transform: 'translateX(-8px)',
+                  transition: 'opacity 0.3s ease, transform 0.3s ease'
+                }}>
+                  En savoir plus
+                  <ArrowRight style={{ width: 16, height: 16 }} />
+                </div>
               </div>
-              <span className="status-pill">Actif</span>
-            </div>
-            <div className="visual-map">
-              <span className="orbit-dot" style={{ top: '26%', left: '32%' }} />
-              <span className="orbit-dot" style={{ top: '58%', left: '58%' }} />
-              <span className="orbit-dot" style={{ top: '42%', left: '72%' }} />
-            </div>
-            <div className="visual-grid">
-              <div>
-                <strong>1 284</strong>
-                <span>Convocations</span>
-              </div>
-              <div>
-                <strong>96%</strong>
-                <span>Presences</span>
-              </div>
-              <div>
-                <strong>72%</strong>
-                <span>Corrections</span>
-              </div>
-              <div>
-                <strong>5</strong>
-                <span>Roles</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="plateforme" className="landing-section workflow-section">
-        <div className="landing-container">
-          <div className="section-heading">
-            <span className="section-eyebrow">Plateforme</span>
-            <h2>Les actions importantes sont au meme endroit.</h2>
-            <p>Chaque role accede aux outils utiles sans melanger les responsabilites.</p>
+      {/* CTA Section */}
+      <section id="contact" style={{
+        padding: '6rem 1.5rem',
+        background: 'linear-gradient(135deg, #0C6478 0%, #1087a3 100%)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Images décoratives gauche/droite, comme #c-left-leaf / #c-right-leaf dans gsap_cocktails */}
+        <img
+          src="/images/cta-left-pencil.png"
+          alt="crayon"
+          id="cta-left-leaf"
+          style={{
+            position: 'absolute',
+            left: 'clamp(-3rem, -2vw, -1rem)',
+            bottom: 'clamp(-2rem, -1vw, 0px)',
+            width: 'clamp(110px, 14vw, 220px)',
+            zIndex: 0,
+            pointerEvents: 'none',
+            userSelect: 'none'
+          }}
+        />
+        <img
+          src="/images/cta-right-notebook.png"
+          alt="cahier"
+          id="cta-right-leaf"
+          style={{
+            position: 'absolute',
+            right: 'clamp(-2rem, -1.5vw, -0.5rem)',
+            bottom: 'clamp(-1rem, -0.5vw, 0px)',
+            width: 'clamp(120px, 15vw, 240px)',
+            zIndex: 0,
+            pointerEvents: 'none',
+            userSelect: 'none',
+            transform: 'rotate(-18deg)',
+            transformOrigin: 'bottom right'
+          }}
+        />
+        <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <div className="cta-title-wrapper" style={{ position: 'relative', marginBottom: '1.5rem' }}>
+            {/* Calque 1 : texte creux (contour blanc, sans remplissage) — visible dès le départ */}
+            <h2 style={{
+              fontFamily: "'Anton', sans-serif",
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.01em',
+              lineHeight: 1.15,
+              color: 'transparent',
+              WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.85)',
+              margin: 0
+            }}>
+              Prêt à Transformer
+              <br />
+              la Gestion de vos Examens?
+            </h2>
+            {/* Calque 2 : texte plein blanc, masqué au départ, révélé au scroll (wipe gauche → droite) */}
+            <h2 className="cta-title-fill" style={{
+              position: 'absolute',
+              inset: 0,
+              fontFamily: "'Anton', sans-serif",
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.01em',
+              lineHeight: 1.15,
+              color: '#ffffff',
+              margin: 0,
+              clipPath: 'inset(100% 0 0 0)'
+            }}>
+              Prêt à Transformer
+              <br />
+              la Gestion de vos Examens?
+            </h2>
+          </div>
+          <p style={{
+            fontSize: '1.15rem',
+            color: 'rgba(255, 255, 255, 0.85)',
+            marginBottom: '2.5rem',
+            maxWidth: '36rem',
+            margin: '0 auto 2.5rem',
+            lineHeight: 1.6
+          }}>
+            Rejoignez des centaines d&lsquo;établissements qui font confiance à ExamGest pour leurs examens nationaux.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', justifyContent: 'center' }}>
+            <a href="/login" style={{
+              padding: '1.1rem 2.5rem',
+              backgroundColor: '#ffffff',
+              color: '#0C6478',
+              textDecoration: 'none',
+              fontWeight: 700,
+              borderRadius: '1rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}>
+              <span>Commencer Gratuitement</span>
+              <ChevronRight style={{ width: 20, height: 20 }} />
+            </a>
+            <a href="#" style={{
+              padding: '1.1rem 2.5rem',
+              backgroundColor: 'transparent',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontWeight: 600,
+              borderRadius: '1rem',
+              border: '2px solid rgba(255, 255, 255, 0.3)'
+            }}>
+              Contacter l&lsquo;Équipe
+            </a>
           </div>
         </div>
-        <div className="landing-container workflow-grid">
-          {features.map((feature) => (
-            <article className="workflow-card" key={feature.title}>
-              <div className="workflow-icon">
-                <feature.icon size={24} />
+      </section>
+
+      {/* Footer */}
+      {/* Footer */}
+      <footer style={{
+        backgroundColor: 'rgba(15, 23, 42, 0.65)', /* Couleur sombre avec 65% d'opacité */
+        backdropFilter: 'blur(16px)', /* Effet de flou sur l'animation en arrière-plan */
+        WebkitBackdropFilter: 'blur(16px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)', /* Ligne subtile pour séparer le contenu */
+        color: '#ffffff',
+        padding: '5rem 1.5rem 3rem',
+        position: 'relative'
+      }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem', marginBottom: '4rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <img 
+                  src="/logo/logo-app.png" 
+                  alt="Exam Mada Logo" 
+                  style={{ width: 110, height: 110, objectFit: 'contain' }}
+                />
+                {/* <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>Exam Mada</span> */}
               </div>
-              <h3>{feature.title}</h3>
-              <p>{feature.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="securite" className="landing-section security-band">
-        <div className="landing-container security-grid">
-          <div className="security-card">
-            <div className="hero-kicker">
-              <LockKeyhole size={17} />
-              Flux securise
+              <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                Plateforme de gestion des examens nationaux de Madagascar
+              </p>
             </div>
-            <h2>Anonymat des copies et roles strictement separes.</h2>
-          </div>
-          <div className="security-points">
-            <div>Numero anonymat pour les corrections</div>
-            <div>Levee d'anonymat par administrateur</div>
-            <div>2FA et controle JWT pour les espaces sensibles</div>
-          </div>
-        </div>
-      </section>
-
-      <section id="roles" className="landing-section">
-        <div className="landing-container metric-strip">
-          {stats.map((item) => (
-            <div className="metric-item" key={item.label}>
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
+            <div>
+              <h4 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Produit</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <a href="#features" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Fonctionnalités</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Tarifs</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Documentation</a>
+              </div>
             </div>
-          ))}
+            <div>
+              <h4 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Support</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Centre d&lsquo;aide</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Contact</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>FAQ</a>
+              </div>
+            </div>
+            <div>
+              <h4 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Légal</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Confidentialité</a>
+                <a href="#" style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Conditions</a>
+              </div>
+            </div>
+          </div>
+          <div style={{ 
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)', 
+            paddingTop: '2rem', 
+            textAlign: 'center', 
+            color: 'rgba(255, 255, 255, 0.5)', 
+            fontSize: '0.85rem' 
+          }}>
+            <p>© 2026 Exam Mada. Tous droits réservés.</p>
+          </div>
         </div>
-      </section>
-    </main>
+      </footer>
+          </div>
+    </div>
   );
 }
