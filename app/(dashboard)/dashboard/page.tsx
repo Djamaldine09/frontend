@@ -24,6 +24,7 @@ import CandidateDashboard from './CandidateDashboard';
 import { adminAPI, type AdminDashboard } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatWeekdayDayMonth } from '@/lib/i18n/dates';
+import { AvatarGroup } from '@/components/animate-ui/components/animate/avatar-group';
 import {
   BarChart,
   Bar,
@@ -541,6 +542,43 @@ export default function DashboardPage() {
               </div>
             </Link>
           ))}
+        </div>
+      </section>
+
+      <section style={{ marginTop: 32 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--ink)', marginBottom: 14, letterSpacing: -0.4 }}>
+          Équipe Active
+        </h2>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>Utilisateurs en ligne</div>
+            <AvatarGroup>
+              {[{ initials: 'JD', name: 'Jean Dupont' },
+                { initials: 'MB', name: 'Marie Blanc' },
+                { initials: 'PR', name: 'Pierre Rouge' },
+                { initials: 'AV', name: 'Anne Vert' }].map((member) => (
+                <div
+                  key={member.initials}
+                  title={member.name}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--lime), var(--sky))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    border: '2px solid var(--bg-app)',
+                  }}
+                >
+                  {member.initials}
+                </div>
+              ))}
+            </AvatarGroup>
+          </div>
         </div>
       </section>
     </div>

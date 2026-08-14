@@ -245,6 +245,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
+              className="register-submit-btn"
               data-testid="register-submit"
               style={{
                 width: '100%',
@@ -281,6 +282,17 @@ export default function RegisterPage() {
       </div>
 
       <style jsx global>{`
+        .register-submit-btn:hover:not(:disabled) {
+          background-color: #4a42d9 !important;
+          box-shadow: 0 6px 18px rgba(92, 84, 243, 0.35) !important;
+          transform: translateY(-2px);
+          transition: all 0.3s ease;
+        }
+
+        .register-submit-btn {
+          transition: all 0.3s ease;
+        }
+
         @media (max-width: 768px) {
           .hidden-mobile-logic { display: none !important; }
         }
