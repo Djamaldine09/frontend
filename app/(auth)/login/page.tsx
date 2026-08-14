@@ -527,6 +527,7 @@ function LoginContent() {
                 <button
                   type="submit"
                   disabled={loading}
+                  className="login-submit-btn"
                   style={{ width: '100%', backgroundColor: '#5c54f3', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '35px', padding: '14px', fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(92, 84, 243, 0.2)' }}
                 >
                   {loading ? <span style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : twoFactorToken ? 'Valider le code 2FA' : 'Se connecter'}
@@ -745,6 +746,17 @@ function LoginContent() {
       </div>
 
       <style jsx global>{`
+        .login-submit-btn:hover:not(:disabled) {
+          background-color: #4a42d9 !important;
+          box-shadow: 0 6px 18px rgba(92, 84, 243, 0.35) !important;
+          transform: translateY(-2px);
+          transition: all 0.3s ease;
+        }
+
+        .login-submit-btn {
+          transition: all 0.3s ease;
+        }
+
         @media (max-width: 768px) {
           .hidden-mobile-logic { display: none !important; }
         }
