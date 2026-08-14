@@ -13,8 +13,10 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   LayoutGrid, FileText, BookOpen, ScrollText, CreditCard, Building2,
   Bell, Settings, LogOut, Search, Download, ArrowUpRight, Calendar,
-  Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, Moon, Sun, CheckCircle
+  Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, CheckCircle
 } from 'lucide-react';
+import Moon from '@/components/animate-ui/icons/moon';
+import Sun from '@/components/animate-ui/icons/sun';
 
 const navItems = [
   { href: '/dashboard',  labelKey: 'nav.dashboard', icon: LayoutGrid,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
@@ -482,7 +484,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               data-testid="topbar-theme"
               title={darkMode ? t('topbar.themeLight') : t('topbar.themeDark')}
             >
-              {darkMode ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
+              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
 
             <Link
