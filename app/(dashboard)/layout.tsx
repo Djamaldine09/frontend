@@ -15,8 +15,8 @@ import {
   Bell, Settings, LogOut, Search, Download, ArrowUpRight, Calendar,
   Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, CheckCircle
 } from 'lucide-react';
-import Moon from '@/components/animate-ui/icons/moon';
-import Sun from '@/components/animate-ui/icons/sun';
+import { Moon } from '@/components/animate-ui/icons/moon';
+import { Sun } from '@/components/animate-ui/icons/sun';
 
 const navItems = [
   { href: '/dashboard',  labelKey: 'nav.dashboard', icon: LayoutGrid,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
