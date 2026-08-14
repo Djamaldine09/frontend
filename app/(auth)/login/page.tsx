@@ -476,7 +476,7 @@ function LoginContent() {
                       value={form.email}
                       onChange={e => setForm({ ...form, email: e.target.value })}
                       required
-                      style={{ width: '100%', padding: '14px 14px 14px 46px', backgroundColor: '#f0f4f9', border: 'none', borderRadius: '12px', fontSize: '14px', color: '#111827', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '14px 14px 14px 46px', backgroundColor: '#f0f4f9', border: 'none', borderRadius: '35px', fontSize: '14px', color: '#111827', outline: 'none', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
@@ -495,7 +495,7 @@ function LoginContent() {
                       value={form.motDePasse}
                       onChange={e => setForm({ ...form, motDePasse: e.target.value })}
                       required
-                      style={{ width: '100%', padding: '14px 46px 14px 46px', backgroundColor: '#f0f4f9', border: 'none', borderRadius: '12px', fontSize: '14px', color: '#111827', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '14px 46px 14px 46px', backgroundColor: '#f0f4f9', border: 'none', borderRadius: '35px', fontSize: '14px', color: '#111827', outline: 'none', boxSizing: 'border-box' }}
                     />
                     <button
                       type="button"
