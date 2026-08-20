@@ -124,12 +124,15 @@ export default function LandingPage() {
   const heroTitleY = useTransform(heroScroll, [0, 1], [0, -70]);
   const heroSubtitleY = useTransform(heroScroll, [0, 1], [0, -30]);
 
-  // Parallaxe Section Fonctionnalités
+  // Parallaxe Section Fonctionnalités (Vitesse différente + Fondu d'opacité)
   const { scrollYProgress: featuresScroll } = useScroll({
     target: featuresRef,
     offset: ["start end", "end start"]
   });
-  const featuresTextY = useTransform(featuresScroll, [0, 1], [100, -100]); 
+  // Mouvement vertical accentué pour créer de la profondeur
+  const featuresTextY = useTransform(featuresScroll, [0, 1], [150, -150]); 
+  // Fades text in and out: 0% d'opacité au début, 100% au milieu, 0% à la fin
+  const featuresTextOpacity = useTransform(featuresScroll, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
   // Parallaxe Section Contact (CTA)
   const { scrollYProgress: ctaScroll } = useScroll({
@@ -269,10 +272,11 @@ export default function LandingPage() {
         opacity: 0, y: 40, scale: 0.9, stagger: 0.1, duration: 0.9, ease: 'power2.out',
       });
 
-      // Header de la section Fonctionnalités
+      // Header de la section Fonctionnalités (Gardé pour le léger pop initial si souhaité, 
+      // bien que Framer Motion s'occupe maintenant de l'opacité globale)
       gsap.from('.features-header-item', {
         scrollTrigger: { trigger: featuresRef.current, start: 'top bottom' },
-        opacity: 0, y: 60, duration: 1, stagger: 0.15, ease: 'power3.out',
+        y: 60, duration: 1, stagger: 0.15, ease: 'power3.out',
       });
 
       // Features animation
@@ -486,7 +490,7 @@ export default function LandingPage() {
               </div>
             </div>
             
-            {/* Widget Tableau de bord (correction hero-col retiré ici) */}
+            {/* Widget Tableau de bord */}
             <div className="hero-dashboard-wrapper" style={{ position: 'relative' }}>
               <motion.div className="hero-glow" style={{
                 y: heroGlowY, 
@@ -640,7 +644,13 @@ export default function LandingPage() {
       <section ref={featuresRef} id="features" style={{ padding: '8rem 1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           
-          <motion.div style={{ y: featuresTextY, textAlign: 'center', marginBottom: '5rem' }}>
+          {/* L'opacité et le déplacement (y) sont appliqués ici */}
+          <motion.div style={{ 
+            y: featuresTextY, 
+            opacity: featuresTextOpacity, 
+            textAlign: 'center', 
+            marginBottom: '5rem' 
+          }}>
             <div className="features-header-item" style={{
               display: 'inline-flex',
               alignItems: 'center',
