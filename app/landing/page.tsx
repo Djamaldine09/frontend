@@ -482,7 +482,7 @@ export default function LandingPage() {
             </div>
             
             {/* Widget Tableau de bord avec styles ajustés */}
-            <div className="hero-col hero-dashboard-wrapper" style={{ position: 'relative' }}>
+            <div className="hero-dashboard-wrapper" style={{ position: 'relative' }}>
               {/* Remplacement par motion.div pour l'effet Glow */}
               <motion.div className="hero-glow" style={{
                 y: heroGlowY, 
