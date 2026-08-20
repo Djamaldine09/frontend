@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
+// 1. Importation de Framer Motion
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   GraduationCap, Users, FileText, Shield, ArrowRight, 
   CheckCircle, TrendingUp, Clock, Award, ChevronRight
@@ -101,16 +103,39 @@ export default function LandingPage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLElement>(null);
   const heroTitleSplitRef = useRef<SplitText | null>(null);
   const heroSubtitleSplitRef = useRef<SplitText | null>(null);
   const cardCleanupsRef = useRef<Array<() => void>>([]);
 
   const [hoverLogin, setHoverLogin] = useState(false);
 
+  // --- HOOKS FRAMER MOTION POUR LE PARALLAXE ---
+  
+  // Parallaxe Section Hero
+  const { scrollYProgress: heroScroll } = useScroll({
+    target: heroRef,
+    offset: ["start start", "100% start"]
+  });
+  
+  // Mapping du défilement vers des valeurs Y (pixels)
+  const heroGlowY = useTransform(heroScroll, [0, 1], [0, 180]);
+  const heroDashboardY = useTransform(heroScroll, [0, 1], [0, -70]);
+  const heroTitleY = useTransform(heroScroll, [0, 1], [0, -70]); // Titre qui monte plus vite
+  const heroSubtitleY = useTransform(heroScroll, [0, 1], [0, -30]); // Sous-titre qui monte plus lentement
+
+  // Parallaxe Section Contact (CTA)
+  const { scrollYProgress: ctaScroll } = useScroll({
+    target: contactRef,
+    offset: ["start end", "end start"]
+  });
+  const ctaTextY = useTransform(ctaScroll, [0, 1], [80, -80]);
+
+  // --- EFFETS GSAP ---
   useEffect(() => {
     const ctx = gsap.context(() => {
       // Hero animations (fondu global des colonnes du hero)
-      gsap.from(heroRef.current?.children || [], {
+      gsap.from('.hero-col', {
         opacity: 0,
         y: 50,
         duration: 1,
@@ -118,10 +143,7 @@ export default function LandingPage() {
         ease: 'power3.out',
       });
 
-      // --- Animation GSAP inspirée du projet "gsap_cocktails" ---
-
-      // 1) Reveal du titre lettre par lettre (SplitText), comme le <h1 className="title">
-      //    du Hero du projet cocktails.
+      // Reveal du titre lettre par lettre (SplitText)
       const heroTitleSplit = new SplitText('.hero-title-line', {
         type: 'chars, words',
       });
@@ -136,7 +158,7 @@ export default function LandingPage() {
         delay: 0.2,
       });
 
-      // Le TypewriterText (mot tapé automatiquement) apparaît en même temps que le titre
+      // TypewriterText apparaît
       gsap.from('.hero-typewriter', {
         opacity: 0,
         y: 30,
@@ -145,7 +167,7 @@ export default function LandingPage() {
         delay: 0.2,
       });
 
-      // Reveal du sous-titre ligne par ligne (SplitText "lines"), comme .subtitle
+      // Reveal du sous-titre
       const heroSubtitleSplit = new SplitText('.hero-subtitle', {
         type: 'lines',
       });
@@ -160,22 +182,7 @@ export default function LandingPage() {
         delay: 0.6,
       });
 
-      // 2) Parallax au scroll dans le hero, comme .left-leaf / .right-leaf
-      //    qui bougent à des vitesses différentes pendant le scroll.
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      })
-        .to('.hero-glow', { y: 180, ease: 'none' }, 0)
-        .to('.hero-dashboard-card', { y: -70, ease: 'none' }, 0)
-        .to('.hero-title-line', { y: -50, ease: 'none' }, 0)
-        .to('.hero-subtitle', { y: -20, ease: 'none' }, 0);
-
-      // 3) Entrée du widget "Tableau de bord" : glisse de droite à gauche
+      // Entrée du widget "Tableau de bord"
       gsap.from('.hero-dashboard-wrapper', {
         x: 150,
         opacity: 0,
@@ -184,10 +191,8 @@ export default function LandingPage() {
         delay: 0.4,
       });
 
-      // 4) Compteurs animés : tous les chiffres (stats + widget dashboard)
-      //    comptent progressivement jusqu'à leur valeur finale au scroll.
+      // Compteurs animés
       const counterEls = gsap.utils.toArray<HTMLElement>('.counter-number');
-
       counterEls.forEach((el) => {
         const target = parseFloat(el.dataset.target || '0');
         const suffix = el.dataset.suffix || '';
@@ -209,7 +214,7 @@ export default function LandingPage() {
         });
       });
 
-      // Anneau de progression SVG (taux de réussite) : se remplit au scroll
+      // Anneau de progression SVG
       const donutRing = document.querySelector<SVGCircleElement>('.donut-ring');
       if (donutRing) {
         const circumference = 2 * Math.PI * 50;
@@ -225,8 +230,7 @@ export default function LandingPage() {
         });
       }
 
-      // Titre CTA "Prêt à Transformer..." : remplissage blanc du bas vers le haut,
-      // suivant directement la position du scroll (scrub, pas un déclenchement unique)
+      // Titre CTA : remplissage blanc
       gsap.to('.cta-title-fill', {
         clipPath: 'inset(0% 0 0 0)',
         ease: 'none',
@@ -238,8 +242,7 @@ export default function LandingPage() {
         },
       });
 
-      // Parallax des images gauche/droite dans la section CTA,
-      // identique à #c-left-leaf / #c-right-leaf dans Cocktails.jsx du projet gsap_cocktails.
+      // Parallax des images gauche/droite dans la section CTA (Gardé en GSAP car ce sont des images, pas du texte)
       const ctaParallaxTimeline = gsap.timeline({
         scrollTrigger: {
           trigger: '#contact',
@@ -253,52 +256,26 @@ export default function LandingPage() {
         .from('#cta-left-leaf', { x: -100, y: 100 })
         .from('#cta-right-leaf', { x: 100, y: 100 });
 
-      // Stats counter animation (reveal + léger effet d'échelle, comme les grilles d'images de About.jsx)
+      // Stats
       gsap.from('.stat-card', {
-        scrollTrigger: {
-          trigger: statsRef.current,
-          start: 'top 80%',
-        },
-        opacity: 0,
-        y: 40,
-        scale: 0.9,
-        stagger: 0.1,
-        duration: 0.9,
-        ease: 'power2.out',
+        scrollTrigger: { trigger: statsRef.current, start: 'top 80%' },
+        opacity: 0, y: 40, scale: 0.9, stagger: 0.1, duration: 0.9, ease: 'power2.out',
       });
 
-      // Header de la section Fonctionnalités : sort de bas en haut, en cascade
+      // Header de la section Fonctionnalités
       gsap.from('.features-header-item', {
-        scrollTrigger: {
-          trigger: featuresRef.current,
-          start: 'top bottom',
-        },
-        opacity: 0,
-        y: 60,
-        duration: 1,
-        stagger: 0.15,
-        ease: 'power3.out',
+        scrollTrigger: { trigger: featuresRef.current, start: 'top bottom' },
+        opacity: 0, y: 60, duration: 1, stagger: 0.15, ease: 'power3.out',
       });
 
-      // Features animation (reveal + échelle)
+      // Features animation
       gsap.from('.feature-item', {
-        scrollTrigger: {
-          trigger: featuresRef.current,
-          start: 'top bottom',
-        },
-        opacity: 0,
-        y: 50,
-        scale: 0.92,
-        stagger: 0.15,
-        duration: 0.9,
-        ease: 'power2.out',
+        scrollTrigger: { trigger: featuresRef.current, start: 'top bottom' },
+        opacity: 0, y: 50, scale: 0.92, stagger: 0.15, duration: 0.9, ease: 'power2.out',
       });
 
-      // Effet de survol "lift" sur les cartes (feature-item et stat-card),
-      // comme un hover premium : la carte se soulève et grossit légèrement.
-      // Pour .feature-item : bordure qui s'illumine, glow radial, flèche "En savoir plus" qui glisse.
+      // Hover
       const hoverCards = gsap.utils.toArray<HTMLElement>('.feature-item, .stat-card');
-
       hoverCards.forEach((card) => {
         const isFeature = card.classList.contains('feature-item');
         card.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
@@ -307,12 +284,7 @@ export default function LandingPage() {
         const arrow = card.querySelector<HTMLElement>('.feature-item-arrow');
 
         const enter = () => {
-          gsap.to(card, {
-            y: isFeature ? -8 : -10,
-            scale: isFeature ? 1.015 : 1.03,
-            duration: 0.4,
-            ease: 'power2.out',
-          });
+          gsap.to(card, { y: isFeature ? -8 : -10, scale: isFeature ? 1.015 : 1.03, duration: 0.4, ease: 'power2.out' });
           if (isFeature) {
             card.style.boxShadow = '0 20px 40px -15px rgba(12, 100, 120, 0.18)';
             card.style.borderColor = 'rgba(12, 100, 120, 0.35)';
@@ -326,12 +298,7 @@ export default function LandingPage() {
           }
         };
         const leave = () => {
-          gsap.to(card, {
-            y: 0,
-            scale: 1,
-            duration: 0.4,
-            ease: 'power2.out',
-          });
+          gsap.to(card, { y: 0, scale: 1, duration: 0.4, ease: 'power2.out' });
           if (isFeature) {
             card.style.boxShadow = '0 10px 30px -12px rgba(0, 0, 0, 0.06)';
             card.style.borderColor = '#e2e8f0';
@@ -380,7 +347,6 @@ export default function LandingPage() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        
       }}>
         <Iridescence
           speed={1}
@@ -391,18 +357,17 @@ export default function LandingPage() {
       <div style={{ position: 'relative', zIndex: 1 }}>
 
       {/* Navigation */}
-      {/* Navigation */}
       <nav style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.35)', /* Plus transparent (35%) pour laisser passer l'animation */
-        backdropFilter: 'blur(24px)', /* Flou beaucoup plus fort pour adoucir les mouvements de l'arrière-plan */
+        backgroundColor: 'rgba(255, 255, 255, 0.35)', 
+        backdropFilter: 'blur(24px)', 
         WebkitBackdropFilter: 'blur(24px)',
         zIndex: 50,
-        borderBottom: '1px solid rgba(255, 255, 255, 0.6)', /* Bordure blanche un peu plus nette */
-        boxShadow: '0 8px 32px 0 rgba(12, 100, 120, 0.12)' /* Ombre délicate teintée avec ton bleu #0C6478 */
+        borderBottom: '1px solid rgba(255, 255, 255, 0.6)', 
+        boxShadow: '0 8px 32px 0 rgba(12, 100, 120, 0.12)' 
       }}>
         <div style={{
           maxWidth: '80rem',
@@ -419,7 +384,6 @@ export default function LandingPage() {
               alt="Exam Mada Logo" 
               style={{ width: 90, height: 90, objectFit: 'contain' }}
             />
-            
           </div>
           
           {/* Liens de Navigation */}
@@ -430,19 +394,18 @@ export default function LandingPage() {
           </div>
           
           {/* Boutons d'Action */}
-          {/* Boutons d'Action Animés */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <a 
               href="/login" 
               onMouseEnter={() => setHoverLogin(true)}
               onMouseLeave={() => setHoverLogin(false)}
               style={{
-                color: hoverLogin ? '#8BCC62' : '#0C6478', /* Devient un vert un peu plus lisible au survol */
+                color: hoverLogin ? '#8BCC62' : '#0C6478',
                 textDecoration: 'none',
                 fontWeight: 700,
                 fontSize: '0.95rem',
                 transition: 'all 0.3s ease',
-                transform: hoverLogin ? 'translateY(-2px)' : 'translateY(0)', /* Se soulève légèrement */
+                transform: hoverLogin ? 'translateY(-2px)' : 'translateY(0)',
                 opacity: hoverLogin ? 0.8 : 1
               }}
             >
@@ -451,7 +414,6 @@ export default function LandingPage() {
             <a href="/register" style={{ display: 'inline-block' }}>
               <MagneticButton 
                 variant="dark" 
-                /* On enlève size="md" au cas où il imposerait une largeur fixe */
                 className="!w-auto !px-8 !py-2.5 !rounded-full whitespace-nowrap cursor-pointer"
               >
                 S&lsquo;inscrire
@@ -465,9 +427,11 @@ export default function LandingPage() {
       <section ref={heroRef} style={{ paddingTop: '10rem', paddingBottom: '6rem', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '4rem', alignItems: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div className="hero-col" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               
-              <h1 style={{
+              {/* Utilisation de motion.h1 pour le texte du titre */}
+              <motion.h1 style={{
+                y: heroTitleY, // <-- Déplacement parallaxe Framer Motion
                 fontSize: '3.5rem',
                 fontWeight: 900,
                 lineHeight: 1.1,
@@ -483,10 +447,11 @@ export default function LandingPage() {
                 <span className="hero-title-line">Nationaux avec</span>
                 <br />
                 <span className="hero-title-line" style={{ color: '#0C6478' }}>Excellence</span>
-              </h1>
+              </motion.h1>
               
-    
-              <p className="hero-subtitle" style={{
+              {/* Utilisation de motion.p pour le sous-titre */}
+              <motion.p className="hero-subtitle" style={{
+                y: heroSubtitleY, // <-- Déplacement parallaxe Framer Motion
                 fontSize: '1.15rem',
                 color: '#475569',
                 lineHeight: 1.8,
@@ -494,14 +459,12 @@ export default function LandingPage() {
               }}>
                 Plateforme complète pour la gestion des examens nationaux. 
                 Simplifiez l&lsquo;organisation, le suivi et l&lsquo;évaluation des candidats.
-              </p>
+              </motion.p>
+              
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
                 <RadialGlowButton className="rounded-full" onClick={() => window.location.href = '/register'}>
-      Commencer <ArrowRight style={{ width: 20, height: 20 }} />
-    </RadialGlowButton>
-                  
-                  
-                
+                  Commencer <ArrowRight style={{ width: 20, height: 20 }} />
+                </RadialGlowButton>
                 <a href="#features" style={{
                   padding: '1rem 2.5rem',
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -518,11 +481,11 @@ export default function LandingPage() {
               </div>
             </div>
             
-
-            
             {/* Widget Tableau de bord avec styles ajustés */}
-            <div className="hero-dashboard-wrapper" style={{ position: 'relative' }}>
-              <div className="hero-glow" style={{
+            <div className="hero-col hero-dashboard-wrapper" style={{ position: 'relative' }}>
+              {/* Remplacement par motion.div pour l'effet Glow */}
+              <motion.div className="hero-glow" style={{
+                y: heroGlowY, // <-- Déplacement parallaxe Framer Motion
                 position: 'absolute',
                 inset: '-20px',
                 background: 'linear-gradient(135deg, #0C6478, #BDEE98)',
@@ -530,8 +493,11 @@ export default function LandingPage() {
                 filter: 'blur(40px)',
                 opacity: 0.15,
                 zIndex: 0
-              }}></div>
-              <div className="hero-dashboard-card" style={{
+              }}></motion.div>
+              
+              {/* Remplacement par motion.div pour la carte du dashboard */}
+              <motion.div className="hero-dashboard-card" style={{
+                y: heroDashboardY, // <-- Déplacement parallaxe Framer Motion
                 position: 'relative',
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
                 backdropFilter: 'blur(20px)',
@@ -549,7 +515,7 @@ export default function LandingPage() {
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tableau de bord</h3>
                   </div>
 
-                  {/* KPI avec tendances réelles */}
+                  {/* KPI */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
                     <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
@@ -582,7 +548,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Taux de réussite : anneau de progression SVG */}
+                  {/* Taux de réussite */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                     <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>
                       <svg viewBox="0 0 120 120" style={{ width: 84, height: 84, transform: 'rotate(-90deg)' }}>
@@ -612,7 +578,7 @@ export default function LandingPage() {
                   </div>
 
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -666,10 +632,9 @@ export default function LandingPage() {
         </div>
       </section>
       
-
-    <div className="w-full h-[600px] flex items-center justify-center bg-[#fff3ed] dark:bg-black rounded-xl overflow-hidden relative">
-      <ImageSlider3D duration={32} cardWidth="15em" />
-    </div>
+      <div className="w-full h-[600px] flex items-center justify-center bg-[#fff3ed] dark:bg-black rounded-xl overflow-hidden relative">
+        <ImageSlider3D duration={32} cardWidth="15em" />
+      </div>
 
       {/* Features Section */}
       <section ref={featuresRef} id="features" style={{ padding: '8rem 1.5rem' }}>
@@ -804,13 +769,13 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section id="contact" style={{
+      <section ref={contactRef} id="contact" style={{
         padding: '6rem 1.5rem',
         background: 'linear-gradient(135deg, #0C6478 0%, #1087a3 100%)',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Images décoratives gauche/droite, comme #c-left-leaf / #c-right-leaf dans gsap_cocktails */}
+        {/* Images décoratives gauche/droite */}
         <img
           src="/images/cta-left-pencil.png"
           alt="crayon"
@@ -841,9 +806,13 @@ export default function LandingPage() {
             transformOrigin: 'bottom right'
           }}
         />
-        <div style={{ maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+        
+        {/* Texte du CTA avec parallaxe Framer Motion */}
+        <motion.div style={{ 
+          y: ctaTextY, // <-- Déplacement parallaxe du bloc texte complet Framer Motion
+          maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 
+        }}>
           <div className="cta-title-wrapper" style={{ position: 'relative', marginBottom: '1.5rem' }}>
-            {/* Calque 1 : texte creux (contour blanc, sans remplissage) — visible dès le départ */}
             <h2 style={{
               fontFamily: "'Anton', sans-serif",
               fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
@@ -858,7 +827,6 @@ export default function LandingPage() {
               <br />
               la Gestion de vos Examens?
             </h2>
-            {/* Calque 2 : texte plein blanc, masqué au départ, révélé au scroll (wipe gauche → droite) */}
             <h2 className="cta-title-fill" style={{
               position: 'absolute',
               inset: 0,
@@ -915,16 +883,15 @@ export default function LandingPage() {
               Contacter l&lsquo;Équipe
             </a>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      {/* Footer */}
       <footer style={{
-        backgroundColor: 'rgba(15, 23, 42, 0.65)', /* Couleur sombre avec 65% d'opacité */
-        backdropFilter: 'blur(16px)', /* Effet de flou sur l'animation en arrière-plan */
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)', /* Ligne subtile pour séparer le contenu */
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
         color: '#ffffff',
         padding: '5rem 1.5rem 3rem',
         position: 'relative'
@@ -938,7 +905,6 @@ export default function LandingPage() {
                   alt="Exam Mada Logo" 
                   style={{ width: 110, height: 110, objectFit: 'contain' }}
                 />
-                {/* <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>Exam Mada</span> */}
               </div>
               <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', lineHeight: 1.6 }}>
                 Plateforme de gestion des examens nationaux de Madagascar
@@ -979,7 +945,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-          </div>
+      </div>
     </div>
   );
 }
