@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
-// 1. Importation de Framer Motion
+// Importation de Framer Motion
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   GraduationCap, Users, FileText, Shield, ArrowRight, 
@@ -115,19 +115,19 @@ export default function LandingPage() {
   // Parallaxe Section Hero
   const { scrollYProgress: heroScroll } = useScroll({
     target: heroRef,
-    offset: ["start start", "100% start"]
+    offset: ["start start", "end start"] // Correction ici
   });
   
   // Mapping du défilement vers des valeurs Y (pixels)
   const heroGlowY = useTransform(heroScroll, [0, 1], [0, 180]);
   const heroDashboardY = useTransform(heroScroll, [0, 1], [0, -70]);
-  const heroTitleY = useTransform(heroScroll, [0, 1], [0, -70]); // Titre qui monte plus vite
-  const heroSubtitleY = useTransform(heroScroll, [0, 1], [0, -30]); // Sous-titre qui monte plus lentement
+  const heroTitleY = useTransform(heroScroll, [0, 1], [0, -70]);
+  const heroSubtitleY = useTransform(heroScroll, [0, 1], [0, -30]);
 
   // Parallaxe Section Contact (CTA)
   const { scrollYProgress: ctaScroll } = useScroll({
     target: contactRef,
-    offset: ["start end", "end start"]
+    offset: ["start end", "end start"] // Correction ici
   });
   const ctaTextY = useTransform(ctaScroll, [0, 1], [80, -80]);
 
@@ -242,7 +242,7 @@ export default function LandingPage() {
         },
       });
 
-      // Parallax des images gauche/droite dans la section CTA (Gardé en GSAP car ce sont des images, pas du texte)
+      // Parallax des images gauche/droite dans la section CTA (GSAP)
       const ctaParallaxTimeline = gsap.timeline({
         scrollTrigger: {
           trigger: '#contact',
@@ -431,7 +431,7 @@ export default function LandingPage() {
               
               {/* Utilisation de motion.h1 pour le texte du titre */}
               <motion.h1 style={{
-                y: heroTitleY, // <-- Déplacement parallaxe Framer Motion
+                y: heroTitleY, 
                 fontSize: '3.5rem',
                 fontWeight: 900,
                 lineHeight: 1.1,
@@ -451,7 +451,7 @@ export default function LandingPage() {
               
               {/* Utilisation de motion.p pour le sous-titre */}
               <motion.p className="hero-subtitle" style={{
-                y: heroSubtitleY, // <-- Déplacement parallaxe Framer Motion
+                y: heroSubtitleY,
                 fontSize: '1.15rem',
                 color: '#475569',
                 lineHeight: 1.8,
@@ -485,7 +485,7 @@ export default function LandingPage() {
             <div className="hero-col hero-dashboard-wrapper" style={{ position: 'relative' }}>
               {/* Remplacement par motion.div pour l'effet Glow */}
               <motion.div className="hero-glow" style={{
-                y: heroGlowY, // <-- Déplacement parallaxe Framer Motion
+                y: heroGlowY, 
                 position: 'absolute',
                 inset: '-20px',
                 background: 'linear-gradient(135deg, #0C6478, #BDEE98)',
@@ -497,7 +497,7 @@ export default function LandingPage() {
               
               {/* Remplacement par motion.div pour la carte du dashboard */}
               <motion.div className="hero-dashboard-card" style={{
-                y: heroDashboardY, // <-- Déplacement parallaxe Framer Motion
+                y: heroDashboardY, 
                 position: 'relative',
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
                 backdropFilter: 'blur(20px)',
@@ -809,7 +809,7 @@ export default function LandingPage() {
         
         {/* Texte du CTA avec parallaxe Framer Motion */}
         <motion.div style={{ 
-          y: ctaTextY, // <-- Déplacement parallaxe du bloc texte complet Framer Motion
+          y: ctaTextY, 
           maxWidth: '56rem', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 
         }}>
           <div className="cta-title-wrapper" style={{ position: 'relative', marginBottom: '1.5rem' }}>
