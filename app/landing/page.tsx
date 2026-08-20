@@ -115,7 +115,7 @@ export default function LandingPage() {
   // Parallaxe Section Hero
   const { scrollYProgress: heroScroll } = useScroll({
     target: heroRef,
-    offset: ["start start", "end start"] // Correction ici
+    offset: ["start start", "end start"]
   });
   
   // Mapping du défilement vers des valeurs Y (pixels)
@@ -124,10 +124,17 @@ export default function LandingPage() {
   const heroTitleY = useTransform(heroScroll, [0, 1], [0, -70]);
   const heroSubtitleY = useTransform(heroScroll, [0, 1], [0, -30]);
 
+  // Parallaxe Section Fonctionnalités
+  const { scrollYProgress: featuresScroll } = useScroll({
+    target: featuresRef,
+    offset: ["start end", "end start"]
+  });
+  const featuresTextY = useTransform(featuresScroll, [0, 1], [100, -100]); 
+
   // Parallaxe Section Contact (CTA)
   const { scrollYProgress: ctaScroll } = useScroll({
     target: contactRef,
-    offset: ["start end", "end start"] // Correction ici
+    offset: ["start end", "end start"]
   });
   const ctaTextY = useTransform(ctaScroll, [0, 1], [80, -80]);
 
@@ -429,7 +436,6 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '4rem', alignItems: 'center' }}>
             <div className="hero-col" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               
-              {/* Utilisation de motion.h1 pour le texte du titre */}
               <motion.h1 style={{
                 y: heroTitleY, 
                 fontSize: '3.5rem',
@@ -449,7 +455,6 @@ export default function LandingPage() {
                 <span className="hero-title-line" style={{ color: '#0C6478' }}>Excellence</span>
               </motion.h1>
               
-              {/* Utilisation de motion.p pour le sous-titre */}
               <motion.p className="hero-subtitle" style={{
                 y: heroSubtitleY,
                 fontSize: '1.15rem',
@@ -481,9 +486,8 @@ export default function LandingPage() {
               </div>
             </div>
             
-            {/* Widget Tableau de bord avec styles ajustés */}
+            {/* Widget Tableau de bord (correction hero-col retiré ici) */}
             <div className="hero-dashboard-wrapper" style={{ position: 'relative' }}>
-              {/* Remplacement par motion.div pour l'effet Glow */}
               <motion.div className="hero-glow" style={{
                 y: heroGlowY, 
                 position: 'absolute',
@@ -495,7 +499,6 @@ export default function LandingPage() {
                 zIndex: 0
               }}></motion.div>
               
-              {/* Remplacement par motion.div pour la carte du dashboard */}
               <motion.div className="hero-dashboard-card" style={{
                 y: heroDashboardY, 
                 position: 'relative',
@@ -510,12 +513,10 @@ export default function LandingPage() {
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                  {/* Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tableau de bord</h3>
                   </div>
 
-                  {/* KPI */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
                     <div style={{ backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
@@ -548,7 +549,6 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Taux de réussite */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', backgroundColor: 'rgba(248, 250, 252, 0.7)', padding: '1.15rem', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                     <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>
                       <svg viewBox="0 0 120 120" style={{ width: 84, height: 84, transform: 'rotate(-90deg)' }}>
@@ -639,7 +639,8 @@ export default function LandingPage() {
       {/* Features Section */}
       <section ref={featuresRef} id="features" style={{ padding: '8rem 1.5rem' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
+          
+          <motion.div style={{ y: featuresTextY, textAlign: 'center', marginBottom: '5rem' }}>
             <div className="features-header-item" style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -681,7 +682,7 @@ export default function LandingPage() {
             }}>
               Tout ce dont vous avez besoin pour gérer efficacement vos examens nationaux
             </p>
-          </div>
+          </motion.div>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.75rem' }}>
             {[
