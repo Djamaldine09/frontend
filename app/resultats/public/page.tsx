@@ -256,23 +256,6 @@ function PublicResultatContent() {
 
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 14px',
-              borderRadius: 999,
-              background: 'rgba(124, 58, 237, 0.1)',
-              color: '#7c3aed',
-              fontSize: 12,
-              fontWeight: 600,
-              marginBottom: 18,
-            }}
-          >
-            <Sparkles size={14} />
-            Consultation publique
-          </div>
 
           <h1
             style={{
@@ -311,7 +294,7 @@ function PublicResultatContent() {
           style={{
             background: '#fff',
             border: '1px solid rgba(15, 23, 42, 0.08)',
-            borderRadius: 20,
+            borderRadius: 35,
             padding: 10,
             boxShadow: '0 12px 40px rgba(15, 23, 42, 0.08)',
             display: 'flex',
@@ -418,7 +401,7 @@ function PublicResultatContent() {
             data-testid="result-card"
             style={{
               background: '#fff',
-              borderRadius: 24,
+              borderRadius: 35,
               overflow: 'hidden',
               border: '1px solid rgba(15, 23, 42, 0.08)',
               boxShadow: '0 24px 60px rgba(15, 23, 42, 0.10)',
