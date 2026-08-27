@@ -188,7 +188,7 @@ export default function UtilisateursAdminPage() {
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
           <button
-            className="btn-primary"
+            className="btn-lime"
             onClick={() => {
               setShowForm(!showForm);
               if (showForm) setEditing(null);
