@@ -17,6 +17,7 @@ import Lottie from 'lottie-react';
 import { publicAPI, PublicResult } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import confettiAnimation from '@/public/Confetti.json';
+import searchAnimation from '@/public/lottieflow-search-07-000000-easey.json';
 
 function getMention(moyenne: number) {
   if (moyenne >= 16) return { label: 'Très bien', color: '#7c3aed', emoji: '🏆' };
@@ -308,14 +309,19 @@ function PublicResultatContent() {
               flex: 1,
             }}
           >
-            <Search
-              size={18}
+            <Lottie
+              animationData={searchAnimation}
+              loop
+              autoplay
+              aria-label="Recherche"
               style={{
                 position: 'absolute',
-                left: 18,
+                left: 13,
                 top: '50%',
+                width: 28,
+                height: 28,
                 transform: 'translateY(-50%)',
-                color: '#94a3b8',
+                pointerEvents: 'none',
               }}
             />
 
