@@ -162,7 +162,7 @@ export default function MatieresPage() {
             Sélectionnez un examen déjà créé, puis ajoutez les matières et horaires qui composeront cet examen.
           </p>
         </div>
-        <button className="btn-primary" onClick={handleAddRow} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button className="btn-lime" onClick={handleAddRow} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Plus size={16} /> Ajouter une matière
         </button>
       </div>
