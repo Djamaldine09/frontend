@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDashboard from './CandidateDashboard';
-import { adminAPI, type AdminDashboard } from '@/lib/api';
+import { API_BASE_URL, adminAPI, resolveFileUrl, type AdminDashboard } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatWeekdayDayMonth } from '@/lib/i18n/dates';
 import {
@@ -63,6 +63,14 @@ type QuickLink = {
   descKey: string;
   Icon: typeof Users;
   tone: string;
+};
+
+type ActiveTeamMember = {
+  id: string;
+  nom: string;
+  prenom: string;
+  role: string;
+  photo?: string;
 };
 
 function isAdminDashboard(value: unknown): value is AdminDashboard {
@@ -124,12 +132,77 @@ const fallbackStats: Record<Exclude<Role, 'CANDIDAT'>, DashboardStat[]> = {
   ],
 };
 
-const activeTeamMembers = [
-  { initials: 'JD', name: 'Jean Dupont', color: 'linear-gradient(135deg, #5c54f3, #7c9cff)' },
-  { initials: 'MB', name: 'Marie Blanc', color: 'linear-gradient(135deg, #22c55e, #34d399)' },
-  { initials: 'PR', name: 'Pierre Rouge', color: 'linear-gradient(135deg, #f59e0b, #f97316)' },
-  { initials: 'AV', name: 'Anne Vert', color: 'linear-gradient(135deg, #ec4899, #8b5cf6)' },
-];
+function ActiveTeamAvatarGroup({ members, size = 42 }: { members: ActiveTeamMember[]; size?: number }) {
+  if (members.length === 0) {
+    return (
+      <AvatarGroup style={{ display: 'flex', alignItems: 'center' }}>
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: '50%',
+            border: '2px dashed var(--ink-line)',
+            background: 'var(--bg-card)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--ink-mute)',
+            fontWeight: 800,
+            fontSize: 12,
+          }}
+        >
+          0
+          <AvatarGroupTooltip>Aucun utilisateur avec photo de profil</AvatarGroupTooltip>
+        </div>
+      </AvatarGroup>
+    );
+  }
+
+  return (
+    <AvatarGroup style={{ display: 'flex', alignItems: 'center' }}>
+      {members.map((member, index) => {
+        const fullName = `${member.prenom} ${member.nom}`.trim();
+        const photoUrl = resolveFileUrl(member.photo);
+
+        return (
+          <div
+            key={member.id}
+            style={{
+              position: 'relative',
+              width: size,
+              height: size,
+              borderRadius: '50%',
+              background: 'var(--bg-card)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '2px solid var(--bg-app)',
+              marginLeft: index === 0 ? 0 : -10,
+              boxShadow: '0 8px 20px rgba(92,84,243,0.18)',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              userSelect: 'none',
+            }}
+          >
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={fullName}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            ) : (
+              <span style={{ color: 'var(--ink)', fontWeight: 800, fontSize: 12 }}>
+                {member.prenom?.[0]?.toUpperCase()}{member.nom?.[0]?.toUpperCase()}
+              </span>
+            )}
+            <AvatarGroupTooltip>{fullName} - {member.role}</AvatarGroupTooltip>
+          </div>
+        );
+      })}
+    </AvatarGroup>
+  );
+}
 
 const quickLinks: Record<Exclude<Role, 'CANDIDAT'>, QuickLink[]> = {
   ADMIN: [
@@ -159,6 +232,42 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<AdminDashboard | null>(null);
   const [isFetchingAdminDashboard, setIsFetchingAdminDashboard] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTeamMembers, setActiveTeamMembers] = useState<ActiveTeamMember[]>([]);
+  const [isFetchingTeam, setIsFetchingTeam] = useState(false);
+
+  useEffect(() => {
+    if (!user || user.role === 'CANDIDAT') {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchActiveTeam = async () => {
+      try {
+        setIsFetchingTeam(true);
+        const response = await fetch(`${API_BASE_URL}/public/active-team`, { cache: 'no-store' });
+        if (!response.ok) {
+          if (!cancelled) setActiveTeamMembers([]);
+          return;
+        }
+
+        const members = await response.json() as ActiveTeamMember[];
+        if (!cancelled) {
+          setActiveTeamMembers(members.filter((member) => Boolean(member.photo)).slice(0, 4));
+        }
+      } catch {
+        if (!cancelled) setActiveTeamMembers([]);
+      } finally {
+        if (!cancelled) setIsFetchingTeam(false);
+      }
+    };
+
+    void fetchActiveTeam();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') {
@@ -294,36 +403,12 @@ export default function DashboardPage() {
                 Équipe active
               </div>
               <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
-                4 utilisateurs connectés aujourd&apos;hui
+                {isFetchingTeam
+                  ? 'Chargement des profils...'
+                  : `${activeTeamMembers.length} utilisateur${activeTeamMembers.length > 1 ? 's' : ''} avec photo de profil`}
               </div>
             </div>
-            <AvatarGroup style={{ display: 'flex', alignItems: 'center' }}>
-              {activeTeamMembers.map((member, index) => (
-                <div
-                  key={member.initials}
-                  style={{
-                    position: 'relative',
-                    width: 42,
-                    height: 42,
-                    borderRadius: '50%',
-                    background: member.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 800,
-                    fontSize: 12,
-                    border: '2px solid var(--bg-app)',
-                    marginLeft: index === 0 ? 0 : -10,
-                    boxShadow: '0 8px 20px rgba(92,84,243,0.18)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {member.initials}
-                  <AvatarGroupTooltip>{member.name}</AvatarGroupTooltip>
-                </div>
-              ))}
-            </AvatarGroup>
+            <ActiveTeamAvatarGroup members={activeTeamMembers} />
           </div>
         </section>
 
@@ -557,36 +642,12 @@ export default function DashboardPage() {
               Équipe active
             </div>
             <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
-              4 utilisateurs connectés aujourd&apos;hui
+              {isFetchingTeam
+                ? 'Chargement des profils...'
+                : `${activeTeamMembers.length} utilisateur${activeTeamMembers.length > 1 ? 's' : ''} avec photo de profil`}
             </div>
           </div>
-          <AvatarGroup style={{ display: 'flex', alignItems: 'center' }}>
-            {activeTeamMembers.map((member, index) => (
-              <div
-                key={member.initials}
-                style={{
-                  position: 'relative',
-                  width: 42,
-                  height: 42,
-                  borderRadius: '50%',
-                  background: member.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 800,
-                  fontSize: 12,
-                  border: '2px solid var(--bg-app)',
-                  marginLeft: index === 0 ? 0 : -10,
-                  boxShadow: '0 8px 20px rgba(92,84,243,0.18)',
-                  cursor: 'pointer',
-                }}
-              >
-                {member.initials}
-                <AvatarGroupTooltip>{member.name}</AvatarGroupTooltip>
-              </div>
-            ))}
-          </AvatarGroup>
+          <ActiveTeamAvatarGroup members={activeTeamMembers} />
         </div>
       </section>
 
@@ -638,36 +699,7 @@ export default function DashboardPage() {
         <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>Utilisateurs en ligne</div>
-            <AvatarGroup>
-              {[
-                { initials: 'JD', name: 'Jean Dupont' },
-                { initials: 'MB', name: 'Marie Blanc' },
-                { initials: 'PR', name: 'Pierre Rouge' },
-                { initials: 'AV', name: 'Anne Vert' },
-              ].map((member) => (
-                <div
-                  key={member.initials}
-                  title={member.name}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--lime), var(--sky))',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    border: '2px solid var(--bg-app)',
-                    userSelect: 'none',
-                    boxShadow: '0 6px 18px rgba(92, 84, 243, 0.18)',
-                  }}
-                >
-                  {member.initials}
-                </div>
-              ))}
-            </AvatarGroup>
+            <ActiveTeamAvatarGroup members={activeTeamMembers} size={48} />
           </div>
         </div>
       </section>
