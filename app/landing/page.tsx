@@ -14,31 +14,11 @@ import Iridescence from '../../components/Iridescence';
 import ImageSlider3D from "@/components/lightswind/3d-image-slider";
 import { MagneticButton } from "@/components/lightswind/magnetic-button";
 import { RadialGlowButton } from "@/components/ui/radial-glow-button"
+import { publicAPI, resolveFileUrl, type PublicTeamMember } from '@/lib/api';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
-const activeTeam = [
-  {
-    name: 'Jean Dama',
-    role: 'Administrateur national',
-    photo: 'https://randomuser.me/api/portraits/men/32.jpg',
-  },
-  {
-    name: 'Miora Bema',
-    role: 'Responsable centre',
-    photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-  },
-  {
-    name: 'Patrick Ravo',
-    role: 'Correcteur',
-    photo: 'https://randomuser.me/api/portraits/men/75.jpg',
-  },
-  {
-    name: 'Aina Volana',
-    role: 'Surveillante',
-    photo: 'https://randomuser.me/api/portraits/women/68.jpg',
-  },
-];
+type LandingTeamMember = PublicTeamMember;
 
 // Machine à écrire : tape un mot, pause, l'efface, passe au mot suivant — en boucle infinie.
 function TypewriterText({
@@ -132,6 +112,27 @@ export default function LandingPage() {
   const cardCleanupsRef = useRef<Array<() => void>>([]);
 
   const [hoverLogin, setHoverLogin] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<LandingTeamMember[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadActiveTeam = async () => {
+      try {
+        const response = await publicAPI.getActiveTeam();
+        if (!cancelled) {
+          setTeamMembers(response.data.filter((member) => Boolean(member.photo)).slice(0, 4));
+        }
+      } catch {
+        if (!cancelled) setTeamMembers([]);
+      }
+    };
+
+    loadActiveTeam();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // --- HOOKS FRAMER MOTION POUR LE PARALLAXE ---
   
@@ -604,69 +605,78 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div style={{
-                    marginTop: 18,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    flexWrap: 'wrap',
-                    padding: '14px 16px',
-                    border: '1px solid rgba(226, 232, 240, 0.75)',
-                    borderRadius: 18,
-                    background: 'rgba(12, 100, 120, 0.045)'
-                  }}>
-                    <div>
-                      <div style={{
-                        fontSize: 12,
-                        fontWeight: 800,
-                        color: '#64748b',
-                        letterSpacing: '0.7px',
-                        textTransform: 'uppercase'
-                      }}>
-                        Equipe active
-                      </div>
-                      <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
-                        4 utilisateurs connectes aujourd'hui
-                      </div>
-                    </div>
-
-                    <div data-slot="avatar-group" aria-label="Equipe active" style={{ display: 'flex', alignItems: 'center', height: 48 }}>
-                      {activeTeam.map((member, index) => (
-                        <div
-                          key={member.name}
-                          title={`${member.name} - ${member.role}`}
-                          aria-label={`${member.name}, ${member.role}`}
-                          tabIndex={0}
-                          style={{
-                            position: 'relative',
-                            zIndex: activeTeam.length - index,
-                            width: 42,
-                            height: 42,
-                            borderRadius: '50%',
-                            border: '2px solid rgba(255, 255, 255, 0.95)',
-                            marginLeft: index === 0 ? 0 : -10,
-                            boxShadow: '0 8px 20px rgba(12, 100, 120, 0.18)',
-                            overflow: 'hidden',
-                            cursor: 'pointer',
-                            background: '#e2e8f0'
-                          }}
-                        >
-                          <img
-                            src={member.photo}
-                            alt={member.name}
-                            loading="lazy"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              display: 'block'
-                            }}
-                          />
+                  {teamMembers.length > 0 && (
+                    <div style={{
+                      marginTop: 18,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                      padding: '14px 16px',
+                      border: '1px solid rgba(226, 232, 240, 0.75)',
+                      borderRadius: 18,
+                      background: 'rgba(12, 100, 120, 0.045)'
+                    }}>
+                      <div>
+                        <div style={{
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: '#64748b',
+                          letterSpacing: '0.7px',
+                          textTransform: 'uppercase'
+                        }}>
+                          Equipe active
                         </div>
-                      ))}
+                        <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
+                          {teamMembers.length} utilisateur{teamMembers.length > 1 ? 's' : ''} avec photo de profil
+                        </div>
+                      </div>
+
+                      <div data-slot="avatar-group" aria-label="Equipe active" style={{ display: 'flex', alignItems: 'center', height: 48 }}>
+                        {teamMembers.map((member, index) => {
+                          const fullName = `${member.prenom} ${member.nom}`.trim();
+                          const photoUrl = resolveFileUrl(member.photo);
+
+                          return (
+                            <div
+                              key={member.id}
+                              title={`${fullName} - ${member.role}`}
+                              aria-label={`${fullName}, ${member.role}`}
+                              tabIndex={0}
+                              style={{
+                                position: 'relative',
+                                zIndex: teamMembers.length - index,
+                                width: 42,
+                                height: 42,
+                                borderRadius: '50%',
+                                border: '2px solid rgba(255, 255, 255, 0.95)',
+                                marginLeft: index === 0 ? 0 : -10,
+                                boxShadow: '0 8px 20px rgba(12, 100, 120, 0.18)',
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                background: '#e2e8f0'
+                              }}
+                            >
+                              {photoUrl && (
+                                <img
+                                  src={photoUrl}
+                                  alt={fullName}
+                                  loading="lazy"
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    display: 'block'
+                                  }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                 </div>
               </motion.div>
