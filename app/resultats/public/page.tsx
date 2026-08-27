@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
-  Search,
   Trophy,
   CheckCircle2,
   XCircle,
@@ -363,7 +362,7 @@ function PublicResultatContent() {
               gap: 8,
             }}
           >
-            {loading ? (
+            {loading && (
               <span
                 style={{
                   width: 16,
@@ -374,8 +373,6 @@ function PublicResultatContent() {
                   animation: 'spin 0.8s linear infinite',
                 }}
               />
-            ) : (
-              <Search size={15} />
             )}
 
             {loading ? 'Recherche…' : 'Rechercher'}
