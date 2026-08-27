@@ -243,6 +243,8 @@ function PublicResultatContent() {
             style={{
               display: 'flex',
               alignItems: 'center',
+              alignSelf: 'center',
+              height: 43,
               gap: 8,
               fontSize: 12,
               color: '#64748b',
