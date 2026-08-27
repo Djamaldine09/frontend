@@ -119,22 +119,34 @@ export default function LandingPage() {
 
   const [hoverLogin, setHoverLogin] = useState(false);
   const [teamMembers, setTeamMembers] = useState<LandingTeamMember[]>([]);
+  const [teamLoading, setTeamLoading] = useState(true);
+  const [teamError, setTeamError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadActiveTeam = async () => {
+      setTeamLoading(true);
+      setTeamError(false);
       try {
         const response = await fetch(`${API_BASE_URL}/public/active-team`, {
           cache: 'no-store',
         });
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (!cancelled) setTeamError(true);
+          return;
+        }
         const members = await response.json() as LandingTeamMember[];
         if (!cancelled) {
           setTeamMembers(members.filter((member) => Boolean(member.photo)).slice(0, 4));
         }
       } catch {
-        if (!cancelled) setTeamMembers([]);
+        if (!cancelled) {
+          setTeamMembers([]);
+          setTeamError(true);
+        }
+      } finally {
+        if (!cancelled) setTeamLoading(false);
       }
     };
 
@@ -615,78 +627,98 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {teamMembers.length > 0 && (
-                    <div style={{
-                      marginTop: 18,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      flexWrap: 'wrap',
-                      padding: '14px 16px',
-                      border: '1px solid rgba(226, 232, 240, 0.75)',
-                      borderRadius: 18,
-                      background: 'rgba(12, 100, 120, 0.045)'
-                    }}>
-                      <div>
-                        <div style={{
-                          fontSize: 12,
-                          fontWeight: 800,
-                          color: '#64748b',
-                          letterSpacing: '0.7px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Equipe active
-                        </div>
-                        <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
-                          {teamMembers.length} utilisateur{teamMembers.length > 1 ? 's' : ''} avec photo de profil
-                        </div>
+                  <div style={{
+                    marginTop: 18,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    flexWrap: 'wrap',
+                    padding: '14px 16px',
+                    border: '1px solid rgba(226, 232, 240, 0.75)',
+                    borderRadius: 18,
+                    background: 'rgba(12, 100, 120, 0.045)'
+                  }}>
+                    <div>
+                      <div style={{
+                        fontSize: 12,
+                        fontWeight: 800,
+                        color: '#64748b',
+                        letterSpacing: '0.7px',
+                        textTransform: 'uppercase'
+                      }}>
+                        Equipe active
                       </div>
-
-                      <div data-slot="avatar-group" aria-label="Equipe active" style={{ display: 'flex', alignItems: 'center', height: 48 }}>
-                        {teamMembers.map((member, index) => {
-                          const fullName = `${member.prenom} ${member.nom}`.trim();
-                          const photoUrl = resolveFileUrl(member.photo);
-
-                          return (
-                            <div
-                              key={member.id}
-                              title={`${fullName} - ${member.role}`}
-                              aria-label={`${fullName}, ${member.role}`}
-                              tabIndex={0}
-                              style={{
-                                position: 'relative',
-                                zIndex: teamMembers.length - index,
-                                width: 42,
-                                height: 42,
-                                borderRadius: '50%',
-                                border: '2px solid rgba(255, 255, 255, 0.95)',
-                                marginLeft: index === 0 ? 0 : -10,
-                                boxShadow: '0 8px 20px rgba(12, 100, 120, 0.18)',
-                                overflow: 'hidden',
-                                cursor: 'pointer',
-                                background: '#e2e8f0'
-                              }}
-                            >
-                              {photoUrl && (
-                                <img
-                                  src={photoUrl}
-                                  alt={fullName}
-                                  loading="lazy"
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    display: 'block'
-                                  }}
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
+                      <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
+                        {teamLoading
+                          ? 'Chargement des profils...'
+                          : teamMembers.length > 0
+                            ? `${teamMembers.length} utilisateur${teamMembers.length > 1 ? 's' : ''} avec photo de profil`
+                            : teamError
+                              ? 'Backend indisponible ou endpoint non deploye'
+                              : 'Aucune photo de profil en base'}
                       </div>
                     </div>
-                  )}
+
+                    <div data-slot="avatar-group" aria-label="Equipe active" style={{ display: 'flex', alignItems: 'center', height: 48 }}>
+                      {teamMembers.length > 0 ? teamMembers.map((member, index) => {
+                        const fullName = `${member.prenom} ${member.nom}`.trim();
+                        const photoUrl = resolveFileUrl(member.photo);
+
+                        return (
+                          <div
+                            key={member.id}
+                            title={`${fullName} - ${member.role}`}
+                            aria-label={`${fullName}, ${member.role}`}
+                            tabIndex={0}
+                            style={{
+                              position: 'relative',
+                              zIndex: teamMembers.length - index,
+                              width: 42,
+                              height: 42,
+                              borderRadius: '50%',
+                              border: '2px solid rgba(255, 255, 255, 0.95)',
+                              marginLeft: index === 0 ? 0 : -10,
+                              boxShadow: '0 8px 20px rgba(12, 100, 120, 0.18)',
+                              overflow: 'hidden',
+                              cursor: 'pointer',
+                              background: '#e2e8f0'
+                            }}
+                          >
+                            {photoUrl && (
+                              <img
+                                src={photoUrl}
+                                alt={fullName}
+                                loading="lazy"
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  display: 'block'
+                                }}
+                              />
+                            )}
+                          </div>
+                        );
+                      }) : (
+                        <div style={{
+                          width: 42,
+                          height: 42,
+                          borderRadius: '50%',
+                          border: '2px dashed rgba(12, 100, 120, 0.25)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#0C6478',
+                          fontWeight: 900,
+                          fontSize: 13,
+                          background: 'rgba(255, 255, 255, 0.7)'
+                        }}>
+                          0
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                 </div>
               </motion.div>
