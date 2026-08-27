@@ -14,11 +14,17 @@ import Iridescence from '../../components/Iridescence';
 import ImageSlider3D from "@/components/lightswind/3d-image-slider";
 import { MagneticButton } from "@/components/lightswind/magnetic-button";
 import { RadialGlowButton } from "@/components/ui/radial-glow-button"
-import { publicAPI, resolveFileUrl, type PublicTeamMember } from '@/lib/api';
+import { API_BASE_URL, resolveFileUrl } from '@/lib/api';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
-type LandingTeamMember = PublicTeamMember;
+type LandingTeamMember = {
+  id: string;
+  nom: string;
+  prenom: string;
+  role: string;
+  photo?: string;
+};
 
 // Machine à écrire : tape un mot, pause, l'efface, passe au mot suivant — en boucle infinie.
 function TypewriterText({
@@ -119,9 +125,13 @@ export default function LandingPage() {
 
     const loadActiveTeam = async () => {
       try {
-        const response = await publicAPI.getActiveTeam();
+        const response = await fetch(`${API_BASE_URL}/public/active-team`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) return;
+        const members = await response.json() as LandingTeamMember[];
         if (!cancelled) {
-          setTeamMembers(response.data.filter((member) => Boolean(member.photo)).slice(0, 4));
+          setTeamMembers(members.filter((member) => Boolean(member.photo)).slice(0, 4));
         }
       } catch {
         if (!cancelled) setTeamMembers([]);
