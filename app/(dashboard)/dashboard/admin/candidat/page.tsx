@@ -342,7 +342,7 @@ export default function CandidatsPage() {
                             <span style={{ fontSize: 12, color: 'var(--status-green)' }}>✓ Validé</span>
                           )}
                           {c.statutInscription === 'REJETE' && (
-                            <span style={{ fontSize: 12, color: 'var(--status-red)' }}>✗ Rejeté</span>
+                            <span style={{ fontSize: 12, color: 'var(--status-red)' }}>✕ Rejeté</span>
                           )}
                         </div>
                       </td>

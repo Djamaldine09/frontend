@@ -287,7 +287,7 @@ export default function ExamensPage() {
           </button>
           {canCreate && (
             <button
-              className="btn-primary"
+              className="btn-lime"
               onClick={() => {
                 resetForm();
                 setShowForm(!showForm);
