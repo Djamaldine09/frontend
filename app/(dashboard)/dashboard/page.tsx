@@ -135,26 +135,24 @@ const fallbackStats: Record<Exclude<Role, 'CANDIDAT'>, DashboardStat[]> = {
 function ActiveTeamAvatarGroup({ members, size = 42 }: { members: ActiveTeamMember[]; size?: number }) {
   if (members.length === 0) {
     return (
-      <AvatarGroup style={{ display: 'flex', alignItems: 'center' }}>
-        <div
-          style={{
-            width: size,
-            height: size,
-            borderRadius: '50%',
-            border: '2px dashed var(--ink-line)',
-            background: 'var(--bg-card)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--ink-mute)',
-            fontWeight: 800,
-            fontSize: 12,
-          }}
-        >
-          0
-          <AvatarGroupTooltip>Aucun utilisateur avec photo de profil</AvatarGroupTooltip>
-        </div>
-      </AvatarGroup>
+      <div
+        title="Aucun utilisateur avec photo de profil"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          border: '2px dashed var(--ink-line)',
+          background: 'var(--bg-card)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--ink-mute)',
+          fontWeight: 800,
+          fontSize: 12,
+        }}
+      >
+        0
+      </div>
     );
   }
 
