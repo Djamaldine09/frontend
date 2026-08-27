@@ -31,11 +31,17 @@ export default function RapportsPage() {
     setExporting(format);
     try {
       const r = await adminExtendedAPI.exportReport(format);
-      const url = window.URL.createObjectURL(new Blob([(r as any).data]));
+      const contentType =
+        format === 'pdf' ? 'application/pdf' :
+        format === 'excel' ? 'application/vnd.ms-excel' :
+        'text/csv;charset=utf-8';
+      const url = window.URL.createObjectURL(new Blob([(r as any).data], { type: contentType }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rapport-national.${format === 'excel' ? 'xlsx' : format}`;
+      a.download = `rapport-national.${format === 'excel' ? 'xls' : format}`;
+      document.body.appendChild(a);
       a.click();
+      a.remove();
       window.URL.revokeObjectURL(url);
       toast.success(`Rapport ${format.toUpperCase()} téléchargé`);
     } catch {
