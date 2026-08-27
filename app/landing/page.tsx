@@ -671,6 +671,16 @@ export default function LandingPage() {
                             title={`${fullName} - ${member.role}`}
                             aria-label={`${fullName}, ${member.role}`}
                             tabIndex={0}
+                            onMouseEnter={(event) => {
+                              event.currentTarget.style.transform = 'translateY(-8px) scale(1.08)';
+                              event.currentTarget.style.zIndex = '20';
+                              event.currentTarget.style.boxShadow = '0 16px 34px rgba(12, 100, 120, 0.28)';
+                            }}
+                            onMouseLeave={(event) => {
+                              event.currentTarget.style.transform = 'translateY(0) scale(1)';
+                              event.currentTarget.style.zIndex = String(teamMembers.length - index);
+                              event.currentTarget.style.boxShadow = '0 8px 20px rgba(12, 100, 120, 0.18)';
+                            }}
                             style={{
                               position: 'relative',
                               zIndex: teamMembers.length - index,
@@ -682,7 +692,9 @@ export default function LandingPage() {
                               boxShadow: '0 8px 20px rgba(12, 100, 120, 0.18)',
                               overflow: 'hidden',
                               cursor: 'pointer',
-                              background: '#e2e8f0'
+                              background: '#e2e8f0',
+                              transform: 'translateY(0) scale(1)',
+                              transition: 'transform 220ms ease, box-shadow 220ms ease'
                             }}
                           >
                             {photoUrl && (
