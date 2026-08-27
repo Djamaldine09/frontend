@@ -447,6 +447,7 @@ export default function LandingPage() {
           <div style={{ display: 'none', alignItems: 'center', gap: '2.5rem' }}>
             <a href="#features" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Fonctionnalités</a>
             <a href="#stats" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Statistiques</a>
+            <a href="/resultats/public" style={{ color: '#0C6478', textDecoration: 'none', fontWeight: 700, fontSize: '0.95rem' }}>Resultats</a>
             <a href="#contact" style={{ color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>Contact</a>
           </div>
           
@@ -532,6 +533,19 @@ export default function LandingPage() {
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                 }}>
                   En savoir plus
+                </a>
+                <a href="/resultats/public" style={{
+                  padding: '1rem 2.5rem',
+                  backgroundColor: 'rgba(12, 100, 120, 0.08)',
+                  backdropFilter: 'blur(10px)',
+                  color: '#0C6478',
+                  textDecoration: 'none',
+                  fontWeight: 800,
+                  borderRadius: '33px',
+                  border: '1px solid rgba(12, 100, 120, 0.18)',
+                  boxShadow: '0 4px 12px rgba(12, 100, 120, 0.08)'
+                }}>
+                  Voir les resultats
                 </a>
               </div>
             </div>
