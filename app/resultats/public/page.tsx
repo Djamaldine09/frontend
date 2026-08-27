@@ -344,7 +344,7 @@ function PublicResultatContent() {
             data-testid="search-btn"
             style={{
               padding: '0 24px',
-              borderRadius: 14,
+              borderRadius: 35,
               border: 'none',
               background: '#0f172a',
               color: '#fff',
