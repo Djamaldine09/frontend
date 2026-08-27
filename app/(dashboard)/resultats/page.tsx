@@ -209,8 +209,7 @@ export default function ResultatsPage() {
             Lever avec force
           </button>
           <button
-            className="btn-primary"
-            style={{ background: 'var(--tile-mint)' }}
+            className="btn-lime"
             onClick={handlePublish}
             disabled={publishing || !examenId || !copies.length || !copies.every((c) => c.anonymatLeve)}
             title={
