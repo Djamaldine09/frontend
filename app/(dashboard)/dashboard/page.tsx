@@ -442,7 +442,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="card card-hoverable">
-            <div className="tile" style={{ background: 'var(--tile-mint)', marginBottom: 14 }}>
+            <div className="tile" style={{ background: 'var(--status-green)', marginBottom: 14 }}>
               <Building2 size={20} />
             </div>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', marginBottom: 6 }}>
