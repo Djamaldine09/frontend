@@ -385,7 +385,7 @@ export default function DashboardPage() {
     return (
       <div className="animate-fade-in">
         <section style={{ marginBottom: 28 }}>
-          <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
+          <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
             {formatWeekdayDayMonth(new Date(), lang)}
           </p>
           <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--ink)', letterSpacing: -1 }}>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
 
           <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 18, background: 'rgba(92, 84, 243, 0.04)' }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-mute)', letterSpacing: 0.7, textTransform: 'uppercase' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)', letterSpacing: 0.7, textTransform: 'uppercase' }}>
                 Équipe active
               </div>
               <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
@@ -415,7 +415,7 @@ export default function DashboardPage() {
             <div className="tile" style={{ background: 'var(--tile-sky)', marginBottom: 14 }}>
               <Users size={20} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', marginBottom: 6 }}>
               {t('adash.stat.candidatsInscrits')}
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: -0.8 }}>
@@ -430,7 +430,7 @@ export default function DashboardPage() {
             <div className="tile" style={{ background: 'var(--tile-lila)', marginBottom: 14 }}>
               <BookOpen size={20} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', marginBottom: 6 }}>
               {t('adash.stat.examensPlanifies')}
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: -0.8 }}>
@@ -445,7 +445,7 @@ export default function DashboardPage() {
             <div className="tile" style={{ background: 'var(--tile-mint)', marginBottom: 14 }}>
               <Building2 size={20} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', marginBottom: 6 }}>
               {t('adash.stat.centresActifs')}
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: -0.8 }}>
@@ -460,7 +460,7 @@ export default function DashboardPage() {
             <div className="tile" style={{ background: 'var(--tile-sun)', marginBottom: 14 }}>
               <TrendingUp size={20} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', marginBottom: 6 }}>
               {t('adash.stat.tauxOccupation')}
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: -0.8 }}>
