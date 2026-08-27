@@ -331,7 +331,7 @@ function PublicResultatContent() {
               placeholder="Ex: BAC2025-00123"
               style={{
                 width: '100%',
-                padding: '16px 16px 16px 48px',
+                padding: '12px 16px 12px 48px',
                 border: 'none',
                 background: 'transparent',
                 fontSize: 16,
