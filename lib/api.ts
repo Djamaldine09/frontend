@@ -630,6 +630,14 @@ export interface PublicResult {
   notes?: { matiere: string; valeur: number; coefficient: number }[];
 }
 
+export interface PublicTeamMember {
+  id: string;
+  nom: string;
+  prenom: string;
+  role: string;
+  photo?: string;
+}
+
 export const publicAPI = {
   // Recherche d'un résultat par matricule (endpoint public, pas de JWT)
   getResultByMatricule: (matricule: string) =>
@@ -637,6 +645,8 @@ export const publicAPI = {
       `${API_BASE_URL}/public/resultats/${encodeURIComponent(matricule)}`,
       { timeout: 10000 }
     ),
+  getActiveTeam: () =>
+    axios.get<PublicTeamMember[]>(`${API_BASE_URL}/public/active-team`, { timeout: 10000 }),
 };
 
 // ============ STRIPE PAIEMENTS ============
