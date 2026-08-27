@@ -73,7 +73,7 @@ export default function SupervisionPage() {
                 <div className="tile" style={{ background: s.tone, marginBottom: 12 }}>
                   <s.Icon size={20} />
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase' }}>
                   {s.label}
                 </div>
                 <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--ink)' }}>{s.value}</div>
@@ -105,7 +105,7 @@ export default function SupervisionPage() {
           {report && (
             <div className="card" style={{ padding: 22, marginTop: 22 }}>
               <h3 style={{ fontWeight: 700, marginBottom: 16 }}>Rapport national</h3>
-              <p style={{ fontSize: 12, color: 'var(--ink-mute)', marginBottom: 12 }}>
+              <p style={{ fontSize: 12, color: 'var(--ink)', marginBottom: 12 }}>
                 Généré le {new Date(report.generatedAt).toLocaleString('fr-FR')}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
@@ -124,7 +124,7 @@ export default function SupervisionPage() {
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div style={{ padding: 14, borderRadius: 12, background: 'var(--bg-soft)' }}>
-      <div style={{ fontSize: 11, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 11, color: 'var(--ink)', textTransform: 'uppercase' }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 800 }}>{value}</div>
     </div>
   );

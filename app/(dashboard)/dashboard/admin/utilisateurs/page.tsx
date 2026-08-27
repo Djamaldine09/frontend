@@ -378,7 +378,7 @@ export default function UtilisateursAdminPage() {
                           {ROLE_LABELS[u.role]}
                         </span>
                        </td>
-                      <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--text-muted)' }}>
+                      <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--ink-soft)' }}>
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—'}
                        </td>
                       <td style={{ padding: '14px 20px', display: 'flex', gap: 6 }}>

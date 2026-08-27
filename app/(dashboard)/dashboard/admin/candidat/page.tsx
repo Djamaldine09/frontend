@@ -314,8 +314,8 @@ export default function CandidatsPage() {
                                 style={{ 
                                   padding: '6px 12px', 
                                   fontSize: 12, 
-                                  color: 'var(--tile-mint)',
-                                  border: '1px solid var(--tile-mint)',
+                                  color: 'var(--status-green)',
+                                  border: '1px solid var(--status-green)',
                                   borderRadius: 4
                                 }}
                                 title="Valider le dossier"
@@ -328,8 +328,8 @@ export default function CandidatsPage() {
                                 style={{ 
                                   padding: '6px 12px', 
                                   fontSize: 12, 
-                                  color: 'var(--tile-rose)',
-                                  border: '1px solid var(--tile-rose)',
+                                  color: 'var(--status-red)',
+                                  border: '1px solid var(--status-red)',
                                   borderRadius: 4
                                 }}
                                 title="Rejeter le dossier"
@@ -339,10 +339,10 @@ export default function CandidatsPage() {
                             </>
                           )}
                           {c.statutInscription === 'VALIDE' && (
-                            <span style={{ fontSize: 12, color: 'var(--tile-mint)' }}>✓ Validé</span>
+                            <span style={{ fontSize: 12, color: 'var(--status-green)' }}>✓ Validé</span>
                           )}
                           {c.statutInscription === 'REJETE' && (
-                            <span style={{ fontSize: 12, color: 'var(--tile-rose)' }}>✗ Rejeté</span>
+                            <span style={{ fontSize: 12, color: 'var(--status-red)' }}>✗ Rejeté</span>
                           )}
                         </div>
                       </td>
