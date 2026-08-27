@@ -318,8 +318,8 @@ function PublicResultatContent() {
                 position: 'absolute',
                 left: 13,
                 top: '50%',
-                width: 28,
-                height: 28,
+                width: 20,
+                height: 20,
                 transform: 'translateY(-50%)',
                 pointerEvents: 'none',
               }}
