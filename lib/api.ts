@@ -15,6 +15,16 @@ export function resolveFileUrl(path?: string | null): string | undefined {
   return `${API_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+export function resolveSalle(salle?: string | null, numeroPlace?: string | number | null, placesParSalle = 30): string {
+  const salleValue = String(salle ?? '').trim();
+  if (!/^auto(?:matique)?$/i.test(salleValue)) return salleValue || '—';
+
+  const place = Number.parseInt(String(numeroPlace ?? '').trim(), 10);
+  if (!Number.isFinite(place) || place < 1 || placesParSalle < 1) return 'AUTO';
+
+  return String(Math.ceil(place / placesParSalle));
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },

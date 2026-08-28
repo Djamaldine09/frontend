@@ -12,7 +12,7 @@ import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Resultat, User } from '@/types';
 import { useCandidatData } from '@/lib/useCandidatData';
-import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage, resolveFileUrl } from '@/lib/api';
+import { documentsAPI, EpreuvePlanning, CandidatMe, getDownloadErrorMessage, resolveFileUrl, resolveSalle } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Lang } from '@/lib/i18n/translations';
 import { WEEKDAYS_MIN, formatDayMonth, formatWeekdayDayMonth, formatMonthYear } from '@/lib/i18n/dates';
@@ -651,7 +651,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           </div>
           <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
             {candidat.centreAffecte
-              ? `${candidat.centreAffecte.ville} · ${t('cdash.centre.salle')} ${candidat.centreAffecte.salle} · ${t('cdash.centre.place')} ${candidat.centreAffecte.numeroPlace}`
+              ? `${candidat.centreAffecte.ville} · ${t('cdash.centre.salle')} ${resolveSalle(candidat.centreAffecte.salle, candidat.centreAffecte.numeroPlace)} · ${t('cdash.centre.place')} ${candidat.centreAffecte.numeroPlace}`
               : t('cdash.centre.sectorisationAuto')}
           </div>
 

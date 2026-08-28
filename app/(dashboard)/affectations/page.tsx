@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { affectationAPI, examensAPI, adminAPI, candidatAPI, Examen, AdminCentre, CandidatMe } from '@/lib/api';
+import { affectationAPI, examensAPI, adminAPI, candidatAPI, Examen, AdminCentre, CandidatMe, resolveSalle } from '@/lib/api';
 import { MapPin, ShieldAlert, RefreshCw, Send, Plus, Eye } from 'lucide-react';
 
 type Tab = 'create' | 'view';
@@ -434,7 +434,7 @@ export default function AffectationsPage() {
                         </td>
                         <td style={{ padding: '12px 18px' }}>{a.centre?.nom || a.centreNom || '—'}</td>
                         <td style={{ padding: '12px 18px' }}>{a.centre?.ville || '—'}</td>
-                        <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)' }}>{a.salle || '—'}</td>
+                        <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)' }}>{resolveSalle(a.salle, a.numeroPlace)}</td>
                         <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)' }}>{a.numeroPlace || '—'}</td>
                         <td style={{ padding: '12px 18px' }}>
                           <span
