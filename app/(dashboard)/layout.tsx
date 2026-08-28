@@ -485,7 +485,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               data-testid="topbar-theme"
               title={darkMode ? t('topbar.themeLight') : t('topbar.themeDark')}
             >
-              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+              {darkMode ? <Sun animateOnHover size={17} /> : <Moon animateOnHover size={17} />}
             </button>
 
             <Link
