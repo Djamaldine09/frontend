@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, CheckCheck, Clock, Loader2, RefreshCw, X } from 'lucide-react';
+import { CheckCheck, Clock, Loader2, RefreshCw, X } from 'lucide-react';
+import { Bell as AnimatedBell } from '@/components/animate-ui/icons/bell';
 import { useRouter } from 'next/navigation';
 import { notificationAPI, type AppNotification } from '@/lib/api';
 
@@ -145,7 +146,7 @@ export default function NotificationBell() {
         aria-expanded={open}
         style={{ position: 'relative', width: 36, height: 36, padding: 0 }}
       >
-        <Bell size={20} />
+        <AnimatedBell animateOnHover size={20} />
         {hasUnread && (
           <span
             aria-label={`${unreadCount} notifications non lues`}
@@ -287,7 +288,7 @@ export default function NotificationBell() {
                       color: 'var(--ink)',
                     }}
                   >
-                    <Bell size={16} />
+                    <AnimatedBell animateOnHover size={16} />
                   </span>
 
                   <span style={{ minWidth: 0 }}>
