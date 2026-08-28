@@ -139,7 +139,7 @@ export default function NotificationBell() {
     <div ref={panelRef} style={{ position: 'relative' }}>
       <button
         type="button"
-        className="btn-ghost"
+        className="btn-icon"
         onClick={handleOpen}
         aria-label="Ouvrir les notifications"
         aria-expanded={open}
