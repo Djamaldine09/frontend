@@ -9,6 +9,7 @@ import {
   Clock, User, Printer, Download, AlertCircle, LoaderCircle,
   Building2, Calendar, CheckCircle
 } from 'lucide-react';
+import { AlarmClock } from '@/components/animate-ui/icons/alarm-clock';
 
 // Types locaux en attendant l'API backend
 interface Convocation {
@@ -385,7 +386,8 @@ export default function ConvocationPage() {
 
           <div className="card" style={{ background: 'var(--tile-sun)' }}>
             <h3 style={{ fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              ⏰ Important
+              <AlarmClock animateOnHover size={18} aria-label="Important" />
+              Important
             </h3>
             <p style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               Présentez-vous <strong>30 minutes avant</strong> l&apos;heure de début. 

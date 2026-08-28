@@ -132,10 +132,14 @@ function PublicResultatContent() {
   };
 
   useEffect(() => {
-    if (initialMatricule) search(initialMatricule);
+    if (!initialMatricule) return;
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const task = window.setTimeout(() => {
+      void search(initialMatricule);
+    }, 0);
+
+    return () => window.clearTimeout(task);
+  }, [initialMatricule]);
 
   const handleShare = async () => {
     if (!result) return;
