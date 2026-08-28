@@ -12,11 +12,12 @@ import NotificationBell from '@/components/NotificationBell';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   LayoutGrid, FileText, BookOpen, ScrollText, CreditCard, Building2,
-  Bell, Settings, LogOut, Search, Download, ArrowUpRight, Calendar,
+  Bell, Settings, LogOut, Search, ArrowUpRight, Calendar,
   Users, Activity, ShieldCheck, BarChart3, Wrench, Menu, X, CheckCircle
 } from 'lucide-react';
 import { Moon } from '@/components/animate-ui/icons/moon';
 import { Sun } from '@/components/animate-ui/icons/sun';
+import { Download as AnimatedDownload } from '@/components/animate-ui/icons/download';
 
 const navItems = [
   { href: '/dashboard',  labelKey: 'nav.dashboard', icon: LayoutGrid,  roles: ['ADMIN','RESPONSABLE','SURVEILLANT','CORRECTEUR','CANDIDAT'] },
@@ -475,7 +476,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
             <NotificationBell />
             <button className="btn-icon" aria-label={t('topbar.download')} data-testid="topbar-download">
-              <Download size={17} strokeWidth={2} />
+              <AnimatedDownload animateOnHover size={17} strokeWidth={2} />
             </button>
             <button 
               onClick={toggleTheme}
