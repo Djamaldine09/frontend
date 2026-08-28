@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { candidatAPI, documentsAPI } from '@/lib/api';
+import { candidatAPI, documentsAPI, resolveSalle } from '@/lib/api';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Clock, User, Printer, Download, AlertCircle, LoaderCircle,
@@ -328,7 +328,7 @@ export default function ConvocationPage() {
                 <div style={{ padding: 12, background: 'var(--bg-soft)', borderRadius: 8 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Salle / Place</div>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                    {convocation.salle} - Place {convocation.numeroPlace}
+                    {resolveSalle(convocation.salle, convocation.numeroPlace)} - Place {convocation.numeroPlace}
                   </div>
                 </div>
               )}

@@ -14,6 +14,16 @@ export default function AffectationAutomatiquePage() {
 
   const isAuthorized = user?.role === 'ADMIN' || user?.role === 'RESPONSABLE';
 
+  const readApiError = async (response: Response): Promise<string> => {
+    const raw = await response.text();
+    try {
+      const payload = JSON.parse(raw) as { message?: string; error?: string; details?: string };
+      return payload.message || payload.error || payload.details || `Erreur serveur (${response.status})`;
+    } catch {
+      return raw.trim() || `Erreur serveur (${response.status})`;
+    }
+  };
+
   useEffect(() => {
     if (!isAuthorized) return;
     (async () => {
@@ -52,19 +62,22 @@ export default function AffectationAutomatiquePage() {
         body: JSON.stringify({ examenId: selectedExamen })
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        toast.error(data.message);
+        const message = await readApiError(res);
+        console.error('Erreur affectation automatique:', { status: res.status, examenId: selectedExamen, message });
+        toast.error(message);
         return;
       }
+
+      const data = await res.json();
 
       toast.success(
         `✅ ${data.resultats.totalCandidatsAffectes} candidats affectés!`
       );
       await loadStats();
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Erreur réseau affectation automatique:', error);
+      toast.error(error.message || 'Backend non joignable');
     } finally {
       setLoading(false);
     }

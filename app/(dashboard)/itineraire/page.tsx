@@ -5,6 +5,7 @@ import { Phone, Navigation, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useCandidatData } from '@/lib/useCandidatData';
+import { resolveSalle } from '@/lib/api';
 
 const DynamicMap = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -92,8 +93,8 @@ export default function ItinerairePage() {
   }
 
   const { candidat, convocation } = data!;
-  const salle = centre.salle || convocation?.salle || '—';
   const numeroPlace = centre.numeroPlace || convocation?.numeroPlace || '—';
+  const salle = resolveSalle(centre.salle || convocation?.salle, numeroPlace);
 
   const handleOpenMaps = () => {
     // Priorité absolue aux coordonnées GPS précises : elles pointent exactement
