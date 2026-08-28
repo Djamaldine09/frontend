@@ -566,7 +566,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
             {WEEKDAYS_MIN[lang].map((d, i) => (
-              <div key={i} style={{ fontSize: 10.5, fontWeight: 700, textAlign: 'center', color: 'var(--ink-mute)', padding: '4px 0' }}>{d}</div>
+              <div key={i} style={{ fontSize: 10.5, fontWeight: 700, textAlign: 'center', color: 'var(--ink)', padding: '4px 0' }}>{d}</div>
             ))}
           </div>
 
