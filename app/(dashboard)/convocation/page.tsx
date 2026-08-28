@@ -377,16 +377,16 @@ export default function ConvocationPage() {
               <CheckCircle size={18} /> À apporter
             </h3>
             <ul style={{ fontSize: 13, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
-              <li>📄 Cette convocation imprimée ou sur mobile</li>
-              <li>🆔 Pièce d&apos;identité (CIN ou Passeport)</li>
-              <li>✍️ Stylo noir et règle</li>
-              <li>📏 Matériel autorisé selon la matière</li>
+              <li>Cette convocation imprimée ou sur mobile</li>
+              <li>Pièce d&apos;identité (CIN ou Passeport)</li>
+              <li>Stylo blue et règle</li>
+              <li>Matériel autorisé selon la matière</li>
             </ul>
           </div>
 
           <div className="card" style={{ background: 'var(--tile-sun)' }}>
             <h3 style={{ fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <AlarmClock animateOnHover size={18} aria-label="Important" />
+              <AlarmClock animateOnHover="default-loop" size={18} aria-label="Important" />
               Important
             </h3>
             <p style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
