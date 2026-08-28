@@ -143,7 +143,7 @@ export default function NotificationBell() {
         onClick={handleOpen}
         aria-label="Ouvrir les notifications"
         aria-expanded={open}
-        style={{ position: 'relative', width: 40, height: 40, padding: 0 }}
+        style={{ position: 'relative', width: 36, height: 36, padding: 0 }}
       >
         <Bell size={20} />
         {hasUnread && (
