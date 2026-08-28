@@ -613,7 +613,7 @@ export default function CandidateDashboard({ user }: { user: User }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {docs.map((d) => {
               const tone =
-                d.state === 'valide' ? 'var(--tile-mint)' :
+                d.state === 'valide' ? 'var(--status-green)' :
                 d.state === 'attente' ? 'var(--tile-sun)' : 'var(--tile-rose)';
               const badge =
                 d.state === 'valide'  ? <span className="badge badge-green"><CheckCircle2 size={11} /> {t('cdash.doc.valide')}</span> :
