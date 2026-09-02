@@ -261,7 +261,7 @@ export default function CentresAdminPage() {
           </p>
         </div>
         <button
-          className="btn-primary"
+          className="btn-lime"
           onClick={() => {
             setShowForm(!showForm);
             if (showForm) setEditing(null);
