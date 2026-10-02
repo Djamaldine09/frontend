@@ -16,6 +16,7 @@ import { MagneticButton } from "@/components/lightswind/magnetic-button";
 import { RadialGlowButton } from "@/components/ui/radial-glow-button"
 import { API_BASE_URL, resolveFileUrl } from '@/lib/api';
 
+// Force Vercel redeploy: Android download CTA is production-critical.
 const MOBILE_APP_DOWNLOAD_URL = 'https://github.com/Djamaldine09/Exam-Mada/releases/latest/download/app-release.apk';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
