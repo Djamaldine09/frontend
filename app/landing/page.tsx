@@ -8,13 +8,15 @@ import { SplitText } from 'gsap/SplitText';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   GraduationCap, Users, FileText, Shield, ArrowRight, 
-  CheckCircle, TrendingUp, Clock, Award, ChevronRight
+  CheckCircle, TrendingUp, Clock, Award, ChevronRight, Download
 } from 'lucide-react';
 import Iridescence from '../../components/Iridescence';
 import ImageSlider3D from "@/components/lightswind/3d-image-slider";
 import { MagneticButton } from "@/components/lightswind/magnetic-button";
 import { RadialGlowButton } from "@/components/ui/radial-glow-button"
 import { API_BASE_URL, resolveFileUrl } from '@/lib/api';
+
+const MOBILE_APP_DOWNLOAD_URL = 'https://github.com/Djamaldine09/Exam-Mada/releases/latest/download/app-release.apk';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -546,6 +548,40 @@ export default function LandingPage() {
                   boxShadow: '0 4px 12px rgba(12, 100, 120, 0.08)'
                 }}>
                   Voir les resultats
+                </a>
+                <a
+                  href={MOBILE_APP_DOWNLOAD_URL}
+                  aria-label="Télécharger l'application mobile Exam Mada pour Android"
+                  style={{
+                    flexBasis: '100%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.7rem',
+                    width: 'fit-content',
+                    marginTop: '0.15rem',
+                    padding: '0.85rem 1.35rem',
+                    backgroundColor: 'rgba(12, 100, 120, 0.10)',
+                    backdropFilter: 'blur(12px)',
+                    color: '#0C6478',
+                    textDecoration: 'none',
+                    fontWeight: 800,
+                    borderRadius: '999px',
+                    border: '1px solid rgba(12, 100, 120, 0.18)',
+                    boxShadow: '0 8px 24px rgba(12, 100, 120, 0.08)',
+                    transition: 'transform 0.25s ease, box-shadow 0.25s ease'
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.transform = 'translateY(-2px)';
+                    event.currentTarget.style.boxShadow = '0 12px 28px rgba(12, 100, 120, 0.14)';
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.transform = 'translateY(0)';
+                    event.currentTarget.style.boxShadow = '0 8px 24px rgba(12, 100, 120, 0.08)';
+                  }}
+                >
+                  <Download style={{ width: 19, height: 19 }} />
+                  <span>Télécharger l'application Android</span>
                 </a>
               </div>
             </div>
