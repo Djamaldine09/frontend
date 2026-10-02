@@ -17,7 +17,7 @@ import { RadialGlowButton } from "@/components/ui/radial-glow-button"
 import { API_BASE_URL, resolveFileUrl } from '@/lib/api';
 
 // Force Vercel redeploy: Android download CTA is production-critical.
-const MOBILE_APP_DOWNLOAD_URL = 'https://github.com/Djamaldine09/Exam-Mada/releases/latest/download/app-release.apk';
+const MOBILE_APP_DOWNLOAD_URL = 'https://drive.google.com/uc?export=download&id=1jOnq9YoNE3vt03-V6rSLc3XWejgk-6Wu';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
